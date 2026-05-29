@@ -1,0 +1,34 @@
+{
+  "version": "0.1.0",
+  "author": "Peatral",
+  "private": true,
+  "keywords": [
+    "pebble-app"
+  ],
+  "pebble": {
+    "uuid": "dabb3617-783b-443f-8add-8d74ccc57d07",
+    "displayName": "Blinkr",
+    "versionLabel": "0.1.0",
+    "sdkVersion": "3",
+    "enableMultiJS": true,
+    "targetPlatforms": [
+      "emery"
+    ],
+    "watchapp": {
+      "watchface": false
+    },
+    "resources": {
+      "media": []
+    },
+    "messageKeys": {
+      "interval": 10000
+    },
+    "capabilities": [
+      "configurable"
+    ]
+  },
+  "name": "Blinkr",
+  "dependencies": {
+    "@rebble/clay": "^1.0.10"
+  }
+}
