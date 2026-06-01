@@ -22,6 +22,7 @@ use pebble::wakeup;
 use pebble::window::{WindowDelegate, WindowRef};
 use pebble::window_stack;
 use pebble::{app, snprintf, timer::AppTimer, window};
+use pebble::system::fonts::{FONT_KEY_BITHAM_42_BOLD, FONT_KEY_GOTHIC_18_BOLD, FONT_KEY_GOTHIC_28_BOLD};
 
 const PERSIST_STATE_KEY: u32 = 1;
 const PERSIST_INTERVAL_KEY: u32 = 2;
@@ -219,7 +220,7 @@ impl WindowDelegate for MainWindowDelegate {
                 });
                 text_main.set_text(c"Blink");
                 text_main.set_font(pebble::system::fonts::Font::get_system(
-                    c"RESOURCE_ID_BITHAM_42_BOLD"
+                    FONT_KEY_BITHAM_42_BOLD
                 ));
                 text_main.set_text_alignment(GTextAlignment::Center);
                 root.add_child(&text_main);
@@ -230,7 +231,7 @@ impl WindowDelegate for MainWindowDelegate {
                 });
                 text_sub.set_text(c"20-20-20 Rule:\nLook 20ft away\nfor 20 seconds.");
                 text_sub.set_font(pebble::system::fonts::Font::get_system(
-                    c"RESOURCE_ID_GOTHIC_18_BOLD"
+                    FONT_KEY_GOTHIC_18_BOLD
                 ));
                 text_sub.set_text_alignment(GTextAlignment::Center);
                 root.add_child(&text_sub);
@@ -251,7 +252,7 @@ impl WindowDelegate for MainWindowDelegate {
                     c"Inactive"
                 });
                 text.set_font(pebble::system::fonts::Font::get_system(
-                    c"RESOURCE_ID_GOTHIC_28_BOLD"
+                    FONT_KEY_GOTHIC_28_BOLD
                 ));
                 text.set_text_alignment(GTextAlignment::Center);
                 root.add_child(&text);
