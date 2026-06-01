@@ -6,16 +6,15 @@ extern crate pebble_rust as pebble;
 
 use core::cell::RefCell;
 use core::ffi::{c_char, CStr};
-use core::sync::atomic::{AtomicBool, AtomicPtr, AtomicUsize, Ordering};
+use core::sync::atomic::{AtomicBool, AtomicPtr, AtomicU32, AtomicUsize, Ordering};
 
 use pebble::app_message::*;
 use pebble::launch;
-use pebble::layer::{ILayer, MenuLayer, MenuLayerDelegate, TextLayer};
+use pebble::layer::{ILayer, MenuLayer, MenuLayerDelegate, TextLayer, MenuLayerRef};
 use pebble::std::time::get_time;
 use pebble::storage;
 use pebble::types::{
-    AppLaunchReason, GContext, GPoint, GRect, GSize, GTextAlignment, Layer as PLayer, MenuIndex,
-    MenuLayer as PMenuLayer,
+    AppLaunchReason, GContext, GPoint, GRect, GSize, GTextAlignment, Layer as PLayer, MenuIndex
 };
 use pebble::vibes;
 use pebble::wakeup;
@@ -27,11 +26,11 @@ use pebble::system::fonts::{FONT_KEY_BITHAM_42_BOLD, FONT_KEY_GOTHIC_18_BOLD, FO
 const PERSIST_STATE_KEY: u32 = 1;
 const PERSIST_INTERVAL_KEY: u32 = 2;
 const CLAY_MESSAGE_KEY_INTERVAL: u32 = 10000;
-const DEFAULT_INTERVAL_MINS: usize = 20;
+const DEFAULT_INTERVAL_MINS: u32 = 20;
 
 
 static IS_ENABLED: AtomicBool = AtomicBool::new(false);
-static INTERVAL_MINS: AtomicUsize = AtomicUsize::new(DEFAULT_INTERVAL_MINS);
+static INTERVAL_MINS: AtomicU32 = AtomicU32::new(DEFAULT_INTERVAL_MINS);
 static LAUNCH_REASON: AtomicUsize = AtomicUsize::new(0);
 static MENU_PTR: AtomicPtr<MenuLayer<ReminderMenu>> = AtomicPtr::new(core::ptr::null_mut());
 
@@ -84,7 +83,7 @@ impl ReminderMenu {
 }
 
 impl MenuLayerDelegate for ReminderMenu {
-    fn get_num_rows(&self, _menu_layer: *mut PMenuLayer, _section_index: u16) -> u16 {
+    fn get_num_rows(&self, _menu_layer: MenuLayerRef, _section_index: u16) -> u16 {
         2
     }
 
@@ -130,7 +129,7 @@ impl MenuLayerDelegate for ReminderMenu {
         }
     }
 
-    fn select_click(&self, _menu_layer: *mut PMenuLayer, index: *mut MenuIndex) {
+    fn select_click(&self, menu_layer: MenuLayerRef, index: *mut MenuIndex) {
         unsafe {
             let row = (*index).row;
             let mut interval = INTERVAL_MINS.load(Ordering::Relaxed);
@@ -174,10 +173,7 @@ impl MenuLayerDelegate for ReminderMenu {
                 }
             }
 
-            let ptr = MENU_PTR.load(Ordering::Relaxed);
-            if !ptr.is_null() {
-                (*ptr).reload_data();
-            }
+            menu_layer.reload_data();
         }
     }
 }
@@ -307,7 +303,7 @@ pub fn main() -> isize {
 
     let mut interval = DEFAULT_INTERVAL_MINS;
     if storage::exists(PERSIST_INTERVAL_KEY) {
-        interval = storage::read_int(PERSIST_INTERVAL_KEY) as usize;
+        interval = storage::read_int(PERSIST_INTERVAL_KEY) as u32;
     }
     INTERVAL_MINS.store(interval, Ordering::Relaxed);
 
@@ -363,7 +359,7 @@ fn handle_exit_timer() {
 
 fn inbox_received_handler(dict: Dictionary) {
     if let Some(tuple) = dict.find(CLAY_MESSAGE_KEY_INTERVAL) {
-        let new_interval = extract_clay_int(&tuple, DEFAULT_INTERVAL_MINS as i32) as usize;
+        let new_interval = extract_clay_int(&tuple, DEFAULT_INTERVAL_MINS as i32) as u32;
 
         INTERVAL_MINS.store(new_interval, Ordering::Relaxed);
 
