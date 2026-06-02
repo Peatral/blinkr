@@ -32,7 +32,6 @@ impl AppWindow {
 #[no_mangle]
 pub fn main() -> isize {
     let launch = launch::get_reason();
-    state::LAUNCH_REASON.store(launch as u32 as usize, Ordering::Relaxed);
 
     state::init_state();
 

@@ -1,4 +1,4 @@
-use core::sync::atomic::{AtomicBool, AtomicU32, AtomicUsize, Ordering};
+use core::sync::atomic::{AtomicBool, AtomicU32, Ordering};
 use pebble::std::time::get_time;
 use pebble::{storage, vibes, wakeup};
 use pebble::types::time_t;
@@ -9,7 +9,6 @@ pub const DEFAULT_INTERVAL_MINS: time_t = 20;
 
 pub static IS_ENABLED: AtomicBool = AtomicBool::new(false);
 pub static INTERVAL_MINS: AtomicU32 = AtomicU32::new(DEFAULT_INTERVAL_MINS);
-pub static LAUNCH_REASON: AtomicUsize = AtomicUsize::new(0);
 
 pub fn init_state() {
     let is_enabled = storage::read_bool(PERSIST_STATE_KEY);

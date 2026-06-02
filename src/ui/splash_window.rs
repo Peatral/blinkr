@@ -4,7 +4,7 @@ use pebble::types::{AppLaunchReason, GPoint, GRect, GSize, GTextAlignment};
 use pebble::window::{Window, WindowDelegate, WindowRef};
 use pebble::timer::AppTimer;
 use pebble::system::fonts::{FONT_KEY_BITHAM_42_BOLD, FONT_KEY_GOTHIC_18_BOLD, FONT_KEY_GOTHIC_28_BOLD};
-use pebble::{vibes, window_stack};
+use pebble::{launch, vibes, window_stack};
 use crate::state;
 use core::sync::atomic::Ordering;
 
@@ -21,8 +21,7 @@ impl WindowDelegate for SplashDelegate {
         let width = bounds.size.w;
         let height = bounds.size.h;
 
-        let launch_val = state::LAUNCH_REASON.load(Ordering::Relaxed) as u32;
-        let reason = AppLaunchReason::from(launch_val);
+        let reason = launch::get_reason();
         let is_enabled = state::IS_ENABLED.load(Ordering::Relaxed);
 
         if reason == AppLaunchReason::Wakeup {
@@ -71,8 +70,7 @@ impl WindowDelegate for SplashDelegate {
 }
 
 fn handle_exit_timer() {
-    let launch_val = state::LAUNCH_REASON.load(Ordering::Relaxed) as u32;
-    if AppLaunchReason::from(launch_val) == AppLaunchReason::Wakeup {
+    if launch::get_reason() == AppLaunchReason::Wakeup {
         vibes::short_pulse();
     }
     window_stack::pop_all(false);
