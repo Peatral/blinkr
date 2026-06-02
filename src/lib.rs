@@ -49,14 +49,13 @@ pub fn main() -> isize {
 
     let app = app::App::new();
 
-    let active_window = if launch == AppLaunchReason::QuickLaunch {
-        AppWindow::Splash(ui::splash_window::create())
-    } else if launch == AppLaunchReason::Wakeup {
-        AppWindow::Reminder(ui::reminder_window::create())
-    } else {
-        AppWindow::Settings(ui::settings_window::create())
+    let active_window = match launch {
+        AppLaunchReason::QuickLaunch => AppWindow::Splash(ui::splash_window::create()),
+        AppLaunchReason::Wakeup => AppWindow::Reminder(ui::reminder_window::create()),
+        _ => AppWindow::Settings(ui::settings_window::create()),
     };
 
+    window_stack::push(active_window.as_window_ref(), false);
 
     static REMINDER_WINDOW: GlobalCell<Option<AppWindow>> = GlobalCell::new(None);
 
@@ -73,8 +72,6 @@ pub fn main() -> isize {
             window_stack::push(new_win.as_ref(), false);
         }
     });
-
-    window_stack::push(active_window.as_window_ref(), false);
 
     app.run_event_loop();
 
