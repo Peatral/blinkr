@@ -7,7 +7,7 @@ use pebble::layer::{ILayer, MenuLayer, MenuLayerDelegate, MenuLayerRef};
 use pebble::types::{GContext, GlobalCell, MenuIndex};
 use pebble::window::{Window, WindowDelegate, WindowRef};
 
-static MENU_REF: GlobalCell<Option<MenuLayerRef>> = GlobalCell::new(None);
+static MENU_REF: GlobalCell<Option<MenuLayer<ReminderMenu>>> = GlobalCell::new(None);
 
 struct ReminderMenu {
     subtitle_buf: RefCell<[u8; 16]>,
@@ -80,9 +80,7 @@ impl MenuLayerDelegate for ReminderMenu {
     }
 }
 
-pub struct SettingsDelegate {
-    menu_view: RefCell<Option<MenuLayer<ReminderMenu>>>,
-}
+pub struct SettingsDelegate;
 
 impl WindowDelegate for SettingsDelegate {
     fn load(&self, window: WindowRef) {
@@ -96,21 +94,16 @@ impl WindowDelegate for SettingsDelegate {
         menu.set_click_config_onto_window(&window);
         window.get_root_layer().add_child(&menu);
 
-        *MENU_REF.borrow_mut() = Some(menu.as_ref());
-
-        *self.menu_view.borrow_mut() = Some(menu);
+        *MENU_REF.borrow_mut() = Some(menu);
     }
 
     fn unload(&self, _window: WindowRef) {
-        self.menu_view.borrow_mut().take();
-        *MENU_REF.borrow_mut() = None;
+        MENU_REF.borrow_mut().take();
     }
 }
 
 pub fn create() -> Window<SettingsDelegate> {
-    Window::new(SettingsDelegate {
-        menu_view: RefCell::new(None),
-    })
+    Window::new(SettingsDelegate {})
 }
 
 pub fn inbox_received_handler(dict: Dictionary) {
