@@ -37,8 +37,9 @@ impl WindowDelegate for SplashDelegate {
         root.add_child(&text);
 
         *self.text_main.borrow_mut() = Some(text);
-        *self.exit_timer.borrow_mut() =
-            Some(AppTimer::register(3_000, || window_stack::pop_all(false)));
+        *self.exit_timer.borrow_mut() = Some(AppTimer::register(3_000, move || {
+            window_stack::remove(window, false);
+        }));
     }
 
     fn unload(&self, _window: WindowRef) {

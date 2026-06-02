@@ -48,9 +48,9 @@ impl WindowDelegate for ReminderDelegate {
 
         *self.text_main.borrow_mut() = Some(text_main);
         *self.text_sub.borrow_mut() = Some(text_sub);
-        *self.exit_timer.borrow_mut() = Some(AppTimer::register(20_000, || {
+        *self.exit_timer.borrow_mut() = Some(AppTimer::register(20_000, move || {
             vibes::short_pulse();
-            window_stack::pop_all(false);
+            window_stack::remove(window, false);
         }));
     }
 
