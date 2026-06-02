@@ -4,7 +4,6 @@ use pebble::{storage, vibes, wakeup};
 
 pub const PERSIST_STATE_KEY: u32 = 1;
 pub const PERSIST_INTERVAL_KEY: u32 = 2;
-pub const CLAY_MESSAGE_KEY_INTERVAL: u32 = 10000;
 pub const DEFAULT_INTERVAL_MINS: time_t = 20;
 
 pub static IS_ENABLED: GlobalCell<bool> = GlobalCell::new(false);

@@ -5,7 +5,7 @@ module.exports = [
   },
   {
     "type": "slider",
-    "messageKey": "interval",
+    "messageKey": "INTERVAL",
     "defaultValue": 20,
     "label": "Remind me every (minutes)",
     "min": 1,

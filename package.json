@@ -20,9 +20,9 @@
     "resources": {
       "media": []
     },
-    "messageKeys": {
-      "interval": 10000
-    },
+    "messageKeys": [
+      "INTERVAL"
+    ],
     "capabilities": [
       "configurable"
     ]

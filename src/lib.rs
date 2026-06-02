@@ -13,7 +13,9 @@ use crate::ui::settings_window::SettingsDelegate;
 use crate::ui::splash_window::SplashDelegate;
 use pebble::types::{AppLaunchReason, GlobalCell};
 use pebble::window::{Window, WindowRef};
-use pebble::{app, app_message::AppMessage, launch, wakeup, window_stack};
+use pebble::{app, app_message::AppMessage, include_message_keys, launch, wakeup, window_stack};
+
+include_message_keys!();
 
 enum AppWindow {
     Splash(Window<SplashDelegate>),

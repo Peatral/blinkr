@@ -1,5 +1,5 @@
 use crate::utils::reschedule_wakeup;
-use crate::{state, utils};
+use crate::{message_keys, state, utils};
 use core::cell::RefCell;
 use core::ffi::CStr;
 use pebble::app_message::Dictionary;
@@ -107,7 +107,7 @@ pub fn create() -> Window<SettingsDelegate> {
 }
 
 pub fn inbox_received_handler(dict: Dictionary) {
-    if let Some(tuple) = dict.find(state::CLAY_MESSAGE_KEY_INTERVAL) {
+    if let Some(tuple) = dict.find(message_keys::MESSAGE_KEY_INTERVAL) {
         let new_interval =
             utils::extract_clay_int(&tuple, state::DEFAULT_INTERVAL_MINS as i32) as u32;
 
