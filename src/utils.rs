@@ -27,7 +27,9 @@ pub fn extract_clay_int(tuple: &Tuple, default: i32) -> i32 {
 }
 
 pub unsafe fn format_int(buf: *mut u8, len: usize, format: &CStr, val: i32) {
-    snprintf(buf as *mut _, len, format.as_ptr(), val);
+    unsafe {
+        snprintf(buf as *mut _, len, format.as_ptr(), val);
+    }
 }
 
 pub fn reschedule_wakeup(interval_mins: u32) -> Result<WakeupId, StatusCode> {

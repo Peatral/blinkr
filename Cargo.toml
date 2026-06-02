@@ -2,7 +2,7 @@
 name = "blinkr"
 version = "0.1.0"
 authors = ["Peatral <contact@peatral.xyz>"]
-edition = "2021"
+edition = "2024"
 
 [lib]
 crate-type = ["staticlib"]

@@ -33,7 +33,7 @@ impl AppWindow {
     }
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub fn main() -> isize {
     let launch = launch::get_reason();
 
