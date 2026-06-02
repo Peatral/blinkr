@@ -1,6 +1,6 @@
 use crate::state;
+use crate::state::toggle_state;
 use core::cell::RefCell;
-use core::sync::atomic::Ordering;
 use pebble::layer::{ILayer, TextLayer};
 use pebble::system::fonts::FONT_KEY_GOTHIC_28_BOLD;
 use pebble::timer::AppTimer;
@@ -20,7 +20,7 @@ impl WindowDelegate for SplashDelegate {
         let width = bounds.size.w;
         let height = bounds.size.h;
 
-        let is_enabled = state::IS_ENABLED.load(Ordering::Relaxed);
+        let is_enabled = *state::IS_ENABLED.borrow();
 
         let text = TextLayer::new(GRect {
             origin: GPoint {
@@ -49,6 +49,8 @@ impl WindowDelegate for SplashDelegate {
 }
 
 pub fn create() -> Window<SplashDelegate> {
+    toggle_state();
+
     Window::new(SplashDelegate {
         text_main: RefCell::new(None),
         exit_timer: RefCell::new(None),

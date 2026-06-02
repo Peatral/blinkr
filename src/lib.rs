@@ -11,10 +11,9 @@ mod utils;
 use crate::ui::reminder_window::ReminderDelegate;
 use crate::ui::settings_window::SettingsDelegate;
 use crate::ui::splash_window::SplashDelegate;
-use core::sync::atomic::Ordering;
-use pebble::types::AppLaunchReason;
+use pebble::types::{AppLaunchReason, GlobalCell};
 use pebble::window::{Window, WindowRef};
-use pebble::{app, app_message::AppMessage, launch, window_stack};
+use pebble::{app, app_message::AppMessage, launch, wakeup, window_stack};
 
 enum AppWindow {
     Splash(Window<SplashDelegate>),
@@ -38,12 +37,10 @@ pub fn main() -> isize {
 
     state::init_state();
 
-    if launch == AppLaunchReason::Wakeup && !state::IS_ENABLED.load(Ordering::Relaxed) {
+    if launch == AppLaunchReason::Wakeup && !*state::IS_ENABLED.borrow() {
         pebble::pbl_warn!(c"Ghost wakeup detected. Aborting.");
         return 0;
     }
-
-    state::handle_launch(launch);
 
     AppMessage::register_inbox_received(ui::settings_window::inbox_received_handler);
     if AppMessage::open(128, 128).is_err() {
@@ -60,9 +57,28 @@ pub fn main() -> isize {
         AppWindow::Settings(ui::settings_window::create())
     };
 
+
+    static REMINDER_WINDOW: GlobalCell<Option<AppWindow>> = GlobalCell::new(None);
+
+    wakeup::subscribe(|_id, _cookie| {
+        let mut window_state = REMINDER_WINDOW.borrow_mut();
+
+        if let Some(AppWindow::Reminder(old_win)) = window_state.take() {
+            window_stack::remove(old_win.as_ref(), false);
+        }
+
+        *window_state = Some(AppWindow::Reminder(ui::reminder_window::create()));
+
+        if let Some(AppWindow::Reminder(ref new_win)) = *window_state {
+            window_stack::push(new_win.as_ref(), false);
+        }
+    });
+
     window_stack::push(active_window.as_window_ref(), false);
 
     app.run_event_loop();
+
+    REMINDER_WINDOW.borrow_mut().take();
 
     0
 }

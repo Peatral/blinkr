@@ -2,13 +2,12 @@ use crate::utils::reschedule_wakeup;
 use crate::{state, utils};
 use core::cell::RefCell;
 use core::ffi::CStr;
-use core::sync::atomic::{AtomicPtr, Ordering};
 use pebble::app_message::Dictionary;
 use pebble::layer::{ILayer, MenuLayer, MenuLayerDelegate, MenuLayerRef};
-use pebble::types::{GContext, MenuIndex};
+use pebble::types::{GContext, GlobalCell, MenuIndex};
 use pebble::window::{Window, WindowDelegate, WindowRef};
 
-static MENU_PTR: AtomicPtr<MenuLayer<ReminderMenu>> = AtomicPtr::new(core::ptr::null_mut());
+static MENU_REF: GlobalCell<Option<MenuLayerRef>> = GlobalCell::new(None);
 
 struct ReminderMenu {
     subtitle_buf: RefCell<[u8; 16]>,
@@ -29,7 +28,7 @@ impl MenuLayerDelegate for ReminderMenu {
             let row = (*index).row;
 
             if row == 0 {
-                let is_enabled = state::IS_ENABLED.load(Ordering::Relaxed);
+                let is_enabled = *state::IS_ENABLED.borrow();
                 let subtitle = if is_enabled { c"ON" } else { c"OFF" };
                 pebble::layer::menu_layer::cell_basic_draw(
                     ctx,
@@ -39,7 +38,7 @@ impl MenuLayerDelegate for ReminderMenu {
                     core::ptr::null_mut(),
                 );
             } else if row == 1 {
-                let interval = state::INTERVAL_MINS.load(Ordering::Relaxed);
+                let interval = *state::INTERVAL_MINS.borrow();
                 let mut buf = self.subtitle_buf.borrow_mut();
 
                 utils::format_int(buf.as_mut_ptr(), 16, c"%d mins", interval as i32);
@@ -63,16 +62,17 @@ impl MenuLayerDelegate for ReminderMenu {
             if row == 0 {
                 state::toggle_state();
             } else if row == 1 {
-                let mut interval = state::INTERVAL_MINS.load(Ordering::Relaxed);
+                let mut interval = *state::INTERVAL_MINS.borrow();
                 interval += 10;
                 if interval > 60 {
                     interval = 10;
                 }
-                state::INTERVAL_MINS.store(interval, Ordering::Relaxed);
+
+                *state::INTERVAL_MINS.borrow_mut() = interval;
                 let _ = pebble::storage::write_int(state::PERSIST_INTERVAL_KEY, interval as i32);
 
-                if state::IS_ENABLED.load(Ordering::Relaxed) {
-                    reschedule_wakeup(interval);
+                if *state::IS_ENABLED.borrow() {
+                    let _ = reschedule_wakeup(interval);
                 }
             }
             menu_layer.reload_data();
@@ -96,14 +96,14 @@ impl WindowDelegate for SettingsDelegate {
         menu.set_click_config_onto_window(&window);
         window.get_root_layer().add_child(&menu);
 
-        let stable_ptr = &menu as *const _ as *mut MenuLayer<ReminderMenu>;
-        MENU_PTR.store(stable_ptr, Ordering::Relaxed);
+        *MENU_REF.borrow_mut() = Some(menu.as_ref());
+
         *self.menu_view.borrow_mut() = Some(menu);
     }
 
     fn unload(&self, _window: WindowRef) {
         self.menu_view.borrow_mut().take();
-        MENU_PTR.store(core::ptr::null_mut(), Ordering::Relaxed);
+        *MENU_REF.borrow_mut() = None;
     }
 }
 
@@ -117,18 +117,16 @@ pub fn inbox_received_handler(dict: Dictionary) {
     if let Some(tuple) = dict.find(state::CLAY_MESSAGE_KEY_INTERVAL) {
         let new_interval =
             utils::extract_clay_int(&tuple, state::DEFAULT_INTERVAL_MINS as i32) as u32;
-        state::INTERVAL_MINS.store(new_interval, Ordering::Relaxed);
+
+        *state::INTERVAL_MINS.borrow_mut() = new_interval;
         let _ = pebble::storage::write_int(state::PERSIST_INTERVAL_KEY, new_interval as i32);
 
-        if state::IS_ENABLED.load(Ordering::Relaxed) {
-            reschedule_wakeup(new_interval);
+        if *state::IS_ENABLED.borrow() {
+            let _ = reschedule_wakeup(new_interval);
         }
 
-        let ptr = MENU_PTR.load(Ordering::Relaxed);
-        if !ptr.is_null() {
-            unsafe {
-                (*ptr).reload_data();
-            }
+        if let Some(menu) = MENU_REF.borrow().as_ref() {
+            menu.reload_data();
         }
     }
 }

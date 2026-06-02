@@ -1,7 +1,6 @@
 use crate::state::INTERVAL_MINS;
 use crate::utils::reschedule_wakeup;
 use core::cell::RefCell;
-use core::sync::atomic::Ordering;
 use pebble::layer::{ILayer, TextLayer};
 use pebble::system::fonts::{FONT_KEY_BITHAM_42_BOLD, FONT_KEY_GOTHIC_18_BOLD};
 use pebble::timer::AppTimer;
@@ -62,8 +61,9 @@ impl WindowDelegate for ReminderDelegate {
 }
 
 pub fn create() -> Window<ReminderDelegate> {
-    let interval = INTERVAL_MINS.load(Ordering::Relaxed);
-    reschedule_wakeup(interval);
+    vibes::double_pulse();
+    let interval = *INTERVAL_MINS.borrow();
+    let _ = reschedule_wakeup(interval);
 
     Window::new(ReminderDelegate {
         text_main: RefCell::new(None),
