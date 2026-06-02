@@ -11,6 +11,23 @@ mod ui;
 use pebble::{app, app_message::AppMessage, launch, window_stack};
 use pebble::types::AppLaunchReason;
 use core::sync::atomic::Ordering;
+use pebble::window::{Window, WindowRef};
+use crate::ui::settings_window::SettingsDelegate;
+use crate::ui::splash_window::SplashDelegate;
+
+enum AppWindow {
+    Splash(Window<SplashDelegate>),
+    Settings(Window<SettingsDelegate>),
+}
+
+impl AppWindow {
+    fn as_window_ref(&self) -> WindowRef {
+        match self {
+            AppWindow::Splash(w) => w.as_ref(),
+            AppWindow::Settings(w) => w.as_ref(),
+        }
+    }
+}
 
 #[no_mangle]
 pub fn main() -> isize {
@@ -33,15 +50,13 @@ pub fn main() -> isize {
 
     let app = app::App::new();
 
-    let mut _active_splash = None;
-    let mut _active_settings = None;
-    if launch == AppLaunchReason::Wakeup || launch == AppLaunchReason::QuickLaunch {
-        _active_splash = Some(ui::splash_window::create());
-        window_stack::push(&_active_splash.as_ref().unwrap(), false);
+    let active_window = if launch == AppLaunchReason::Wakeup || launch == AppLaunchReason::QuickLaunch {
+        AppWindow::Splash(ui::splash_window::create())
     } else {
-        _active_settings = Some(ui::settings_window::create());
-        window_stack::push(_active_settings.as_ref().unwrap(), false);
-    }
+        AppWindow::Settings(ui::settings_window::create())
+    };
+
+    window_stack::push(active_window.as_window_ref(), false);
 
     app.run_event_loop();
 
