@@ -28,3 +28,9 @@ pub fn extract_clay_int(tuple: &Tuple, default: i32) -> i32 {
 pub unsafe fn format_int(buf: *mut u8, len: usize, format: &CStr, val: i32) {
     snprintf(buf as *mut _, len, format.as_ptr(), val);
 }
+
+pub fn reschedule_wakeup(interval_mins: u32) {
+    pebble::wakeup::cancel_all();
+    let now = pebble::std::time::get_time();
+    let _ = pebble::wakeup::schedule(now + (interval_mins * 60), 0, true);
+}

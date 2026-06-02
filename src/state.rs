@@ -1,7 +1,7 @@
 use core::sync::atomic::{AtomicBool, AtomicU32, Ordering};
 use pebble::std::time::get_time;
-use pebble::{storage, vibes, wakeup};
 use pebble::types::time_t;
+use pebble::{storage, vibes, wakeup};
 pub const PERSIST_STATE_KEY: u32 = 1;
 pub const PERSIST_INTERVAL_KEY: u32 = 2;
 pub const CLAY_MESSAGE_KEY_INTERVAL: u32 = 10000;

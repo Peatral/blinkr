@@ -1,3 +1,5 @@
+use crate::utils::reschedule_wakeup;
+use crate::{state, utils};
 use core::cell::RefCell;
 use core::ffi::CStr;
 use core::sync::atomic::{AtomicPtr, Ordering};
@@ -5,7 +7,6 @@ use pebble::app_message::Dictionary;
 use pebble::layer::{ILayer, MenuLayer, MenuLayerDelegate, MenuLayerRef};
 use pebble::types::{GContext, MenuIndex};
 use pebble::window::{Window, WindowDelegate, WindowRef};
-use crate::{state, utils};
 
 static MENU_PTR: AtomicPtr<MenuLayer<ReminderMenu>> = AtomicPtr::new(core::ptr::null_mut());
 
@@ -18,17 +19,18 @@ impl MenuLayerDelegate for ReminderMenu {
         2
     }
 
-    fn draw_row(&self, ctx: *mut GContext, cell_layer: *const pebble::types::Layer, index: *mut MenuIndex) {
+    fn draw_row(
+        &self,
+        ctx: *mut GContext,
+        cell_layer: *const pebble::types::Layer,
+        index: *mut MenuIndex,
+    ) {
         unsafe {
             let row = (*index).row;
 
             if row == 0 {
                 let is_enabled = state::IS_ENABLED.load(Ordering::Relaxed);
-                let subtitle = if is_enabled {
-                    c"ON"
-                } else {
-                    c"OFF"
-                };
+                let subtitle = if is_enabled { c"ON" } else { c"OFF" };
                 pebble::layer::menu_layer::cell_basic_draw(
                     ctx,
                     cell_layer,
@@ -40,12 +42,7 @@ impl MenuLayerDelegate for ReminderMenu {
                 let interval = state::INTERVAL_MINS.load(Ordering::Relaxed);
                 let mut buf = self.subtitle_buf.borrow_mut();
 
-                utils::format_int(
-                    buf.as_mut_ptr(),
-                    16,
-                    c"%d mins",
-                    interval as i32,
-                );
+                utils::format_int(buf.as_mut_ptr(), 16, c"%d mins", interval as i32);
 
                 let subtitle_cstr = CStr::from_bytes_until_nul(&buf[..]).unwrap_or(c"Error");
 
@@ -68,14 +65,14 @@ impl MenuLayerDelegate for ReminderMenu {
             } else if row == 1 {
                 let mut interval = state::INTERVAL_MINS.load(Ordering::Relaxed);
                 interval += 10;
-                if interval > 60 { interval = 10; }
+                if interval > 60 {
+                    interval = 10;
+                }
                 state::INTERVAL_MINS.store(interval, Ordering::Relaxed);
                 let _ = pebble::storage::write_int(state::PERSIST_INTERVAL_KEY, interval as i32);
 
                 if state::IS_ENABLED.load(Ordering::Relaxed) {
-                    pebble::wakeup::cancel_all();
-                    let now = pebble::std::time::get_time();
-                    let _ = pebble::wakeup::schedule(now + (interval * 60), 0, true);
+                    reschedule_wakeup(interval);
                 }
             }
             menu_layer.reload_data();
@@ -90,7 +87,12 @@ pub struct SettingsDelegate {
 impl WindowDelegate for SettingsDelegate {
     fn load(&self, window: WindowRef) {
         let bounds = window.get_root_layer().get_bounds();
-        let menu = MenuLayer::new(bounds, ReminderMenu { subtitle_buf: RefCell::new([0; 16]) });
+        let menu = MenuLayer::new(
+            bounds,
+            ReminderMenu {
+                subtitle_buf: RefCell::new([0; 16]),
+            },
+        );
         menu.set_click_config_onto_window(&window);
         window.get_root_layer().add_child(&menu);
 
@@ -113,18 +115,20 @@ pub fn create() -> Window<SettingsDelegate> {
 
 pub fn inbox_received_handler(dict: Dictionary) {
     if let Some(tuple) = dict.find(state::CLAY_MESSAGE_KEY_INTERVAL) {
-        let new_interval = utils::extract_clay_int(&tuple, state::DEFAULT_INTERVAL_MINS as i32) as u32;
+        let new_interval =
+            utils::extract_clay_int(&tuple, state::DEFAULT_INTERVAL_MINS as i32) as u32;
         state::INTERVAL_MINS.store(new_interval, Ordering::Relaxed);
         let _ = pebble::storage::write_int(state::PERSIST_INTERVAL_KEY, new_interval as i32);
 
         if state::IS_ENABLED.load(Ordering::Relaxed) {
-            pebble::wakeup::cancel_all();
-            let _ = pebble::wakeup::schedule(pebble::std::time::get_time() + (new_interval * 60), 0, true);
+            reschedule_wakeup(new_interval);
         }
 
         let ptr = MENU_PTR.load(Ordering::Relaxed);
         if !ptr.is_null() {
-            unsafe { (*ptr).reload_data(); }
+            unsafe {
+                (*ptr).reload_data();
+            }
         }
     }
 }
