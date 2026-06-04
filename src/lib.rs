@@ -27,9 +27,9 @@ enum AppWindow {
 impl AppWindow {
     fn as_window_ref(&self) -> WindowRef {
         match self {
-            AppWindow::Splash(w) => w.as_ref(),
-            AppWindow::Settings(w) => w.as_ref(),
-            AppWindow::Reminder(w) => w.as_ref(),
+            AppWindow::Splash(w) => **w,
+            AppWindow::Settings(w) => **w,
+            AppWindow::Reminder(w) => **w,
         }
     }
 }
@@ -66,13 +66,13 @@ pub fn main() -> isize {
         let mut window_state = REMINDER_WINDOW.borrow_mut();
 
         if let Some(AppWindow::Reminder(old_win)) = window_state.take() {
-            window_stack::remove(old_win.as_ref(), false);
+            window_stack::remove(*old_win, false);
         }
 
         *window_state = Some(AppWindow::Reminder(ui::reminder_window::create()));
 
         if let Some(AppWindow::Reminder(ref new_win)) = *window_state {
-            window_stack::push(new_win.as_ref(), false);
+            window_stack::push(**new_win, false);
         }
     });
 

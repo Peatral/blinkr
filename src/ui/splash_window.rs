@@ -29,7 +29,7 @@ impl WindowDelegate for SplashDelegate {
             },
             size: GSize { w: width, h: 40 },
         });
-        text.set_text(if is_enabled { c"Active" } else { c"Inactive" });
+        text.set_text_static(if is_enabled { c"Active" } else { c"Inactive" });
         text.set_font(pebble::system::fonts::Font::get_system(
             FONT_KEY_GOTHIC_28_BOLD,
         ));
