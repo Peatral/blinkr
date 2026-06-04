@@ -2,6 +2,7 @@
 #![no_std]
 #![no_builtins]
 
+extern crate alloc;
 extern crate pebble_rust as pebble;
 
 mod state;
@@ -78,6 +79,8 @@ pub fn main() -> isize {
     app.run_event_loop();
 
     REMINDER_WINDOW.borrow_mut().take();
+
+    state::deinit_state();
 
     0
 }

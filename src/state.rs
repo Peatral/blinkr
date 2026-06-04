@@ -1,17 +1,63 @@
+use alloc::vec::Vec;
+use core::slice;
 use pebble::std::time::get_time;
 use pebble::types::{GlobalCell, time_t};
 use pebble::{storage, vibes, wakeup};
 
 pub const PERSIST_STATE_KEY: u32 = 1;
 pub const PERSIST_INTERVAL_KEY: u32 = 2;
+pub const PERSIST_HISTORY_KEY: u32 = 3;
+pub const PERSIST_CURRENT_START_KEY: u32 = 4;
+
 pub const DEFAULT_INTERVAL_MINS: time_t = 20;
+
+pub const MAX_HISTORY_PAIRS: usize = 256 / size_of::<TimePair>();
+
+#[derive(Debug, Clone, Copy)]
+pub struct TimePair {
+    pub start: time_t,
+    pub end: time_t,
+}
 
 pub static IS_ENABLED: GlobalCell<bool> = GlobalCell::new(false);
 pub static INTERVAL_MINS: GlobalCell<u32> = GlobalCell::new(DEFAULT_INTERVAL_MINS as u32);
 
+pub static HISTORY: GlobalCell<Vec<TimePair>> = GlobalCell::new(Vec::new());
+pub static CURRENT_START_TIME: GlobalCell<Option<time_t>> = GlobalCell::new(None);
+
 pub fn init_state() {
     *IS_ENABLED.borrow_mut() = storage::read_bool(PERSIST_STATE_KEY);
     *INTERVAL_MINS.borrow_mut() = storage::read_int(PERSIST_INTERVAL_KEY) as u32;
+
+    if storage::exists(PERSIST_HISTORY_KEY) {
+        if let Ok(size) = storage::get_size(PERSIST_HISTORY_KEY) {
+            let count = size / size_of::<TimePair>();
+
+            let mut history = alloc::vec![TimePair { start: 0, end: 0 }; count];
+
+            let byte_slice =
+                unsafe { slice::from_raw_parts_mut(history.as_mut_ptr() as *mut u8, size) };
+
+            if storage::read_data(PERSIST_HISTORY_KEY, byte_slice).is_ok() {
+                *HISTORY.borrow_mut() = history;
+            }
+        }
+    }
+
+    if *IS_ENABLED.borrow() {
+        if storage::exists(PERSIST_CURRENT_START_KEY) {
+            let st = storage::read_int(PERSIST_CURRENT_START_KEY) as time_t;
+            *CURRENT_START_TIME.borrow_mut() = Some(st);
+        }
+    }
+}
+
+pub fn deinit_state() {
+    let mut history = HISTORY.borrow_mut();
+    *history = Vec::new();
+    history.shrink_to_fit();
+
+    *CURRENT_START_TIME.borrow_mut() = None;
 }
 
 pub fn toggle_state() {
@@ -19,14 +65,38 @@ pub fn toggle_state() {
     *is_enabled = !*is_enabled;
 
     let _ = storage::write_bool(PERSIST_STATE_KEY, *is_enabled);
-
     let now = get_time();
 
     if *is_enabled {
+        *CURRENT_START_TIME.borrow_mut() = Some(now);
+        let _ = storage::write_int(PERSIST_CURRENT_START_KEY, now as i32);
+
         vibes::long_pulse();
         let interval = *INTERVAL_MINS.borrow();
-        let _ = wakeup::schedule(now + (interval * 60), 0, true);
+        let _ = wakeup::schedule(now + (interval as time_t * 60), 0, true);
     } else {
+        if let Some(start) = *CURRENT_START_TIME.borrow() {
+            let mut history = HISTORY.borrow_mut();
+
+            history.push(TimePair { start, end: now });
+
+            while history.len() > MAX_HISTORY_PAIRS {
+                history.remove(0);
+            }
+
+            let byte_slice = unsafe {
+                slice::from_raw_parts(
+                    history.as_ptr() as *const u8,
+                    history.len() * size_of::<TimePair>(),
+                )
+            };
+
+            let _ = storage::write_data(PERSIST_HISTORY_KEY, byte_slice);
+        }
+
+        *CURRENT_START_TIME.borrow_mut() = None;
+        let _ = storage::delete(PERSIST_CURRENT_START_KEY);
+
         vibes::double_pulse();
         wakeup::cancel_all();
     }
