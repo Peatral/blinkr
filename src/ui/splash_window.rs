@@ -1,7 +1,7 @@
 use crate::state;
 use crate::state::toggle_state;
 use core::cell::RefCell;
-use pebble::layer::{ILayer, TextLayer};
+use pebble::layer::{ILayer, ILayerMut, TextLayer};
 use pebble::system::fonts::FONT_KEY_GOTHIC_28_BOLD;
 use pebble::timer::AppTimer;
 use pebble::types::{GPoint, GRect, GSize, GTextAlignment};

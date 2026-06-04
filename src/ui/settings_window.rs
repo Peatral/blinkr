@@ -3,8 +3,10 @@ use crate::{message_keys, state, utils};
 use core::cell::RefCell;
 use core::ffi::CStr;
 use pebble::app_message::Dictionary;
-use pebble::layer::{ILayer, MenuLayer, MenuLayerDelegate, MenuLayerRef};
-use pebble::types::{GContext, GlobalCell, MenuIndex};
+use pebble::graphics::context::GContext;
+use pebble::layer::menu_layer::MenuCellLayer;
+use pebble::layer::{ILayer, ILayerMut, MenuIndexRef, MenuLayer, MenuLayerDelegate, MenuLayerRef};
+use pebble::types::GlobalCell;
 use pebble::window::{Window, WindowDelegate, WindowRef};
 
 static MENU_REF: GlobalCell<Option<MenuLayer<ReminderMenu>>> = GlobalCell::new(None);
@@ -18,65 +20,46 @@ impl MenuLayerDelegate for ReminderMenu {
         2
     }
 
-    fn draw_row(
-        &self,
-        ctx: *mut GContext,
-        cell_layer: *const pebble::types::Layer,
-        index: *mut MenuIndex,
-    ) {
-        unsafe {
-            let row = (*index).row;
+    fn draw_row(&self, ctx: GContext, cell_layer: MenuCellLayer, index: MenuIndexRef) {
+        let row = index.row();
 
-            if row == 0 {
-                let is_enabled = *state::IS_ENABLED.borrow();
-                let subtitle = if is_enabled { c"ON" } else { c"OFF" };
-                pebble::layer::menu_layer::cell_basic_draw(
-                    ctx,
-                    cell_layer,
-                    c"Reminder",
-                    subtitle,
-                    core::ptr::null_mut(),
-                );
-            } else if row == 1 {
-                let interval = *state::INTERVAL_MINS.borrow();
-                let mut buf = self.subtitle_buf.borrow_mut();
+        if row == 0 {
+            let is_enabled = *state::IS_ENABLED.borrow();
+            let subtitle = if is_enabled { c"ON" } else { c"OFF" };
+            cell_layer.draw_basic(ctx, c"Reminder", subtitle, core::ptr::null_mut());
+        } else if row == 1 {
+            let interval = *state::INTERVAL_MINS.borrow();
+            let mut buf = self.subtitle_buf.borrow_mut();
 
+            unsafe {
                 utils::format_int(buf.as_mut_ptr(), 16, c"%d mins", interval as i32);
-
-                let subtitle_cstr = CStr::from_bytes_until_nul(&buf[..]).unwrap_or(c"Error");
-
-                pebble::layer::menu_layer::cell_basic_draw(
-                    ctx,
-                    cell_layer,
-                    c"Duration",
-                    subtitle_cstr,
-                    core::ptr::null_mut(),
-                );
             }
+
+            let subtitle_cstr = CStr::from_bytes_until_nul(&buf[..]).unwrap_or(c"Error");
+
+            cell_layer.draw_basic(ctx, c"Duration", subtitle_cstr, core::ptr::null_mut());
         }
     }
 
-    fn select_click(&self, menu_layer: MenuLayerRef, index: *mut MenuIndex) {
-        unsafe {
-            let row = (*index).row;
-            if row == 0 {
-                state::toggle_state();
-            } else if row == 1 {
-                let mut interval = *state::INTERVAL_MINS.borrow();
-                interval += 10;
-                if interval > 60 {
-                    interval = 10;
-                }
-
-                *state::INTERVAL_MINS.borrow_mut() = interval;
-                let _ = pebble::storage::write_int(state::PERSIST_INTERVAL_KEY, interval as i32);
-
-                if *state::IS_ENABLED.borrow() {
-                    let _ = reschedule_wakeup(interval);
-                }
+    fn select_click(&self, menu_layer: MenuLayerRef, index: MenuIndexRef) {
+        let row = index.row();
+        if row == 0 {
+            state::toggle_state();
+        } else if row == 1 {
+            let mut interval = *state::INTERVAL_MINS.borrow();
+            interval += 10;
+            if interval > 60 {
+                interval = 10;
             }
-            menu_layer.reload_data();
+
+            *state::INTERVAL_MINS.borrow_mut() = interval;
+            let _ = pebble::storage::write_int(state::PERSIST_INTERVAL_KEY, interval as i32);
+
+            if *state::IS_ENABLED.borrow() {
+                let _ = reschedule_wakeup(interval);
+            }
         }
+        menu_layer.reload_data();
     }
 }
 

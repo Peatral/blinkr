@@ -1,5 +1,5 @@
 use pebble::std::time::get_time;
-use pebble::types::{time_t, GlobalCell};
+use pebble::types::{GlobalCell, time_t};
 use pebble::{storage, vibes, wakeup};
 
 pub const PERSIST_STATE_KEY: u32 = 1;
