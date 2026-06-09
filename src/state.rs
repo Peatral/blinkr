@@ -1,7 +1,7 @@
 use alloc::vec::Vec;
 use core::slice;
 use pebble::std::time::get_time;
-use pebble::types::{GlobalCell, time_t};
+use pebble::types::{GlobalCell, GlobalRefCell, time_t};
 use pebble::{storage, vibes, wakeup};
 
 pub const PERSIST_STATE_KEY: u32 = 1;
@@ -22,12 +22,12 @@ pub struct TimePair {
 pub static IS_ENABLED: GlobalCell<bool> = GlobalCell::new(false);
 pub static INTERVAL_MINS: GlobalCell<u32> = GlobalCell::new(DEFAULT_INTERVAL_MINS as u32);
 
-pub static HISTORY: GlobalCell<Vec<TimePair>> = GlobalCell::new(Vec::new());
+pub static HISTORY: GlobalRefCell<Vec<TimePair>> = GlobalRefCell::new(Vec::new());
 pub static CURRENT_START_TIME: GlobalCell<Option<time_t>> = GlobalCell::new(None);
 
 pub fn init_state() {
-    *IS_ENABLED.borrow_mut() = storage::read_bool(PERSIST_STATE_KEY);
-    *INTERVAL_MINS.borrow_mut() = storage::read_int(PERSIST_INTERVAL_KEY) as u32;
+    IS_ENABLED.set(storage::read_bool(PERSIST_STATE_KEY));
+    INTERVAL_MINS.set(storage::read_int(PERSIST_INTERVAL_KEY) as u32);
 
     if storage::exists(PERSIST_HISTORY_KEY) {
         if let Ok(size) = storage::get_size(PERSIST_HISTORY_KEY) {
@@ -44,10 +44,10 @@ pub fn init_state() {
         }
     }
 
-    if *IS_ENABLED.borrow() {
+    if IS_ENABLED.get() {
         if storage::exists(PERSIST_CURRENT_START_KEY) {
             let st = storage::read_int(PERSIST_CURRENT_START_KEY) as time_t;
-            *CURRENT_START_TIME.borrow_mut() = Some(st);
+            CURRENT_START_TIME.set(Some(st));
         }
     }
 }
@@ -57,25 +57,26 @@ pub fn deinit_state() {
     *history = Vec::new();
     history.shrink_to_fit();
 
-    *CURRENT_START_TIME.borrow_mut() = None;
+    CURRENT_START_TIME.set(None);
 }
 
 pub fn toggle_state() {
-    let mut is_enabled = IS_ENABLED.borrow_mut();
-    *is_enabled = !*is_enabled;
+    let mut is_enabled = IS_ENABLED.get();
+    is_enabled = !is_enabled;
+    IS_ENABLED.set(is_enabled);
 
-    let _ = storage::write_bool(PERSIST_STATE_KEY, *is_enabled);
+    let _ = storage::write_bool(PERSIST_STATE_KEY, is_enabled);
     let now = get_time();
 
-    if *is_enabled {
-        *CURRENT_START_TIME.borrow_mut() = Some(now);
+    if is_enabled {
+        CURRENT_START_TIME.set(Some(now));
         let _ = storage::write_int(PERSIST_CURRENT_START_KEY, now as i32);
 
         vibes::long_pulse();
-        let interval = *INTERVAL_MINS.borrow();
+        let interval = INTERVAL_MINS.get();
         let _ = wakeup::schedule(now + (interval as time_t * 60), 0, true);
     } else {
-        if let Some(start) = *CURRENT_START_TIME.borrow() {
+        if let Some(start) = CURRENT_START_TIME.get() {
             let mut history = HISTORY.borrow_mut();
 
             history.push(TimePair { start, end: now });
@@ -94,7 +95,7 @@ pub fn toggle_state() {
             let _ = storage::write_data(PERSIST_HISTORY_KEY, byte_slice);
         }
 
-        *CURRENT_START_TIME.borrow_mut() = None;
+        CURRENT_START_TIME.set(None);
         let _ = storage::delete(PERSIST_CURRENT_START_KEY);
 
         vibes::double_pulse();

@@ -6,10 +6,10 @@ use pebble::app_message::Dictionary;
 use pebble::graphics::context::GContext;
 use pebble::layer::menu_layer::MenuCellLayer;
 use pebble::layer::{ILayer, ILayerMut, MenuIndexRef, MenuLayer, MenuLayerDelegate, MenuLayerRef};
-use pebble::types::GlobalCell;
+use pebble::types::GlobalRefCell;
 use pebble::window::{Window, WindowDelegate, WindowRef};
 
-static MENU_REF: GlobalCell<Option<MenuLayer<ReminderMenu>>> = GlobalCell::new(None);
+static MENU_REF: GlobalRefCell<Option<MenuLayer<ReminderMenu>>> = GlobalRefCell::new(None);
 
 struct ReminderMenu {
     subtitle_buf: RefCell<[u8; 16]>,
@@ -24,11 +24,11 @@ impl MenuLayerDelegate for ReminderMenu {
         let row = index.row();
 
         if row == 0 {
-            let is_enabled = *state::IS_ENABLED.borrow();
+            let is_enabled = state::IS_ENABLED.get();
             let subtitle = if is_enabled { c"ON" } else { c"OFF" };
             cell_layer.draw_basic(ctx, c"Reminder", subtitle, core::ptr::null_mut());
         } else if row == 1 {
-            let interval = *state::INTERVAL_MINS.borrow();
+            let interval = state::INTERVAL_MINS.get();
             let mut buf = self.subtitle_buf.borrow_mut();
 
             unsafe {
@@ -46,16 +46,16 @@ impl MenuLayerDelegate for ReminderMenu {
         if row == 0 {
             state::toggle_state();
         } else if row == 1 {
-            let mut interval = *state::INTERVAL_MINS.borrow();
+            let mut interval = state::INTERVAL_MINS.get();
             interval += 10;
             if interval > 60 {
                 interval = 10;
             }
 
-            *state::INTERVAL_MINS.borrow_mut() = interval;
+            state::INTERVAL_MINS.set(interval);
             let _ = pebble::storage::write_int(state::PERSIST_INTERVAL_KEY, interval as i32);
 
-            if *state::IS_ENABLED.borrow() {
+            if state::IS_ENABLED.get() {
                 let _ = reschedule_wakeup(interval);
             }
         }
@@ -94,10 +94,10 @@ pub fn inbox_received_handler(dict: Dictionary) {
         let new_interval =
             utils::extract_clay_int(&tuple, state::DEFAULT_INTERVAL_MINS as i32) as u32;
 
-        *state::INTERVAL_MINS.borrow_mut() = new_interval;
+        state::INTERVAL_MINS.set(new_interval);
         let _ = pebble::storage::write_int(state::PERSIST_INTERVAL_KEY, new_interval as i32);
 
-        if *state::IS_ENABLED.borrow() {
+        if state::IS_ENABLED.get() {
             let _ = reschedule_wakeup(new_interval);
         }
 

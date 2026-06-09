@@ -20,7 +20,7 @@ impl WindowDelegate for SplashDelegate {
         let width = bounds.size.w;
         let height = bounds.size.h;
 
-        let is_enabled = *state::IS_ENABLED.borrow();
+        let is_enabled = state::IS_ENABLED.get();
 
         let text = TextLayer::new(GRect {
             origin: GPoint {

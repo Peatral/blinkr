@@ -53,7 +53,7 @@ impl WindowDelegate for ReminderDelegate {
 
 pub fn create() -> Window<ReminderDelegate> {
     vibes::double_pulse();
-    let interval = *INTERVAL_MINS.borrow();
+    let interval = INTERVAL_MINS.get();
     let _ = reschedule_wakeup(interval);
 
     Window::new(ReminderDelegate {

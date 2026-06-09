@@ -12,7 +12,7 @@ mod utils;
 use crate::ui::reminder_window::ReminderDelegate;
 use crate::ui::settings_window::SettingsDelegate;
 use crate::ui::splash_window::SplashDelegate;
-use pebble::types::{AppLaunchReason, GlobalCell};
+use pebble::types::{AppLaunchReason, GlobalRefCell};
 use pebble::window::{Window, WindowRef};
 use pebble::{app, app_message::AppMessage, include_message_keys, launch, wakeup, window_stack};
 
@@ -40,7 +40,7 @@ pub fn main() -> isize {
 
     state::init_state();
 
-    if launch == AppLaunchReason::Wakeup && !*state::IS_ENABLED.borrow() {
+    if launch == AppLaunchReason::Wakeup && !state::IS_ENABLED.get() {
         pebble::pbl_warn!(c"Ghost wakeup detected. Aborting.");
         return 0;
     }
@@ -60,7 +60,7 @@ pub fn main() -> isize {
 
     window_stack::push(active_window.as_window_ref(), false);
 
-    static REMINDER_WINDOW: GlobalCell<Option<AppWindow>> = GlobalCell::new(None);
+    static REMINDER_WINDOW: GlobalRefCell<Option<AppWindow>> = GlobalRefCell::new(None);
 
     wakeup::subscribe(|_id, _cookie| {
         let mut window_state = REMINDER_WINDOW.borrow_mut();
