@@ -70,21 +70,22 @@ pub fn toggle_state() {
     let now = get_time();
 
     if is_enabled {
-        CURRENT_START_TIME.set(Some(now));
-        let _ = storage::write_int(PERSIST_CURRENT_START_KEY, now as i32);
+        let mut start_time = now;
 
-        vibes::long_pulse();
-        let interval = INTERVAL_MINS.get();
-        let _ = wakeup::schedule(now + (interval as time_t * 60), 0, true);
-    } else {
-        if let Some(start) = CURRENT_START_TIME.get() {
-            let mut history = HISTORY.borrow_mut();
+        let mut history = HISTORY.borrow_mut();
 
-            history.push(TimePair { start, end: now });
-
-            while history.len() > MAX_HISTORY_PAIRS {
-                history.remove(0);
+        // Resume previous session if it was less than 60 seconds ago
+        let resume_start = history.last().and_then(|last| {
+            if now - last.end < 60 {
+                Some(last.start)
+            } else {
+                None
             }
+        });
+
+        if let Some(st) = resume_start {
+            start_time = st;
+            history.pop();
 
             let byte_slice = unsafe {
                 slice::from_raw_parts(
@@ -92,8 +93,34 @@ pub fn toggle_state() {
                     history.len() * size_of::<TimePair>(),
                 )
             };
-
             let _ = storage::write_data(PERSIST_HISTORY_KEY, byte_slice);
+        }
+
+        CURRENT_START_TIME.set(Some(start_time));
+        let _ = storage::write_int(PERSIST_CURRENT_START_KEY, start_time as i32);
+
+        vibes::long_pulse();
+        let interval = INTERVAL_MINS.get();
+        let _ = wakeup::schedule(now + (interval as time_t * 60), 0, true);
+    } else {
+        if let Some(start) = CURRENT_START_TIME.get() {
+            // Only save the session if it lasted 60 seconds or more
+            if now - start >= 60 {
+                let mut history = HISTORY.borrow_mut();
+                history.push(TimePair { start, end: now });
+
+                while history.len() > MAX_HISTORY_PAIRS {
+                    history.remove(0);
+                }
+
+                let byte_slice = unsafe {
+                    slice::from_raw_parts(
+                        history.as_ptr() as *const u8,
+                        history.len() * size_of::<TimePair>(),
+                    )
+                };
+                let _ = storage::write_data(PERSIST_HISTORY_KEY, byte_slice);
+            }
         }
 
         CURRENT_START_TIME.set(None);
