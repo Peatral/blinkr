@@ -1,6 +1,8 @@
 use crate::pebble::window::{WindowDelegate, WindowRef};
 use crate::state::{CURRENT_START_TIME, HISTORY, TimePair};
-use crate::ui::settings_window::SettingsDelegate;
+use crate::ui::settings_window;
+use crate::window_manager;
+use crate::window_manager::{AppWindow, release};
 use alloc::ffi::CString;
 use alloc::vec::Vec;
 use core::cell::RefCell;
@@ -9,17 +11,12 @@ use core::ffi::CStr;
 use pebble::clicks::{ClickConfigurator, ClickDelegate, ClickRecognizer};
 use pebble::graphics::types::{Color, Point, Rect, Size};
 use pebble::layer::{CanvasLayer, ILayer, ILayerMut, ScrollDelegate, ScrollLayer, TextLayer};
-use pebble::types::GlobalRefCell;
 use pebble::window::Window;
-use pebble::window_stack;
 use pebble_sys::{ButtonId, GCornerMask, GTextAlignment, time_t};
 
 const DISPLAYED_DAYS: i32 = 7;
 const ROW_HEIGHT: i16 = 50;
 const SECONDS_PER_DAY: time_t = 86400;
-
-static ACTIVE_SETTINGS_WINDOW: GlobalRefCell<Option<Window<SettingsDelegate>>> =
-    GlobalRefCell::new(None);
 
 fn format_duration(seconds: time_t) -> CString {
     let hours = seconds / 3600;
@@ -77,26 +74,22 @@ struct RowUI {
     _duration_label: TextLayer,
 }
 
-pub struct HistoryScrollDelegate;
+pub struct HistoryScrollHandler;
 
-impl ScrollDelegate for HistoryScrollDelegate {}
+impl ScrollDelegate for HistoryScrollHandler {}
 
-impl ClickDelegate for HistoryScrollDelegate {
+impl ClickDelegate for HistoryScrollHandler {
     fn click_config(&self, config: &ClickConfigurator<Self>) {
         config.subscribe_single_click(ButtonId::BUTTON_ID_SELECT);
     }
 
     fn on_single_click(&self, _recognizer: ClickRecognizer) {
-        let settings = crate::ui::settings_window::create();
-        *ACTIVE_SETTINGS_WINDOW.borrow_mut() = Some(settings);
-        if let Some(ref new_win) = *ACTIVE_SETTINGS_WINDOW.borrow() {
-            window_stack::push(**new_win, true);
-        }
+        window_manager::push(settings_window::create(), true);
     }
 }
 
 pub struct HistoryScreen {
-    scroll_layer: RefCell<Option<ScrollLayer<HistoryScrollDelegate>>>,
+    scroll_layer: RefCell<Option<ScrollLayer<HistoryScrollHandler>>>,
     rows: RefCell<Vec<RowUI>>,
 }
 
@@ -211,7 +204,7 @@ impl WindowDelegate for HistoryScreen {
         window.set_background_color(Color::BLACK);
         let bounds = window.get_root_layer().get_bounds();
 
-        let scroll = ScrollLayer::new(bounds, HistoryScrollDelegate);
+        let scroll = ScrollLayer::new(bounds, HistoryScrollHandler);
         scroll.set_click_config_onto_window(&window);
         scroll.enable_clicks_override();
         scroll.set_content_size(Size::new(bounds.size.w, DISPLAYED_DAYS as i16 * ROW_HEIGHT));
@@ -244,16 +237,16 @@ impl WindowDelegate for HistoryScreen {
         *self.scroll_layer.borrow_mut() = Some(scroll);
     }
 
-    fn unload(&self, _window: WindowRef) {
+    fn unload(&self, window: WindowRef) {
         *self.rows.borrow_mut() = Vec::new();
         *self.scroll_layer.borrow_mut() = None;
-        *ACTIVE_SETTINGS_WINDOW.borrow_mut() = None;
+        release(window);
     }
 }
 
-pub fn create() -> Window<HistoryScreen> {
-    Window::new(HistoryScreen {
+pub fn create() -> AppWindow {
+    AppWindow::History(Window::new(HistoryScreen {
         scroll_layer: RefCell::new(None),
         rows: RefCell::new(Vec::new()),
-    })
+    }))
 }

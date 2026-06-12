@@ -1,5 +1,6 @@
 use crate::state::INTERVAL_MINS;
 use crate::utils::reschedule_wakeup;
+use crate::window_manager::{AppWindow, release};
 use core::cell::RefCell;
 use pebble::graphics::types::{Point, Rect, Size};
 use pebble::layer::{ILayer, ILayerMut, TextLayer};
@@ -9,13 +10,13 @@ use pebble::window::{Window, WindowDelegate, WindowRef};
 use pebble::{vibes, window_stack};
 use pebble_sys::GTextAlignment;
 
-pub struct ReminderDelegate {
+pub struct ReminderScreen {
     text_main: RefCell<Option<TextLayer>>,
     text_sub: RefCell<Option<TextLayer>>,
     exit_timer: RefCell<Option<AppTimer>>,
 }
 
-impl WindowDelegate for ReminderDelegate {
+impl WindowDelegate for ReminderScreen {
     fn load(&self, window: WindowRef) {
         let root = window.get_root_layer();
         let bounds = root.get_bounds();
@@ -45,21 +46,22 @@ impl WindowDelegate for ReminderDelegate {
         }));
     }
 
-    fn unload(&self, _window: WindowRef) {
+    fn unload(&self, window: WindowRef) {
         self.text_main.borrow_mut().take();
         self.text_sub.borrow_mut().take();
         self.exit_timer.borrow_mut().take();
+        release(window);
     }
 }
 
-pub fn create() -> Window<ReminderDelegate> {
+pub fn create() -> AppWindow {
     vibes::double_pulse();
     let interval = INTERVAL_MINS.get();
     let _ = reschedule_wakeup(interval);
 
-    Window::new(ReminderDelegate {
+    AppWindow::Reminder(Window::new(ReminderScreen {
         text_main: RefCell::new(None),
         text_sub: RefCell::new(None),
         exit_timer: RefCell::new(None),
-    })
+    }))
 }

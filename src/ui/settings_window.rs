@@ -1,4 +1,5 @@
 use crate::utils::reschedule_wakeup;
+use crate::window_manager::{AppWindow, release};
 use crate::{message_keys, state, utils};
 use core::cell::RefCell;
 use core::ffi::CStr;
@@ -68,9 +69,9 @@ impl MenuLayerDelegate for ReminderMenu {
     }
 }
 
-pub struct SettingsDelegate;
+pub struct SettingsScreen;
 
-impl WindowDelegate for SettingsDelegate {
+impl WindowDelegate for SettingsScreen {
     fn load(&self, window: WindowRef) {
         let bounds = window.get_root_layer().get_bounds();
         let menu = MenuLayer::new(
@@ -85,13 +86,14 @@ impl WindowDelegate for SettingsDelegate {
         *MENU_REF.borrow_mut() = Some(menu);
     }
 
-    fn unload(&self, _window: WindowRef) {
+    fn unload(&self, window: WindowRef) {
         MENU_REF.borrow_mut().take();
+        release(window);
     }
 }
 
-pub fn create() -> Window<SettingsDelegate> {
-    Window::new(SettingsDelegate {})
+pub fn create() -> AppWindow {
+    AppWindow::Settings(Window::new(SettingsScreen {}))
 }
 
 pub fn inbox_received_handler(dict: Dictionary) {

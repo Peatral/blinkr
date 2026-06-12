@@ -1,5 +1,6 @@
 use crate::state;
 use crate::state::toggle_state;
+use crate::window_manager::{AppWindow, release};
 use core::cell::RefCell;
 use pebble::graphics::types::{Point, Rect, Size};
 use pebble::layer::{ILayer, ILayerMut, TextLayer};
@@ -9,12 +10,12 @@ use pebble::window::{Window, WindowDelegate, WindowRef};
 use pebble::window_stack;
 use pebble_sys::GTextAlignment;
 
-pub struct SplashDelegate {
+pub struct SplashScreen {
     text_main: RefCell<Option<TextLayer>>,
     exit_timer: RefCell<Option<AppTimer>>,
 }
 
-impl WindowDelegate for SplashDelegate {
+impl WindowDelegate for SplashScreen {
     fn load(&self, window: WindowRef) {
         let root = window.get_root_layer();
         let bounds = root.get_bounds();
@@ -40,17 +41,18 @@ impl WindowDelegate for SplashDelegate {
         }));
     }
 
-    fn unload(&self, _window: WindowRef) {
+    fn unload(&self, window: WindowRef) {
         self.text_main.borrow_mut().take();
         self.exit_timer.borrow_mut().take();
+        release(window);
     }
 }
 
-pub fn create() -> Window<SplashDelegate> {
+pub fn create() -> AppWindow {
     toggle_state();
 
-    Window::new(SplashDelegate {
+    AppWindow::Splash(Window::new(SplashScreen {
         text_main: RefCell::new(None),
         exit_timer: RefCell::new(None),
-    })
+    }))
 }
