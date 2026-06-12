@@ -135,14 +135,14 @@ impl HistoryScreen {
                 let bar_h: i16 = 12;
                 let max_bar_w = bounds.size.w - (bar_x * 2);
 
-                ctx.set_fill_color(Color::DARK_GRAY);
+                ctx.set_fill_color(Color::GREEN);
                 ctx.fill_rect(
                     Rect::new(Point::new(bar_x, bar_y), Size::new(max_bar_w, bar_h)),
                     4,
                     GCornerMask::GCornersAll,
                 );
 
-                ctx.set_fill_color(Color::GREEN);
+                ctx.set_fill_color(Color::RED);
 
                 let history = HISTORY.borrow();
                 let mut active_sessions = history.clone();
