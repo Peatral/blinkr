@@ -23,7 +23,10 @@ impl WindowDelegate for SplashDelegate {
 
         let is_enabled = state::IS_ENABLED.get();
 
-        let text = TextLayer::new(Rect::new(Point::new(0, height / 2 - 20), Size::new(width, 40)));
+        let text = TextLayer::new(Rect::new(
+            Point::new(0, height / 2 - 20),
+            Size::new(width, 40),
+        ));
         text.set_text_static(if is_enabled { c"Active" } else { c"Inactive" });
         text.set_font(pebble::system::fonts::Font::get_system(
             FONT_KEY_GOTHIC_28_BOLD,

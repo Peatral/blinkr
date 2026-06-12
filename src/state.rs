@@ -1,8 +1,8 @@
 use alloc::vec::Vec;
 use core::slice;
 use pebble::std::time::get_time;
-use pebble::{storage, vibes, wakeup};
 use pebble::types::{GlobalCell, GlobalRefCell};
+use pebble::{storage, vibes, wakeup};
 use pebble_sys::time_t;
 
 pub const PERSIST_STATE_KEY: u32 = 1;

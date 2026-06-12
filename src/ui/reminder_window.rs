@@ -1,12 +1,12 @@
 use crate::state::INTERVAL_MINS;
 use crate::utils::reschedule_wakeup;
 use core::cell::RefCell;
+use pebble::graphics::types::{Point, Rect, Size};
 use pebble::layer::{ILayer, ILayerMut, TextLayer};
 use pebble::system::fonts::{FONT_KEY_BITHAM_42_BOLD, FONT_KEY_GOTHIC_18_BOLD};
 use pebble::timer::AppTimer;
 use pebble::window::{Window, WindowDelegate, WindowRef};
 use pebble::{vibes, window_stack};
-use pebble::graphics::types::{Point, Rect, Size};
 use pebble_sys::GTextAlignment;
 
 pub struct ReminderDelegate {

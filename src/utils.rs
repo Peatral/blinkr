@@ -1,5 +1,5 @@
-use core::ffi::{c_uint, CStr};
-use pebble_sys::{snprintf, time_t, StatusCode, Tuple, WakeupId};
+use core::ffi::{CStr, c_uint};
+use pebble_sys::{StatusCode, Tuple, WakeupId, snprintf, time_t};
 
 pub fn extract_clay_int(tuple: &Tuple, default: i32) -> i32 {
     unsafe {
