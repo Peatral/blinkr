@@ -11,12 +11,14 @@ use core::ffi::CStr;
 use pebble::clicks::{ClickConfigurator, ClickDelegate, ClickRecognizer};
 use pebble::graphics::types::{Color, Point, Rect, Size};
 use pebble::layer::{CanvasLayer, ILayer, ILayerMut, ScrollDelegate, ScrollLayer, TextLayer};
+use pebble::system::fonts::{FONT_KEY_BITHAM_42_BOLD, Font};
 use pebble::window::Window;
 use pebble_sys::{ButtonId, GCornerMask, GTextAlignment, time_t};
 
 const DISPLAYED_DAYS: i32 = 7;
 const ROW_HEIGHT: i16 = 50;
 const SECONDS_PER_DAY: time_t = 86400;
+const HEADER_HEIGHT: i16 = 80;
 
 fn format_duration(seconds: time_t) -> CString {
     let hours = seconds / 3600;
@@ -91,9 +93,20 @@ impl ClickDelegate for HistoryScrollHandler {
 pub struct HistoryScreen {
     scroll_layer: RefCell<Option<ScrollLayer<HistoryScrollHandler>>>,
     rows: RefCell<Vec<RowUI>>,
+    header_label: RefCell<Option<TextLayer>>,
 }
 
 impl HistoryScreen {
+    fn calculate_displayed_total(now: time_t, today_start: time_t) -> time_t {
+        let mut total = 0;
+        for i in 0..DISPLAYED_DAYS {
+            let day_start = today_start - (i as time_t * SECONDS_PER_DAY);
+            let day_end = day_start + SECONDS_PER_DAY;
+            total += Self::calculate_day_total(day_start, day_end, i == 0, now);
+        }
+        total
+    }
+
     fn calculate_day_total(
         day_start: time_t,
         day_end: time_t,
@@ -207,17 +220,30 @@ impl WindowDelegate for HistoryScreen {
         let scroll = ScrollLayer::new(bounds, HistoryScrollHandler);
         scroll.set_click_config_onto_window(&window);
         scroll.enable_clicks_override();
-        scroll.set_content_size(Size::new(bounds.size.w, DISPLAYED_DAYS as i16 * ROW_HEIGHT));
+        scroll.set_content_size(Size::new(
+            bounds.size.w,
+            HEADER_HEIGHT + DISPLAYED_DAYS as i16 * ROW_HEIGHT,
+        ));
         window.get_root_layer().add_child(&scroll);
 
         let now = pebble::std::time::get_time();
         let today_start = now - (now % SECONDS_PER_DAY);
+
+        let grand_total = Self::calculate_displayed_total(now, today_start);
+        let mut header = TextLayer::new(Rect::new(Point::new(0, 19), Size::new(bounds.size.w, 42)));
+        header.set_text_alignment(GTextAlignment::GTextAlignmentCenter);
+        header.set_text_color(Color::WHITE);
+        header.set_background_color(Color::CLEAR);
+        header.set_font(Font::get_system(FONT_KEY_BITHAM_42_BOLD));
+        header.set_text(format_duration(grand_total));
+        scroll.add_scroll_child(&header);
+
         let mut ui_rows = Vec::with_capacity(DISPLAYED_DAYS as usize);
 
         for i in 0..DISPLAYED_DAYS {
             let day_start = today_start - (i as time_t * SECONDS_PER_DAY);
             let day_end = day_start + SECONDS_PER_DAY;
-            let row_y = i as i16 * ROW_HEIGHT;
+            let row_y = HEADER_HEIGHT + i as i16 * ROW_HEIGHT;
 
             let day_total_seconds = Self::calculate_day_total(day_start, day_end, i == 0, now);
             let row_ui = Self::build_row_ui(
@@ -233,6 +259,7 @@ impl WindowDelegate for HistoryScreen {
             ui_rows.push(row_ui);
         }
 
+        *self.header_label.borrow_mut() = Some(header);
         *self.rows.borrow_mut() = ui_rows;
         *self.scroll_layer.borrow_mut() = Some(scroll);
     }
@@ -240,6 +267,7 @@ impl WindowDelegate for HistoryScreen {
     fn unload(&self, window: WindowRef) {
         *self.rows.borrow_mut() = Vec::new();
         *self.scroll_layer.borrow_mut() = None;
+        *self.header_label.borrow_mut() = None;
         release(window);
     }
 }
@@ -248,5 +276,6 @@ pub fn create() -> AppWindow {
     AppWindow::History(Window::new(HistoryScreen {
         scroll_layer: RefCell::new(None),
         rows: RefCell::new(Vec::new()),
+        header_label: RefCell::new(None),
     }))
 }
