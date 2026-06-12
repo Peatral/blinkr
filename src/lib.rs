@@ -9,8 +9,8 @@ mod state;
 mod ui;
 mod utils;
 
+use crate::ui::history_window::HistoryScreen;
 use crate::ui::reminder_window::ReminderDelegate;
-use crate::ui::settings_window::SettingsDelegate;
 use crate::ui::splash_window::SplashDelegate;
 use pebble::types::GlobalRefCell;
 use pebble::window::{Window, WindowRef};
@@ -21,16 +21,16 @@ include_message_keys!();
 
 enum AppWindow {
     Splash(Window<SplashDelegate>),
-    Settings(Window<SettingsDelegate>),
     Reminder(Window<ReminderDelegate>),
+    History(Window<HistoryScreen>),
 }
 
 impl AppWindow {
     fn as_window_ref(&self) -> WindowRef {
         match self {
             AppWindow::Splash(w) => **w,
-            AppWindow::Settings(w) => **w,
             AppWindow::Reminder(w) => **w,
+            AppWindow::History(w) => **w,
         }
     }
 }
@@ -56,7 +56,7 @@ pub fn main() -> isize {
     let active_window = match launch {
         AppLaunchReason::APP_LAUNCH_QUICK_LAUNCH => AppWindow::Splash(ui::splash_window::create()),
         AppLaunchReason::APP_LAUNCH_WAKEUP => AppWindow::Reminder(ui::reminder_window::create()),
-        _ => AppWindow::Settings(ui::settings_window::create()),
+        _ => AppWindow::History(ui::history_window::create()),
     };
 
     window_stack::push(active_window.as_window_ref(), false);

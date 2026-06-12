@@ -42,6 +42,10 @@ impl MenuLayerDelegate for ReminderMenu {
         }
     }
 
+    fn draw_header(&self, ctx: Context, cell_layer: MenuCellLayer, _section_index: u16) {
+        cell_layer.draw_basic_header(ctx, c"Settings");
+    }
+
     fn select_click(&self, menu_layer: MenuLayerRef, index: MenuIndexRef) {
         let row = index.row();
         if row == 0 {
