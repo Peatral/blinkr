@@ -1,6 +1,5 @@
-use core::ffi::CStr;
-use pebble::types::{StatusCode, WakeupId};
-use pebble::{snprintf, types::Tuple};
+use core::ffi::{c_uint, CStr};
+use pebble_sys::{snprintf, time_t, StatusCode, Tuple, WakeupId};
 
 pub fn extract_clay_int(tuple: &Tuple, default: i32) -> i32 {
     unsafe {
@@ -28,11 +27,11 @@ pub fn extract_clay_int(tuple: &Tuple, default: i32) -> i32 {
 
 pub unsafe fn format_int(buf: *mut u8, len: usize, format: &CStr, val: i32) {
     unsafe {
-        snprintf(buf as *mut _, len, format.as_ptr(), val);
+        snprintf(buf as *mut _, len as c_uint, format.as_ptr(), val);
     }
 }
 
-pub fn reschedule_wakeup(interval_mins: u32) -> Result<WakeupId, StatusCode> {
+pub fn reschedule_wakeup(interval_mins: time_t) -> Result<WakeupId, StatusCode> {
     pebble::wakeup::cancel_all();
     let now = pebble::std::time::get_time();
     pebble::wakeup::schedule(now + (interval_mins * 60), 0, true)

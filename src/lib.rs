@@ -3,7 +3,7 @@
 #![no_builtins]
 
 extern crate alloc;
-extern crate pebble_rust as pebble;
+extern crate pebble_rs as pebble;
 
 mod state;
 mod ui;
@@ -12,9 +12,10 @@ mod utils;
 use crate::ui::reminder_window::ReminderDelegate;
 use crate::ui::settings_window::SettingsDelegate;
 use crate::ui::splash_window::SplashDelegate;
-use pebble::types::{AppLaunchReason, GlobalRefCell};
+use pebble::types::GlobalRefCell;
 use pebble::window::{Window, WindowRef};
 use pebble::{app, app_message::AppMessage, include_message_keys, launch, wakeup, window_stack};
+use pebble_sys::AppLaunchReason;
 
 include_message_keys!();
 
@@ -40,7 +41,7 @@ pub fn main() -> isize {
 
     state::init_state();
 
-    if launch == AppLaunchReason::Wakeup && !state::IS_ENABLED.get() {
+    if launch == AppLaunchReason::APP_LAUNCH_WAKEUP && !state::IS_ENABLED.get() {
         pebble::pbl_warn!(c"Ghost wakeup detected. Aborting.");
         return 0;
     }
@@ -53,8 +54,8 @@ pub fn main() -> isize {
     let app = app::App::new();
 
     let active_window = match launch {
-        AppLaunchReason::QuickLaunch => AppWindow::Splash(ui::splash_window::create()),
-        AppLaunchReason::Wakeup => AppWindow::Reminder(ui::reminder_window::create()),
+        AppLaunchReason::APP_LAUNCH_QUICK_LAUNCH => AppWindow::Splash(ui::splash_window::create()),
+        AppLaunchReason::APP_LAUNCH_WAKEUP => AppWindow::Reminder(ui::reminder_window::create()),
         _ => AppWindow::Settings(ui::settings_window::create()),
     };
 

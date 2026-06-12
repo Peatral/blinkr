@@ -4,9 +4,10 @@ use core::cell::RefCell;
 use pebble::layer::{ILayer, ILayerMut, TextLayer};
 use pebble::system::fonts::{FONT_KEY_BITHAM_42_BOLD, FONT_KEY_GOTHIC_18_BOLD};
 use pebble::timer::AppTimer;
-use pebble::types::{GPoint, GRect, GSize, GTextAlignment};
 use pebble::window::{Window, WindowDelegate, WindowRef};
 use pebble::{vibes, window_stack};
+use pebble::graphics::types::{Point, Rect, Size};
+use pebble_sys::GTextAlignment;
 
 pub struct ReminderDelegate {
     text_main: RefCell<Option<TextLayer>>,
@@ -20,20 +21,20 @@ impl WindowDelegate for ReminderDelegate {
         let bounds = root.get_bounds();
         let width = bounds.size.w;
 
-        let text_main = TextLayer::new(GRect::new(GPoint::new(0, 30), GSize::new(width, 50)));
+        let text_main = TextLayer::new(Rect::new(Point::new(0, 30), Size::new(width, 50)));
         text_main.set_text_static(c"Blink");
         text_main.set_font(pebble::system::fonts::Font::get_system(
             FONT_KEY_BITHAM_42_BOLD,
         ));
-        text_main.set_text_alignment(GTextAlignment::Center);
+        text_main.set_text_alignment(GTextAlignment::GTextAlignmentCenter);
         root.add_child(&text_main);
 
-        let text_sub = TextLayer::new(GRect::new(GPoint::new(5, 100), GSize::new(width - 10, 60)));
+        let text_sub = TextLayer::new(Rect::new(Point::new(5, 100), Size::new(width - 10, 60)));
         text_sub.set_text_static(c"20-20-20 Rule:\nLook 20ft away\nfor 20 seconds.");
         text_sub.set_font(pebble::system::fonts::Font::get_system(
             FONT_KEY_GOTHIC_18_BOLD,
         ));
-        text_sub.set_text_alignment(GTextAlignment::Center);
+        text_sub.set_text_alignment(GTextAlignment::GTextAlignmentCenter);
         root.add_child(&text_sub);
 
         *self.text_main.borrow_mut() = Some(text_main);

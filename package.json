@@ -12,7 +12,8 @@
     "sdkVersion": "3",
     "enableMultiJS": true,
     "targetPlatforms": [
-      "emery"
+      "emery",
+      "gabbro"
     ],
     "watchapp": {
       "watchface": false
@@ -27,7 +28,7 @@
       "configurable"
     ]
   },
-  "name": "Blinkr",
+  "name": "blinkr",
   "dependencies": {
     "@rebble/clay": "^1.0.10"
   }

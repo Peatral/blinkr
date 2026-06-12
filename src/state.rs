@@ -1,8 +1,9 @@
 use alloc::vec::Vec;
 use core::slice;
 use pebble::std::time::get_time;
-use pebble::types::{GlobalCell, GlobalRefCell, time_t};
 use pebble::{storage, vibes, wakeup};
+use pebble::types::{GlobalCell, GlobalRefCell};
+use pebble_sys::time_t;
 
 pub const PERSIST_STATE_KEY: u32 = 1;
 pub const PERSIST_INTERVAL_KEY: u32 = 2;
@@ -20,14 +21,14 @@ pub struct TimePair {
 }
 
 pub static IS_ENABLED: GlobalCell<bool> = GlobalCell::new(false);
-pub static INTERVAL_MINS: GlobalCell<u32> = GlobalCell::new(DEFAULT_INTERVAL_MINS as u32);
+pub static INTERVAL_MINS: GlobalCell<time_t> = GlobalCell::new(DEFAULT_INTERVAL_MINS as time_t);
 
 pub static HISTORY: GlobalRefCell<Vec<TimePair>> = GlobalRefCell::new(Vec::new());
 pub static CURRENT_START_TIME: GlobalCell<Option<time_t>> = GlobalCell::new(None);
 
 pub fn init_state() {
     IS_ENABLED.set(storage::read_bool(PERSIST_STATE_KEY));
-    INTERVAL_MINS.set(storage::read_int(PERSIST_INTERVAL_KEY) as u32);
+    INTERVAL_MINS.set(storage::read_int(PERSIST_INTERVAL_KEY) as time_t);
 
     if storage::exists(PERSIST_HISTORY_KEY) {
         if let Ok(size) = storage::get_size(PERSIST_HISTORY_KEY) {

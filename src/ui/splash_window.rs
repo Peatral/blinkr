@@ -1,12 +1,13 @@
 use crate::state;
 use crate::state::toggle_state;
 use core::cell::RefCell;
+use pebble::graphics::types::{Point, Rect, Size};
 use pebble::layer::{ILayer, ILayerMut, TextLayer};
 use pebble::system::fonts::FONT_KEY_GOTHIC_28_BOLD;
 use pebble::timer::AppTimer;
-use pebble::types::{GPoint, GRect, GSize, GTextAlignment};
 use pebble::window::{Window, WindowDelegate, WindowRef};
 use pebble::window_stack;
+use pebble_sys::GTextAlignment;
 
 pub struct SplashDelegate {
     text_main: RefCell<Option<TextLayer>>,
@@ -22,18 +23,12 @@ impl WindowDelegate for SplashDelegate {
 
         let is_enabled = state::IS_ENABLED.get();
 
-        let text = TextLayer::new(GRect {
-            origin: GPoint {
-                x: 0,
-                y: height / 2 - 20,
-            },
-            size: GSize { w: width, h: 40 },
-        });
+        let text = TextLayer::new(Rect::new(Point::new(0, height / 2 - 20), Size::new(width, 40)));
         text.set_text_static(if is_enabled { c"Active" } else { c"Inactive" });
         text.set_font(pebble::system::fonts::Font::get_system(
             FONT_KEY_GOTHIC_28_BOLD,
         ));
-        text.set_text_alignment(GTextAlignment::Center);
+        text.set_text_alignment(GTextAlignment::GTextAlignmentCenter);
         root.add_child(&text);
 
         *self.text_main.borrow_mut() = Some(text);

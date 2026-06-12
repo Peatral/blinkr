@@ -8,10 +8,22 @@ edition = "2024"
 crate-type = ["staticlib"]
 
 [dependencies]
-pebble-rust = {path = "../pebble-rust"}
+pebble-rs = {path = "../pebble-rust/pebble-rs"}
+pebble-sys = {path = "../pebble-rust/pebble-sys"}
 
 [profile.dev]
 panic = "abort"
 
 [profile.release]
 panic = "abort"
+
+[features]
+default = ["emery"]
+
+aplite = ["pebble-rs/aplite"]
+basalt = ["pebble-rs/basalt"]
+chalk = ["pebble-rs/chalk"]
+diorite = ["pebble-rs/diorite"]
+emery = ["pebble-rs/emery"]
+flint = ["pebble-rs/flint"]
+gabbro = ["pebble-rs/gabbro"]
