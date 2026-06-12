@@ -12,7 +12,7 @@ pub const PERSIST_CURRENT_START_KEY: u32 = 4;
 
 pub const DEFAULT_INTERVAL_MINS: time_t = 20;
 
-pub const MAX_HISTORY_PAIRS: usize = 512 / size_of::<TimePair>();
+pub const MAX_HISTORY_PAIRS: usize = 4096 / size_of::<TimePair>();
 
 #[derive(Debug, Clone, Copy)]
 pub struct TimePair {
