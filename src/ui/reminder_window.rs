@@ -1,19 +1,32 @@
 use crate::state::INTERVAL_MINS;
+use crate::ui::history_window;
 use crate::utils::reschedule_wakeup;
+use crate::window_manager;
 use crate::window_manager::{AppWindow, release};
 use core::cell::RefCell;
+use pebble::clicks::{ClickConfigurator, ClickDelegate, ClickRecognizer};
 use pebble::graphics::types::{Point, Rect, Size};
 use pebble::layer::{ILayer, ILayerMut, TextLayer};
 use pebble::system::fonts::{FONT_KEY_BITHAM_42_BOLD, FONT_KEY_GOTHIC_18_BOLD};
 use pebble::timer::AppTimer;
 use pebble::window::{Window, WindowDelegate, WindowRef};
 use pebble::{vibes, window_stack};
-use pebble_sys::GTextAlignment;
+use pebble_sys::{ButtonId, GTextAlignment};
 
 pub struct ReminderScreen {
     text_main: RefCell<Option<TextLayer>>,
     text_sub: RefCell<Option<TextLayer>>,
     exit_timer: RefCell<Option<AppTimer>>,
+}
+
+impl ClickDelegate for ReminderScreen {
+    fn click_config(&self, config: &ClickConfigurator<Self>) {
+        config.subscribe_single_click(ButtonId::BUTTON_ID_SELECT);
+    }
+
+    fn on_single_click(&self, _recognizer: ClickRecognizer) {
+        window_manager::replace_top(history_window::create(), true);
+    }
 }
 
 impl WindowDelegate for ReminderScreen {
@@ -58,10 +71,11 @@ pub fn create() -> AppWindow {
     vibes::double_pulse();
     let interval = INTERVAL_MINS.get();
     let _ = reschedule_wakeup(interval);
-
-    AppWindow::Reminder(Window::new(ReminderScreen {
+    let window = Window::new(ReminderScreen {
         text_main: RefCell::new(None),
         text_sub: RefCell::new(None),
         exit_timer: RefCell::new(None),
-    }))
+    });
+    window.enable_clicks();
+    AppWindow::Reminder(window)
 }

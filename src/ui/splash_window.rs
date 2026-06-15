@@ -1,18 +1,33 @@
-use crate::state;
 use crate::state::toggle_state;
+use crate::ui::history_window;
 use crate::window_manager::{AppWindow, release};
+use crate::{state, window_manager};
 use core::cell::RefCell;
+use pebble::clicks::{ClickConfigurator, ClickDelegate, ClickRecognizer};
 use pebble::graphics::types::{Point, Rect, Size};
 use pebble::layer::{ILayer, ILayerMut, TextLayer};
 use pebble::system::fonts::FONT_KEY_GOTHIC_28_BOLD;
 use pebble::timer::AppTimer;
 use pebble::window::{Window, WindowDelegate, WindowRef};
 use pebble::window_stack;
-use pebble_sys::GTextAlignment;
+use pebble_sys::{ButtonId, GTextAlignment};
 
 pub struct SplashScreen {
     text_main: RefCell<Option<TextLayer>>,
     exit_timer: RefCell<Option<AppTimer>>,
+}
+
+impl ClickDelegate for SplashScreen {
+    fn click_config(&self, config: &ClickConfigurator<Self>) {
+        config.subscribe_single_click(ButtonId::BUTTON_ID_SELECT);
+    }
+
+    fn on_single_click(&self, _recognizer: ClickRecognizer) {
+        // There probably won't be any case where toggle state has been called since the window has been opened
+        // So reverting the state change like this should be safe
+        toggle_state();
+        window_manager::replace_top(history_window::create(), true);
+    }
 }
 
 impl WindowDelegate for SplashScreen {
@@ -51,8 +66,10 @@ impl WindowDelegate for SplashScreen {
 pub fn create() -> AppWindow {
     toggle_state();
 
-    AppWindow::Splash(Window::new(SplashScreen {
+    let window = Window::new(SplashScreen {
         text_main: RefCell::new(None),
         exit_timer: RefCell::new(None),
-    }))
+    });
+    window.enable_clicks();
+    AppWindow::Splash(window)
 }
