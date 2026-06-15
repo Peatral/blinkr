@@ -187,7 +187,7 @@ impl HistoryScreen {
 
     pub fn refresh(&self) {
         let now = time::get_time();
-        let today_start = now - (now % SECONDS_PER_DAY);
+        let today_start = time::start_of_today();
 
         let grand_total = Self::calculate_displayed_total(now, today_start);
         if let Some(header) = self.header_label.borrow_mut().as_mut() {
@@ -224,7 +224,7 @@ impl WindowDelegate for HistoryScreen {
         window.get_root_layer().add_child(&scroll);
 
         let now = time::get_time();
-        let today_start = now - (now % SECONDS_PER_DAY);
+        let today_start = time::start_of_today();
 
         let grand_total = Self::calculate_displayed_total(now, today_start);
         let mut header = TextLayer::new(Rect::new(Point::new(0, 19), Size::new(bounds.size.w, 42)));

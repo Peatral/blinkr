@@ -166,7 +166,7 @@ dependencies = [
 [[package]]
 name = "pebble-rs"
 version = "0.1.0"
-source = "git+https://github.com/Peatral/pebble-rust.git?branch=master#d52c9ae63ed95c939b301a15552a35f4f01f9fa4"
+source = "git+https://github.com/Peatral/pebble-rust.git?branch=master#7938466184cf5384af21a9897b84daffd3c1d10c"
 dependencies = [
  "cty",
  "pebble-sys",
@@ -175,7 +175,7 @@ dependencies = [
 [[package]]
 name = "pebble-sys"
 version = "0.1.0"
-source = "git+https://github.com/Peatral/pebble-rust.git?branch=master#d52c9ae63ed95c939b301a15552a35f4f01f9fa4"
+source = "git+https://github.com/Peatral/pebble-rust.git?branch=master#7938466184cf5384af21a9897b84daffd3c1d10c"
 dependencies = [
  "bindgen",
  "cfg-if",
