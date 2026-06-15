@@ -8,6 +8,7 @@ edition = "2024"
 crate-type = ["staticlib"]
 
 [dependencies]
+bytemuck = { version = "1.14", default-features = false, features = ["derive", "extern_crate_alloc"] }
 pebble-rs = { git = "https://github.com/Peatral/pebble-rust.git", branch = "master" }
 pebble-sys = { git = "https://github.com/Peatral/pebble-rust.git", branch = "master" }
 
