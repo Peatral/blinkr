@@ -47,6 +47,8 @@ pub fn main() -> isize {
 
     app.run_event_loop();
 
+    wakeup::unsubscribe();
+
     window_manager::deinit();
     state::deinit_state();
 
