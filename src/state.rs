@@ -51,6 +51,11 @@ pub fn init_state() {
             let st = storage::read_int(PERSIST_CURRENT_START_KEY) as time_t;
             CURRENT_START_TIME.set(Some(st));
         }
+    } else {
+        if storage::exists(PERSIST_CURRENT_START_KEY) {
+            let _ = storage::delete(PERSIST_CURRENT_START_KEY);
+            CURRENT_START_TIME.set(None);
+        }
     }
 }
 
