@@ -15,6 +15,7 @@ pub const DEFAULT_INTERVAL_MINS: time_t = 20;
 pub const MAX_HISTORY_PAIRS: usize = 4096 / size_of::<TimePair>();
 
 #[derive(Debug, Clone, Copy)]
+#[repr(C)]
 pub struct TimePair {
     pub start: time_t,
     pub end: time_t,
