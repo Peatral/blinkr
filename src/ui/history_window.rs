@@ -76,17 +76,12 @@ impl HistoryScreen {
         for i in 0..DISPLAYED_DAYS {
             let day_start = today_start - (i as time_t * SECONDS_PER_DAY);
             let day_end = day_start + SECONDS_PER_DAY;
-            total += Self::calculate_day_total(day_start, day_end, i == 0, now);
+            total += Self::calculate_day_total(day_start, day_end, now);
         }
         total
     }
 
-    fn calculate_day_total(
-        day_start: time_t,
-        day_end: time_t,
-        is_today: bool,
-        now: time_t,
-    ) -> time_t {
+    fn calculate_day_total(day_start: time_t, day_end: time_t, now: time_t) -> time_t {
         let mut total = 0;
         let history = HISTORY.borrow();
 
@@ -96,9 +91,9 @@ impl HistoryScreen {
             }
         }
 
-        if is_today {
-            if let Some(start) = CURRENT_START_TIME.get() {
-                total += now - start;
+        if let Some(start) = CURRENT_START_TIME.get() {
+            if start < day_end && now > day_start {
+                total += min(now, day_end) - max(start, day_start);
             }
         }
 
@@ -213,7 +208,7 @@ impl HistoryScreen {
         for (i, row) in rows.iter_mut().enumerate() {
             let day_start = today_start - (i as time_t * SECONDS_PER_DAY);
             let day_end = day_start + SECONDS_PER_DAY;
-            let day_total_seconds = Self::calculate_day_total(day_start, day_end, i == 0, now);
+            let day_total_seconds = Self::calculate_day_total(day_start, day_end, now);
 
             row.duration_label
                 .set_text(format_duration(day_total_seconds));
@@ -256,7 +251,7 @@ impl WindowDelegate for HistoryScreen {
             let day_end = day_start + SECONDS_PER_DAY;
             let row_y = HEADER_HEIGHT + i as i16 * ROW_HEIGHT;
 
-            let day_total_seconds = Self::calculate_day_total(day_start, day_end, i == 0, now);
+            let day_total_seconds = Self::calculate_day_total(day_start, day_end, now);
             let row_ui = Self::build_row_ui(
                 i,
                 row_y,
