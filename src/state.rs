@@ -82,7 +82,8 @@ pub fn toggle_state() {
 
         // Resume previous session if it was less than 60 seconds ago
         let resume_start = history.last().and_then(|last| {
-            if now - last.end < 60 {
+            let diff = now - last.end;
+            if diff >= 0 && diff < 60 {
                 Some(last.start)
             } else {
                 None
@@ -111,7 +112,7 @@ pub fn toggle_state() {
     } else {
         if let Some(start) = CURRENT_START_TIME.get() {
             // Only save the session if it lasted 60 seconds or more
-            if now - start >= 60 {
+            if now >= start && (now - start) >= 60 {
                 let mut history = HISTORY.borrow_mut();
                 history.push(TimePair { start, end: now });
 
