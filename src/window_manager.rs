@@ -7,6 +7,7 @@ use core::mem::discriminant;
 use pebble::types::GlobalRefCell;
 use pebble::window::{Window, WindowRef};
 use pebble::window_stack;
+use pebble_sys::{TimeUnits, tm};
 
 pub enum AppWindow {
     Splash(Window<SplashScreen>),
@@ -23,6 +24,9 @@ impl AppWindow {
             AppWindow::Settings(w) => **w,
             AppWindow::History(w) => **w,
         }
+    }
+
+    pub fn on_tick(&self, _tick_time: &tm, _units_changed: TimeUnits) {
     }
 }
 
@@ -70,4 +74,10 @@ pub fn deinit() {
     let mut stack = APP_STACK.borrow_mut();
     stack.clear();
     stack.shrink_to_fit();
+}
+
+pub fn notify_tick(tick_time: &tm, units_changed: TimeUnits) {
+    if let Some(active_window) = APP_STACK.borrow().last() {
+        active_window.on_tick(tick_time, units_changed);
+    }
 }

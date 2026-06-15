@@ -10,8 +10,9 @@ mod ui;
 mod utils;
 pub mod window_manager;
 
+use pebble::event::tick_timer;
 use pebble::{app, app_message::AppMessage, include_message_keys, launch, wakeup};
-use pebble_sys::AppLaunchReason;
+use pebble_sys::{AppLaunchReason, TimeUnits};
 
 include_message_keys!();
 
@@ -45,9 +46,14 @@ pub fn main() -> isize {
         window_manager::push(ui::reminder_window::create(), false);
     });
 
+    tick_timer::subscribe(TimeUnits::MINUTE_UNIT, |tm, time_units| {
+        window_manager::notify_tick(tm, time_units);
+    });
+
     app.run_event_loop();
 
     wakeup::unsubscribe();
+    tick_timer::unsubscribe();
 
     window_manager::deinit();
     state::deinit_state();
