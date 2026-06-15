@@ -122,18 +122,32 @@ impl HistoryScreen {
                 let bar_h: i16 = 12;
                 let max_bar_w = bounds.size.w - (bar_x * 2);
 
-                ctx.set_fill_color(Color::GREEN);
+                let now = time::get_time();
+
+                ctx.set_fill_color(Color::DARK_GRAY);
                 ctx.fill_rect(
                     Rect::new(Point::new(bar_x, bar_y), Size::new(max_bar_w, bar_h)),
                     4,
                     GCornerMask::GCornersAll,
                 );
 
+                if now > day_start {
+                    let end_of_passed_time = min(now, day_end);
+                    let passed_px = ((end_of_passed_time - day_start) * (max_bar_w as time_t))
+                        / SECONDS_PER_DAY;
+
+                    ctx.set_fill_color(Color::GREEN);
+                    ctx.fill_rect(
+                        Rect::new(Point::new(bar_x, bar_y), Size::new(passed_px as i16, bar_h)),
+                        4,
+                        GCornerMask::GCornersAll,
+                    );
+                }
+
                 ctx.set_fill_color(Color::RED);
 
                 let history = HISTORY.borrow();
                 let mut active_sessions = history.clone();
-                let now = time::get_time();
 
                 if let Some(start) = CURRENT_START_TIME.get() {
                     active_sessions.push(TimePair { start, end: now });
