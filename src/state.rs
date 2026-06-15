@@ -27,6 +27,8 @@ pub static INTERVAL_MINS: GlobalCell<time_t> = GlobalCell::new(DEFAULT_INTERVAL_
 pub static HISTORY: GlobalRefCell<Vec<TimePair>> = GlobalRefCell::new(Vec::new());
 pub static CURRENT_START_TIME: GlobalCell<Option<time_t>> = GlobalCell::new(None);
 
+const DAY_SECONDS: i32 = 60 * 60 * 24;
+
 pub fn init_state() {
     IS_ENABLED.set(storage::read_bool(PERSIST_STATE_KEY));
     INTERVAL_MINS.set(storage::read_int(PERSIST_INTERVAL_KEY) as time_t);
@@ -41,6 +43,13 @@ pub fn init_state() {
                 unsafe { slice::from_raw_parts_mut(history.as_mut_ptr() as *mut u8, size) };
 
             if storage::read_data(PERSIST_HISTORY_KEY, byte_slice).is_ok() {
+                let current_time = get_time();
+                history.retain(|pair| {
+                    pair.start > 0 &&
+                    pair.end >= pair.start &&
+                    pair.end <= current_time + DAY_SECONDS
+                });
+
                 *HISTORY.borrow_mut() = history;
             }
         }
