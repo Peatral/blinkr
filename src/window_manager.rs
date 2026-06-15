@@ -3,6 +3,7 @@ use crate::ui::reminder_window::ReminderScreen;
 use crate::ui::settings_window::SettingsScreen;
 use crate::ui::splash_window::SplashScreen;
 use alloc::vec::Vec;
+use core::mem::discriminant;
 use pebble::types::GlobalRefCell;
 use pebble::window::{Window, WindowRef};
 use pebble::window_stack;
@@ -28,6 +29,20 @@ impl AppWindow {
 static APP_STACK: GlobalRefCell<Vec<AppWindow>> = GlobalRefCell::new(Vec::new());
 
 pub fn push(window: AppWindow, animated: bool) {
+    let duplicate_window_ref = {
+        let stack = APP_STACK.borrow();
+        let target_discriminant = discriminant(&window);
+
+        stack
+            .iter()
+            .find(|w| discriminant(*w) == target_discriminant)
+            .map(|w| w.as_window_ref())
+    };
+
+    if let Some(old_win_ref) = duplicate_window_ref {
+        window_stack::remove(old_win_ref, false);
+    }
+
     window_stack::push(window.as_window_ref(), animated);
     APP_STACK.borrow_mut().push(window);
 }
