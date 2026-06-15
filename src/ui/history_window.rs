@@ -10,6 +10,7 @@ use core::cmp::{max, min};
 use pebble::clicks::{ClickConfigurator, ClickDelegate, ClickRecognizer};
 use pebble::graphics::types::{Color, Point, Rect, Size};
 use pebble::layer::{CanvasLayer, ILayer, ILayerMut, ScrollDelegate, ScrollLayer, TextLayer};
+use pebble::std::time;
 use pebble::system::fonts::{FONT_KEY_BITHAM_42_BOLD, Font};
 use pebble::window::Window;
 use pebble_sys::{ButtonId, GCornerMask, GTextAlignment, time_t};
@@ -44,9 +45,9 @@ fn format_day(day_index: i32) -> CString {
 }
 
 struct RowUI {
-    _container: CanvasLayer,
+    container: CanvasLayer,
     _day_label: TextLayer,
-    _duration_label: TextLayer,
+    duration_label: TextLayer,
 }
 
 pub struct HistoryScrollHandler;
@@ -132,7 +133,7 @@ impl HistoryScreen {
 
                 let history = HISTORY.borrow();
                 let mut active_sessions = history.clone();
-                let now = pebble::std::time::get_time();
+                let now = time::get_time();
 
                 if let Some(start) = CURRENT_START_TIME.get() {
                     active_sessions.push(TimePair { start, end: now });
@@ -178,9 +179,32 @@ impl HistoryScreen {
         container.add_child(&dur_label);
 
         RowUI {
-            _container: container,
+            container,
             _day_label: day_label,
-            _duration_label: dur_label,
+            duration_label: dur_label,
+        }
+    }
+
+    pub fn refresh(&self) {
+        let now = time::get_time();
+        let today_start = now - (now % SECONDS_PER_DAY);
+
+        let grand_total = Self::calculate_displayed_total(now, today_start);
+        if let Some(header) = self.header_label.borrow_mut().as_mut() {
+            header.set_text(format_duration(grand_total));
+            header.mark_dirty();
+        }
+
+        let mut rows = self.rows.borrow_mut();
+        for (i, row) in rows.iter_mut().enumerate() {
+            let day_start = today_start - (i as time_t * SECONDS_PER_DAY);
+            let day_end = day_start + SECONDS_PER_DAY;
+            let day_total_seconds = Self::calculate_day_total(day_start, day_end, i == 0, now);
+
+            row.duration_label
+                .set_text(format_duration(day_total_seconds));
+
+            row.container.mark_dirty();
         }
     }
 }
@@ -199,7 +223,7 @@ impl WindowDelegate for HistoryScreen {
         ));
         window.get_root_layer().add_child(&scroll);
 
-        let now = pebble::std::time::get_time();
+        let now = time::get_time();
         let today_start = now - (now % SECONDS_PER_DAY);
 
         let grand_total = Self::calculate_displayed_total(now, today_start);
@@ -228,7 +252,7 @@ impl WindowDelegate for HistoryScreen {
                 day_total_seconds,
             );
 
-            scroll.add_scroll_child(&row_ui._container);
+            scroll.add_scroll_child(&row_ui.container);
             ui_rows.push(row_ui);
         }
 

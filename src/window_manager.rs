@@ -27,6 +27,12 @@ impl AppWindow {
     }
 
     pub fn on_tick(&self, _tick_time: &tm, _units_changed: TimeUnits) {
+        match self {
+            AppWindow::History(w) => {
+                w.delegate().refresh();
+            }
+            _ => {}
+        }
     }
 }
 
