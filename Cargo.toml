@@ -8,8 +8,8 @@ edition = "2024"
 crate-type = ["staticlib"]
 
 [dependencies]
-pebble-rs = {path = "../pebble-rust/pebble-rs"}
-pebble-sys = {path = "../pebble-rust/pebble-sys"}
+pebble-rs = { git = "https://github.com/Peatral/pebble-rust.git", branch = "master" }
+pebble-sys = { git = "https://github.com/Peatral/pebble-rust.git", branch = "master" }
 
 [profile.dev]
 panic = "abort"
