@@ -58,8 +58,10 @@ pub fn push(window: AppWindow, animated: bool) {
 }
 
 pub fn replace_top(window: AppWindow, animated: bool) {
-    if let Some(old_win) = APP_STACK.borrow().last() {
-        window_stack::remove(old_win.as_window_ref(), false);
+    let old_win_ref = APP_STACK.borrow().last().map(|w| w.as_window_ref());
+
+    if let Some(win_ref) = old_win_ref {
+        window_stack::remove(win_ref, false);
     }
 
     push(window, animated);
