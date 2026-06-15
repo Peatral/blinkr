@@ -1,8 +1,6 @@
 use crate::utils::reschedule_wakeup;
 use crate::window_manager::{AppWindow, release};
 use crate::{message_keys, state, utils};
-use core::cell::RefCell;
-use core::ffi::CStr;
 use pebble::app_message::Dictionary;
 use pebble::graphics::context::Context;
 use pebble::layer::menu_layer::MenuCellLayer;
@@ -13,9 +11,7 @@ use pebble_sys::time_t;
 
 static MENU_REF: GlobalRefCell<Option<MenuLayer<ReminderMenu>>> = GlobalRefCell::new(None);
 
-struct ReminderMenu {
-    subtitle_buf: RefCell<[u8; 16]>,
-}
+struct ReminderMenu;
 
 impl MenuLayerDelegate for ReminderMenu {
     fn get_num_rows(&self, _menu_layer: MenuLayerRef, _section_index: u16) -> u16 {
@@ -31,15 +27,10 @@ impl MenuLayerDelegate for ReminderMenu {
             cell_layer.draw_basic(ctx, c"Reminder", subtitle, None);
         } else if row == 1 {
             let interval = state::INTERVAL_MINS.get();
-            let mut buf = self.subtitle_buf.borrow_mut();
 
-            unsafe {
-                utils::format_int(buf.as_mut_ptr(), 16, c"%d mins", interval as i32);
-            }
+            pebble::pbl_fmt!(let subtitle = c"%d mins", interval as i32);
 
-            let subtitle_cstr = CStr::from_bytes_until_nul(&buf[..]).unwrap_or(c"Error");
-
-            cell_layer.draw_basic(ctx, c"Duration", subtitle_cstr, None);
+            cell_layer.draw_basic(ctx, c"Duration", subtitle, None);
         }
     }
 
@@ -74,12 +65,7 @@ pub struct SettingsScreen;
 impl WindowDelegate for SettingsScreen {
     fn load(&self, window: WindowRef) {
         let bounds = window.get_root_layer().get_bounds();
-        let menu = MenuLayer::new(
-            bounds,
-            ReminderMenu {
-                subtitle_buf: RefCell::new([0; 16]),
-            },
-        );
+        let menu = MenuLayer::new(bounds, ReminderMenu {});
         menu.set_click_config_onto_window(&window);
         window.get_root_layer().add_child(&menu);
 

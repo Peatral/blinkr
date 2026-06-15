@@ -7,7 +7,6 @@ use alloc::ffi::CString;
 use alloc::vec::Vec;
 use core::cell::RefCell;
 use core::cmp::{max, min};
-use core::ffi::CStr;
 use pebble::clicks::{ClickConfigurator, ClickDelegate, ClickRecognizer};
 use pebble::graphics::types::{Color, Point, Rect, Size};
 use pebble::layer::{CanvasLayer, ILayer, ILayerMut, ScrollDelegate, ScrollLayer, TextLayer};
@@ -24,50 +23,24 @@ fn format_duration(seconds: time_t) -> CString {
     let hours = seconds / 3600;
     let mins = (seconds % 3600) / 60;
 
-    let mut buf = [0u8; 16];
-
-    unsafe {
-        if hours > 0 {
-            pebble_sys::snprintf(
-                buf.as_mut_ptr() as *mut _,
-                16,
-                c"%dh %dm".as_ptr(),
-                hours,
-                mins,
-            );
-        } else {
-            pebble_sys::snprintf(buf.as_mut_ptr() as *mut _, 16, c"%dm".as_ptr(), mins);
-        }
+    if hours > 0 {
+        pebble::pbl_fmt!(let formatted = c"%dh %dm", hours, mins);
+        CString::from(formatted)
+    } else {
+        pebble::pbl_fmt!(let formatted = c"%dm", mins);
+        CString::from(formatted)
     }
-
-    let c_str = CStr::from_bytes_until_nul(&buf).unwrap();
-    CString::from(c_str)
 }
 
 fn format_day(day_index: i32) -> CString {
-    let mut buf = [0u8; 16];
-
-    unsafe {
-        match day_index {
-            0 => {
-                pebble_sys::snprintf(buf.as_mut_ptr() as *mut _, 16, c"Today".as_ptr());
-            }
-            1 => {
-                pebble_sys::snprintf(buf.as_mut_ptr() as *mut _, 16, c"Yesterday".as_ptr());
-            }
-            _ => {
-                pebble_sys::snprintf(
-                    buf.as_mut_ptr() as *mut _,
-                    16,
-                    c"%d days ago".as_ptr(),
-                    day_index,
-                );
-            }
-        };
+    match day_index {
+        0 => CString::from(c"Today"),
+        1 => CString::from(c"Yesterday"),
+        _ => {
+            pebble::pbl_fmt!(let formatted = c"%d days ago", day_index);
+            CString::from(formatted)
+        }
     }
-
-    let c_str = CStr::from_bytes_until_nul(&buf).unwrap();
-    CString::from(c_str)
 }
 
 struct RowUI {

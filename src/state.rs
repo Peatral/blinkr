@@ -45,9 +45,9 @@ pub fn init_state() {
             if storage::read_data(PERSIST_HISTORY_KEY, byte_slice).is_ok() {
                 let current_time = get_time();
                 history.retain(|pair| {
-                    pair.start > 0 &&
-                    pair.end >= pair.start &&
-                    pair.end <= current_time + DAY_SECONDS
+                    pair.start > 0
+                        && pair.end >= pair.start
+                        && pair.end <= current_time + DAY_SECONDS
                 });
 
                 *HISTORY.borrow_mut() = history;
