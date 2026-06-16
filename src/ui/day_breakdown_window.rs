@@ -19,6 +19,7 @@ const SECONDS_PER_DAY: time_t = 86400;
 pub enum TimelineItem {
     Session { start: time_t, end: time_t },
     Break { start: time_t, end: time_t },
+    Empty,
 }
 
 pub struct DayBreakdownMenu {
@@ -41,55 +42,70 @@ impl MenuLayerDelegate for DayBreakdownMenu {
 
         let font_title = Font::get_system(FONT_KEY_GOTHIC_24_BOLD);
         let font_sub = Font::get_system(FONT_KEY_GOTHIC_18_BOLD);
-
-        let (title, start, end, color_accent) = match item {
-            TimelineItem::Session { start, end } => (c"Session", *start, *end, Color::RED),
-            TimelineItem::Break { start, end } => (c"Break", *start, *end, Color::GREEN),
-        };
-
-        let dur_text = format_duration(end - start);
-        let time_text = format_time_range(start, end);
-
         let text_color = if is_highlighted {
             Color::BLACK
         } else {
             Color::WHITE
         };
-        let sub_color = if is_highlighted {
-            Color::BLACK
-        } else {
-            color_accent
-        };
 
-        ctx.set_text_color(text_color);
-        ctx.draw_text(
-            title,
-            &font_title,
-            Rect::new(Point::new(10, 0), Size::new(100, 24)),
-            GTextOverflowMode::GTextOverflowModeWordWrap,
-            GTextAlignment::GTextAlignmentLeft,
-            None,
-        );
+        match item {
+            TimelineItem::Empty => {
+                ctx.set_text_color(text_color);
+                ctx.draw_text(
+                    c"No sessions yet",
+                    &font_title,
+                    Rect::new(Point::new(0, 8), Size::new(self.bounds_w, 30)),
+                    GTextOverflowMode::GTextOverflowModeWordWrap,
+                    GTextAlignment::GTextAlignmentCenter,
+                    None,
+                );
+            }
+            TimelineItem::Session { start, end } | TimelineItem::Break { start, end } => {
+                let (title, color_accent) = match item {
+                    TimelineItem::Session { .. } => (c"Session", Color::RED),
+                    TimelineItem::Break { .. } => (c"Break", Color::GREEN),
+                    _ => unreachable!(),
+                };
 
-        ctx.set_text_color(sub_color);
-        ctx.draw_text(
-            &time_text,
-            &font_sub,
-            Rect::new(Point::new(10, 26), Size::new(100, 20)),
-            GTextOverflowMode::GTextOverflowModeWordWrap,
-            GTextAlignment::GTextAlignmentLeft,
-            None,
-        );
+                let sub_color = if is_highlighted {
+                    Color::BLACK
+                } else {
+                    color_accent
+                };
+                let dur_text = format_duration(*end - *start);
+                let time_text = format_time_range(*start, *end);
 
-        ctx.set_text_color(sub_color);
-        ctx.draw_text(
-            &dur_text,
-            &font_title,
-            Rect::new(Point::new(self.bounds_w - 100, 8), Size::new(90, 30)),
-            GTextOverflowMode::GTextOverflowModeTrailingEllipsis,
-            GTextAlignment::GTextAlignmentRight,
-            None,
-        );
+                ctx.set_text_color(text_color);
+                ctx.draw_text(
+                    title,
+                    &font_title,
+                    Rect::new(Point::new(10, 0), Size::new(100, 24)),
+                    GTextOverflowMode::GTextOverflowModeWordWrap,
+                    GTextAlignment::GTextAlignmentLeft,
+                    None,
+                );
+
+                ctx.set_text_color(sub_color);
+                ctx.draw_text(
+                    &time_text,
+                    &font_sub,
+                    Rect::new(Point::new(10, 26), Size::new(100, 20)),
+                    GTextOverflowMode::GTextOverflowModeWordWrap,
+                    GTextAlignment::GTextAlignmentLeft,
+                    None,
+                );
+
+                ctx.set_text_color(sub_color);
+                ctx.draw_text(
+                    &dur_text,
+                    &font_title,
+                    Rect::new(Point::new(self.bounds_w - 100, 8), Size::new(90, 30)),
+                    GTextOverflowMode::GTextOverflowModeTrailingEllipsis,
+                    GTextAlignment::GTextAlignmentRight,
+                    None,
+                );
+            }
+        }
     }
 }
 
@@ -140,6 +156,10 @@ impl WindowDelegate for DayBreakdownScreen {
                 start: session.start,
                 end: session.end,
             });
+        }
+
+        if items.is_empty() {
+            items.push(TimelineItem::Empty);
         }
 
         let menu = MenuLayer::new(
