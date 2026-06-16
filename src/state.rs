@@ -73,6 +73,26 @@ fn load_history(current_time: time_t) -> Vec<TimePair> {
         pair.start > 0 && pair.end >= pair.start && pair.end <= current_time + DAY_SECONDS
     });
 
+    full_history.sort_unstable_by_key(|pair| pair.start);
+
+    if !full_history.is_empty() {
+        let mut write_idx = 0;
+        for read_idx in 1..full_history.len() {
+            let current = full_history[read_idx];
+
+            if current.start < full_history[write_idx].end + 60 {
+                if current.end > full_history[write_idx].end {
+                    full_history[write_idx].end = current.end;
+                }
+            } else {
+                write_idx += 1;
+                full_history[write_idx] = current;
+            }
+        }
+        full_history.truncate(write_idx + 1);
+    }
+    full_history.retain(|session| session.end - session.start >= 60);
+
     full_history
 }
 
