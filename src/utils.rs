@@ -1,3 +1,5 @@
+use alloc::ffi::CString;
+use pebble::std::time;
 use pebble_sys::{StatusCode, Tuple, WakeupId, time_t};
 
 pub fn extract_clay_int(tuple: &Tuple, default: i32) -> i32 {
@@ -28,4 +30,40 @@ pub fn reschedule_wakeup(interval_mins: time_t) -> Result<WakeupId, StatusCode> 
     pebble::wakeup::cancel_all();
     let now = pebble::std::time::get_time();
     pebble::wakeup::schedule(now + (interval_mins * 60), 0, true)
+}
+
+pub fn format_duration(seconds: time_t) -> CString {
+    let hours = seconds / 3600;
+    let mins = (seconds % 3600) / 60;
+    if hours > 0 {
+        pebble::pbl_fmt!(let formatted = c"%dh %dm", hours, mins);
+        CString::from(formatted)
+    } else {
+        pebble::pbl_fmt!(let formatted = c"%dm", mins);
+        CString::from(formatted)
+    }
+}
+
+pub fn format_day(day_index: i32) -> CString {
+    match day_index {
+        0 => CString::from(c"Today"),
+        1 => CString::from(c"Yesterday"),
+        _ => {
+            pebble::pbl_fmt!(let formatted = c"%d days ago", day_index);
+            CString::from(formatted)
+        }
+    }
+}
+
+pub fn format_time_range(start: time_t, end: time_t) -> CString {
+    let tm_s = time::get_local_time(start);
+    let h_s = tm_s.tm_hour;
+    let m_s = tm_s.tm_min;
+
+    let tm_e = time::get_local_time(end);
+    let h_e = tm_e.tm_hour;
+    let m_e = tm_e.tm_min;
+
+    pebble::pbl_fmt!(let f = c"%02d:%02d - %02d:%02d", h_s, m_s, h_e, m_e);
+    CString::from(f)
 }

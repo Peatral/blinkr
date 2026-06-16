@@ -1,3 +1,4 @@
+use crate::ui::day_breakdown_window::DayBreakdownScreen;
 use crate::ui::history_window::HistoryScreen;
 use crate::ui::reminder_window::ReminderScreen;
 use crate::ui::settings_window::SettingsScreen;
@@ -14,6 +15,7 @@ pub enum AppWindow {
     Reminder(Window<ReminderScreen>),
     Settings(Window<SettingsScreen>),
     History(Window<HistoryScreen>),
+    DayBreakdown(Window<DayBreakdownScreen>),
 }
 
 impl AppWindow {
@@ -23,6 +25,7 @@ impl AppWindow {
             AppWindow::Reminder(w) => **w,
             AppWindow::Settings(w) => **w,
             AppWindow::History(w) => **w,
+            AppWindow::DayBreakdown(w) => **w,
         }
     }
 
