@@ -1,3 +1,4 @@
+use crate::ui::confirmation_screen::ConfirmationScreen;
 use crate::ui::day_breakdown_window::DayBreakdownScreen;
 use crate::ui::history_window::HistoryScreen;
 use crate::ui::reminder_window::ReminderScreen;
@@ -16,6 +17,7 @@ pub enum AppWindow {
     Settings(Window<SettingsScreen>),
     History(Window<HistoryScreen>),
     DayBreakdown(Window<DayBreakdownScreen>),
+    Confirmation(Window<ConfirmationScreen>),
 }
 
 impl AppWindow {
@@ -26,6 +28,7 @@ impl AppWindow {
             AppWindow::Settings(w) => **w,
             AppWindow::History(w) => **w,
             AppWindow::DayBreakdown(w) => **w,
+            AppWindow::Confirmation(w) => **w,
         }
     }
 
@@ -58,6 +61,10 @@ pub fn push(window: AppWindow, animated: bool) {
 
     window_stack::push(window.as_window_ref(), animated);
     APP_STACK.borrow_mut().push(window);
+}
+
+pub fn pop(animated: bool) {
+    window_stack::pop(animated);
 }
 
 pub fn replace_top(window: AppWindow, animated: bool) {

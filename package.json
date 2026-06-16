@@ -19,7 +19,18 @@
       "watchface": false
     },
     "resources": {
-      "media": []
+      "media": [
+        {
+          "type": "bitmap",
+          "name": "ICON_CHECK",
+          "file": "images/action_bar_icon_check.png"
+        },
+        {
+          "type": "bitmap",
+          "name": "ICON_DISMISS",
+          "file": "images/action_bar_icon_dismiss.png"
+        }
+      ]
     },
     "messageKeys": [
       "INTERVAL"

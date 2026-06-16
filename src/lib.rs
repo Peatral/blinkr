@@ -11,10 +11,13 @@ mod utils;
 pub mod window_manager;
 
 use pebble::event::tick_timer;
-use pebble::{app, app_message::AppMessage, include_message_keys, launch, wakeup};
+use pebble::{
+    app, app_message::AppMessage, include_message_keys, include_resource_ids, launch, wakeup,
+};
 use pebble_sys::{AppLaunchReason, TimeUnits};
 
 include_message_keys!();
+include_resource_ids!();
 
 #[unsafe(no_mangle)]
 pub fn main() -> isize {

@@ -48,7 +48,7 @@ fn save_history(history: &[TimePair]) {
 }
 
 /// Helper function to load the history array from multiple keys
-fn load_history(current_time: time_t) -> Vec<TimePair> {
+fn load_history() -> Vec<TimePair> {
     if !storage::exists(PERSIST_HISTORY_COUNT_KEY) {
         return Vec::new();
     }
@@ -68,6 +68,13 @@ fn load_history(current_time: time_t) -> Vec<TimePair> {
             }
         }
     }
+
+    full_history
+}
+
+pub fn revalidate_data() {
+    let current_time = get_time();
+    let mut full_history = HISTORY.borrow_mut();
 
     full_history.retain(|pair| {
         pair.start > 0 && pair.end >= pair.start && pair.end <= current_time + DAY_SECONDS
@@ -91,21 +98,19 @@ fn load_history(current_time: time_t) -> Vec<TimePair> {
         }
         full_history.truncate(write_idx + 1);
     }
+
     full_history.retain(|session| session.end - session.start >= 60);
 
-    full_history
+    save_history(&full_history);
+    vibes::short_pulse();
 }
 
 pub fn init_state() {
     IS_ENABLED.set(storage::read_bool(PERSIST_STATE_KEY));
     INTERVAL_MINS.set(storage::read_int(PERSIST_INTERVAL_KEY) as time_t);
 
-    let current_time = get_time();
-
-    let loaded_history = load_history(current_time);
-    if !loaded_history.is_empty() {
-        *HISTORY.borrow_mut() = loaded_history;
-    }
+    let loaded_history = load_history();
+    *HISTORY.borrow_mut() = loaded_history;
 
     if IS_ENABLED.get() {
         if storage::exists(PERSIST_CURRENT_START_KEY) {
