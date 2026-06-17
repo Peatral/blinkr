@@ -42,6 +42,7 @@ name = "blinkr"
 version = "0.1.0"
 dependencies = [
  "bytemuck",
+ "pebble-build",
  "pebble-rs",
  "pebble-sys",
 ]
@@ -164,9 +165,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "pebble-build"
+version = "0.1.0"
+source = "git+https://github.com/Peatral/pebble-rust.git?branch=master#0f0555fc7c67aa515e626cc072699304084436a2"
+
+[[package]]
 name = "pebble-rs"
 version = "0.1.0"
-source = "git+https://github.com/Peatral/pebble-rust.git?branch=master#f5cf6f536e303f5214a31e6c18ac2a2f316f6bfe"
+source = "git+https://github.com/Peatral/pebble-rust.git?branch=master#0f0555fc7c67aa515e626cc072699304084436a2"
 dependencies = [
  "cty",
  "pebble-sys",
@@ -175,7 +181,7 @@ dependencies = [
 [[package]]
 name = "pebble-sys"
 version = "0.1.0"
-source = "git+https://github.com/Peatral/pebble-rust.git?branch=master#f5cf6f536e303f5214a31e6c18ac2a2f316f6bfe"
+source = "git+https://github.com/Peatral/pebble-rust.git?branch=master#0f0555fc7c67aa515e626cc072699304084436a2"
 dependencies = [
  "bindgen",
  "cfg-if",

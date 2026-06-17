@@ -12,6 +12,9 @@ bytemuck = { version = "1.14", default-features = false, features = ["derive", "
 pebble-rs = { git = "https://github.com/Peatral/pebble-rust.git", branch = "master" }
 pebble-sys = { git = "https://github.com/Peatral/pebble-rust.git", branch = "master" }
 
+[build-dependencies]
+pebble-build = { git = "https://github.com/Peatral/pebble-rust.git", branch = "master" }
+
 [profile.dev]
 panic = "abort"
 
