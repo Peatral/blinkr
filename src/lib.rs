@@ -6,6 +6,7 @@ extern crate alloc;
 extern crate pebble_rs as pebble;
 
 mod state;
+pub mod sync;
 mod ui;
 mod utils;
 pub mod window_manager;
@@ -31,7 +32,14 @@ pub fn main() -> isize {
     }
 
     AppMessage::register_inbox_received(ui::settings_window::inbox_received_handler);
-    if AppMessage::open(128, 128).is_err() {
+    AppMessage::register_outbox_sent(sync::outbox_sent_handler);
+    AppMessage::register_outbox_failed(sync::outbox_failed_handler);
+    if AppMessage::open(
+        AppMessage::inbox_size_maximum(),
+        AppMessage::outbox_size_maximum(),
+    )
+    .is_err()
+    {
         pebble::pbl_err!(c"Failed to open AppMessage subsystem!");
     }
 

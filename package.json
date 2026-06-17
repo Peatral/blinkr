@@ -33,7 +33,9 @@
       ]
     },
     "messageKeys": [
-      "INTERVAL"
+      "INTERVAL",
+      "SYNC_TOTAL_CHUNKS",
+      "SYNC_DATA_CHUNK"
     ],
     "capabilities": [
       "configurable"

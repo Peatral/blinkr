@@ -1,7 +1,7 @@
 use crate::ui::confirmation_screen::ConfirmationScreen;
 use crate::utils::reschedule_wakeup;
 use crate::window_manager::{AppWindow, release};
-use crate::{message_keys, state, utils, window_manager};
+use crate::{message_keys, state, sync, utils, window_manager};
 use pebble::app_message::Dictionary;
 use pebble::graphics::context::Context;
 use pebble::layer::menu_layer::MenuCellLayer;
@@ -16,7 +16,7 @@ struct ReminderMenu;
 
 impl MenuLayerDelegate for ReminderMenu {
     fn get_num_rows(&self, _menu_layer: MenuLayerRef, _section_index: u16) -> u16 {
-        3
+        4
     }
 
     fn draw_row(&self, ctx: Context, cell_layer: MenuCellLayer, index: MenuIndexRef) {
@@ -34,6 +34,8 @@ impl MenuLayerDelegate for ReminderMenu {
             cell_layer.draw_basic(ctx, c"Duration", Some(subtitle), None);
         } else if row == 2 {
             cell_layer.draw_basic(ctx, c"Revalidate History", None, None);
+        } else if row == 3 {
+            cell_layer.draw_basic(ctx, c"Sync History to Phone", None, None);
         }
     }
 
@@ -45,6 +47,7 @@ impl MenuLayerDelegate for ReminderMenu {
         let row = index.row();
         if row == 0 {
             state::toggle_state();
+            menu_layer.reload_data();
         } else if row == 1 {
             let mut interval = state::INTERVAL_MINS.get();
             interval += 10;
@@ -58,6 +61,7 @@ impl MenuLayerDelegate for ReminderMenu {
             if state::IS_ENABLED.get() {
                 let _ = reschedule_wakeup(interval);
             }
+            menu_layer.reload_data();
         } else if row == 2 {
             window_manager::push(
                 AppWindow::Confirmation(Window::new(ConfirmationScreen::new(
@@ -66,8 +70,10 @@ impl MenuLayerDelegate for ReminderMenu {
                 ))),
                 true,
             );
+        } else if row == 3 {
+            sync::start_sync();
+            pebble::vibes::short_pulse();
         }
-        menu_layer.reload_data();
     }
 }
 
