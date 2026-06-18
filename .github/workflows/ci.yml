@@ -14,80 +14,83 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout blinkr
-      uses: actions/checkout@v4
+      - name: Checkout blinkr
+        uses: actions/checkout@v4
 
-    - name: Cache APT Packages
-      uses: actions/cache@v4
-      id: apt-cache
-      with:
-        path: ~/apt-cache
-        key: ${{ runner.os }}-apt-${{ hashFiles('.github/workflows/build.yml') }}
+      - name: Cache APT Packages
+        uses: actions/cache@v4
+        id: apt-cache
+        with:
+          path: ~/apt-cache
+          key: ${{ runner.os }}-apt-${{ hashFiles('.github/workflows/build.yml') }}
 
-    - name: Install System Dependencies
-      run: |
-        mkdir -p ~/apt-cache
+      - name: Install System Dependencies
+        run: |
+          mkdir -p ~/apt-cache
 
-        if [ -n "$(ls -A ~/apt-cache 2>/dev/null)" ]; then
-          sudo cp ~/apt-cache/*.deb /var/cache/apt/archives/ 2>/dev/null || true
-        fi
+          if [ -n "$(ls -A ~/apt-cache 2>/dev/null)" ]; then
+            sudo cp ~/apt-cache/*.deb /var/cache/apt/archives/ 2>/dev/null || true
+          fi
 
-        sudo apt-get update
-        sudo apt-get install -y \
-          nodejs npm libsdl2-2.0-0 libglib2.0-0 libpixman-1-0 zlib1g \
-          libnewlib-dev binutils-arm-none-eabi gcc-arm-none-eabi
+          sudo apt-get update
+          sudo apt-get install -y \
+            nodejs npm libsdl2-2.0-0 libglib2.0-0 libpixman-1-0 zlib1g \
+            libnewlib-dev binutils-arm-none-eabi gcc-arm-none-eabi
           
-        sudo cp /var/cache/apt/archives/*.deb ~/apt-cache/ 2>/dev/null || true
+          sudo cp /var/cache/apt/archives/*.deb ~/apt-cache/ 2>/dev/null || true
 
-    - name: Install uv
-      run: |
-        curl -LsSf https://astral.sh/uv/install.sh | sh
-        echo "$HOME/.local/bin" >> $GITHUB_PATH
+      - name: Install uv
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
 
-    - name: Cache Pebble SDK & Tool
-      uses: actions/cache@v4
-      id: pebble-cache
-      with:
-        path: |
-          ~/.local/share/pebble-tool
-          ~/.local/share/pebble-sdk
-        key: ${{ runner.os }}-pebble-sdk-v1
+      - name: Cache Pebble SDK & Tool
+        uses: actions/cache@v4
+        id: pebble-cache
+        with:
+          path: |
+            ~/.local/share/pebble-tool
+            ~/.local/share/pebble-sdk
+          key: ${{ runner.os }}-pebble-sdk-v1
 
-    - name: Expose Binary Paths
-      run: |
-        echo "$HOME/.local/bin" >> $GITHUB_PATH
+      - name: Expose Binary Paths
+        run: |
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
 
-    - name: Install Pebble CLI Launcher
-      run: |
-        $HOME/.local/bin/uv tool install pebble-tool
+      - name: Install Pebble CLI Launcher
+        run: |
+          $HOME/.local/bin/uv tool install pebble-tool
 
-    - name: Install Pebble SDK Core (Cache Miss Only)
-      if: steps.pebble-cache.outputs.cache-hit != 'true'
-      run: |
-        pebble sdk install latest
+      - name: Install Pebble SDK Core (Cache Miss Only)
+        if: steps.pebble-cache.outputs.cache-hit != 'true'
+        run: |
+          pebble sdk install latest
 
-    - name: Link SDK to Legacy Path for Rust Build
-      run: |
-        # Re-verify link folder matches what build.rs looks for
-        rm -f ~/.pebble-sdk
-        ln -s ~/.local/share/pebble-sdk ~/.pebble-sdk
+      - name: Link SDK to Legacy Path for Rust Build
+        run: |
+          # Re-verify link folder matches what build.rs looks for
+          rm -f ~/.pebble-sdk
+          ln -s ~/.local/share/pebble-sdk ~/.pebble-sdk
 
-    - name: Setup Rust
-      uses: dtolnay/rust-toolchain@stable
-      with:
-        targets: thumbv7m-none-eabi
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: thumbv7m-none-eabi
 
-    - name: Rust Cache
-      uses: Swatinem/rust-cache@v2
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@v2
 
-    - name: Run Build Script
-      run: |
-        chmod +x ./build.sh
-        ./build.sh
+      - name: Install cargo-pebble CLI
+        run: |
+          cargo install --git https://github.com/Peatral/pebble-rust.git pebble-cli
 
-    - name: Upload Pebble App Artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: blinkr-pebble-app
-        path: build/*.pbw
-        if-no-files-found: error
+      - name: Build Pebble App
+        run: |
+          cargo pebble build
+
+      - name: Upload Pebble App Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: blinkr-pebble-app
+          path: build/*.pbw
+          if-no-files-found: error
