@@ -1,8 +1,15 @@
-var Clay = require('@rebble/clay');
-var clayConfig = require('./config');
-var clay = new Clay(clayConfig);
+import clayConfig from './config';
+import Clay from '@rebble/clay';
 
-let historyBuffer = [];
+// Initialize Clay configuration
+const clay = new Clay(clayConfig);
+
+interface TimePair {
+  start: number;
+  end: number;
+}
+
+let historyBuffer: TimePair[] = [];
 let expectedChunks = 0;
 let receivedChunks = 0;
 
@@ -12,16 +19,17 @@ Pebble.addEventListener('ready', () => {
 
 Pebble.addEventListener('appmessage', (e) => {
     const dict = e.payload;
+    if (!dict) return;
 
     if ('SYNC_TOTAL_CHUNKS' in dict) {
-        expectedChunks = dict.SYNC_TOTAL_CHUNKS;
+        expectedChunks = dict.SYNC_TOTAL_CHUNKS as number;
         receivedChunks = 0;
         historyBuffer = [];
         console.log(`Starting sync. Expecting ${expectedChunks} chunks.`);
     }
 
     if ('SYNC_DATA_CHUNK' in dict) {
-        const rawBytes = dict.SYNC_DATA_CHUNK;
+        const rawBytes = dict.SYNC_DATA_CHUNK as number[];
 
         const parsedPairs = parseHistoryBytes(rawBytes);
         historyBuffer.push(...parsedPairs);
@@ -40,8 +48,8 @@ Pebble.addEventListener('appmessage', (e) => {
  * The Rust TimePair is two time_t (i32) fields -> 8 bytes total per pair.
  * Pebble uses Little-Endian byte order.
  */
-function parseHistoryBytes(bytesArray) {
-    const pairs = [];
+function parseHistoryBytes(bytesArray: number[]): TimePair[] {
+    const pairs: TimePair[] = [];
 
     const uint8 = new Uint8Array(bytesArray);
     const dataView = new DataView(uint8.buffer);
@@ -59,7 +67,7 @@ function parseHistoryBytes(bytesArray) {
 /**
  * Saves the completed history buffer to the phone's persistent local storage
  */
-function finalizeSync() {
+function finalizeSync(): void {
     try {
         historyBuffer.sort((a, b) => a.start - b.start);
 
