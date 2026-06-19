@@ -173,7 +173,7 @@ dependencies = [
 [[package]]
 name = "pebble-build"
 version = "0.1.0"
-source = "git+https://github.com/Peatral/pebble-rust.git?branch=master#abd703ffa3a0a6d5a50ed011a33accd2d23c5909"
+source = "git+https://github.com/Peatral/pebble-rust.git?branch=master#77db07f09ccd877530e13e045f7fef06f76cac84"
 dependencies = [
  "serde",
  "serde_json",
@@ -182,7 +182,7 @@ dependencies = [
 [[package]]
 name = "pebble-rs"
 version = "0.1.0"
-source = "git+https://github.com/Peatral/pebble-rust.git?branch=master#abd703ffa3a0a6d5a50ed011a33accd2d23c5909"
+source = "git+https://github.com/Peatral/pebble-rust.git?branch=master#77db07f09ccd877530e13e045f7fef06f76cac84"
 dependencies = [
  "cty",
  "pebble-sys",
@@ -191,7 +191,7 @@ dependencies = [
 [[package]]
 name = "pebble-sys"
 version = "0.1.0"
-source = "git+https://github.com/Peatral/pebble-rust.git?branch=master#abd703ffa3a0a6d5a50ed011a33accd2d23c5909"
+source = "git+https://github.com/Peatral/pebble-rust.git?branch=master#77db07f09ccd877530e13e045f7fef06f76cac84"
 dependencies = [
  "bindgen",
  "cfg-if",
