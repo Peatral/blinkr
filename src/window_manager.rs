@@ -37,6 +37,9 @@ impl AppWindow {
             AppWindow::History(w) => {
                 w.delegate().refresh();
             }
+            AppWindow::DayBreakdown(w) => {
+                w.delegate().refresh();
+            }
             _ => {}
         }
     }

@@ -104,13 +104,9 @@ impl MenuLayerDelegate for HistoryMenu {
 
             ctx.set_fill_color(Color::RED);
             let history = HISTORY.borrow();
-            let mut active_sessions = history.clone();
+            let current_start = CURRENT_START_TIME.get();
 
-            if let Some(start) = CURRENT_START_TIME.get() {
-                active_sessions.push(TimePair { start, end: now });
-            }
-
-            for session in active_sessions.iter() {
+            let process_session = |session: &TimePair| {
                 if session.start < day_end && session.end > day_start {
                     let overlap_start = max(session.start, day_start);
                     let overlap_end = min(session.end, day_end);
@@ -130,6 +126,14 @@ impl MenuLayerDelegate for HistoryMenu {
                         GCornerMask::GCornersAll,
                     );
                 }
+            };
+
+            for session in history.iter() {
+                process_session(session);
+            }
+
+            if let Some(start) = current_start {
+                process_session(&TimePair { start, end: now });
             }
 
             let day_text = format_day(row);
