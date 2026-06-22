@@ -29,6 +29,7 @@ pub static IS_ENABLED: GlobalCell<bool> = GlobalCell::new(false);
 pub static INTERVAL_MINS: GlobalCell<time_t> = GlobalCell::new(DEFAULT_INTERVAL_MINS as time_t);
 
 pub static HISTORY: GlobalRefCell<Vec<TimePair>> = GlobalRefCell::new(Vec::new());
+pub static HISTORY_DIRTY: GlobalCell<bool> = GlobalCell::new(false);
 pub static CURRENT_START_TIME: GlobalCell<Option<time_t>> = GlobalCell::new(None);
 
 const DAY_SECONDS: i32 = 60 * 60 * 24;
@@ -76,11 +77,21 @@ pub fn revalidate_data() {
     let current_time = get_time();
     let mut full_history = HISTORY.borrow_mut();
 
+    let mut changed = false;
+
+    let len_before = full_history.len();
     full_history.retain(|pair| {
         pair.start > 0 && pair.end >= pair.start && pair.end <= current_time + DAY_SECONDS
     });
+    if full_history.len() != len_before {
+        changed = true;
+    }
 
-    full_history.sort_unstable_by_key(|pair| pair.start);
+    let is_sorted = full_history.windows(2).all(|w| w[0].start <= w[1].start);
+    if !is_sorted {
+        full_history.sort_unstable_by_key(|pair| pair.start);
+        changed = true;
+    }
 
     if !full_history.is_empty() {
         let mut write_idx = 0;
@@ -90,16 +101,31 @@ pub fn revalidate_data() {
             if current.start < full_history[write_idx].end + 60 {
                 if current.end > full_history[write_idx].end {
                     full_history[write_idx].end = current.end;
+                    changed = true;
                 }
             } else {
                 write_idx += 1;
-                full_history[write_idx] = current;
+                if write_idx != read_idx {
+                    full_history[write_idx] = current;
+                    changed = true;
+                }
             }
         }
-        full_history.truncate(write_idx + 1);
+        if full_history.len() != write_idx + 1 {
+            full_history.truncate(write_idx + 1);
+            changed = true;
+        }
     }
 
+    let len_before_final = full_history.len();
     full_history.retain(|session| session.end - session.start >= 60);
+    if full_history.len() != len_before_final {
+        changed = true;
+    }
+
+    if changed {
+        HISTORY_DIRTY.set(true);
+    }
 
     vibes::short_pulse();
 }
@@ -110,6 +136,7 @@ pub fn init_state() {
 
     let loaded_history = load_history();
     *HISTORY.borrow_mut() = loaded_history;
+    HISTORY_DIRTY.set(false);
 
     if IS_ENABLED.get() {
         if storage::exists(PERSIST_CURRENT_START_KEY) {
@@ -123,17 +150,38 @@ pub fn init_state() {
 
 /// Commits the current in-memory state to persistent storage.
 pub fn commit_state() {
-    let _ = storage::write_bool(PERSIST_STATE_KEY, IS_ENABLED.get());
-    let _ = storage::write_int(PERSIST_INTERVAL_KEY, INTERVAL_MINS.get() as i32);
-
-    if let Some(start_time) = CURRENT_START_TIME.get() {
-        let _ = storage::write_int(PERSIST_CURRENT_START_KEY, start_time as i32);
-    } else {
-        let _ = storage::delete(PERSIST_CURRENT_START_KEY);
+    let enabled = IS_ENABLED.get();
+    if !storage::exists(PERSIST_STATE_KEY) || storage::read_bool(PERSIST_STATE_KEY) != enabled {
+        let _ = storage::write_bool(PERSIST_STATE_KEY, enabled);
     }
 
-    let history = HISTORY.borrow();
-    save_history(&history);
+    let interval = INTERVAL_MINS.get() as i32;
+    if !storage::exists(PERSIST_INTERVAL_KEY) || storage::read_int(PERSIST_INTERVAL_KEY) != interval
+    {
+        let _ = storage::write_int(PERSIST_INTERVAL_KEY, interval);
+    }
+
+    match CURRENT_START_TIME.get() {
+        Some(start_time) => {
+            let st = start_time as i32;
+            if !storage::exists(PERSIST_CURRENT_START_KEY)
+                || storage::read_int(PERSIST_CURRENT_START_KEY) != st
+            {
+                let _ = storage::write_int(PERSIST_CURRENT_START_KEY, st);
+            }
+        }
+        None => {
+            if storage::exists(PERSIST_CURRENT_START_KEY) {
+                let _ = storage::delete(PERSIST_CURRENT_START_KEY);
+            }
+        }
+    }
+
+    if HISTORY_DIRTY.get() {
+        let history = HISTORY.borrow();
+        save_history(&history);
+        HISTORY_DIRTY.set(false);
+    }
 }
 
 pub fn deinit_state() {
@@ -168,6 +216,7 @@ pub fn toggle_state() {
         if let Some(st) = resume_start {
             start_time = st;
             history.pop();
+            HISTORY_DIRTY.set(true);
         }
 
         CURRENT_START_TIME.set(Some(start_time));
@@ -185,6 +234,8 @@ pub fn toggle_state() {
                 while history.len() > MAX_HISTORY_PAIRS {
                     history.remove(0);
                 }
+
+                HISTORY_DIRTY.set(true);
             }
         }
 
