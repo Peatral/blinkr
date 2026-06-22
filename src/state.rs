@@ -222,8 +222,13 @@ pub fn toggle_state() {
         CURRENT_START_TIME.set(Some(start_time));
 
         vibes::long_pulse();
-        let interval = INTERVAL_MINS.get();
-        let _ = wakeup::schedule(now + (interval as time_t * 60), 0, true);
+
+        let interval_secs = INTERVAL_MINS.get() as time_t * 60;
+        let elapsed = now - start_time;
+
+        let next_wakeup_in = interval_secs - (elapsed % interval_secs);
+
+        let _ = wakeup::schedule(now + next_wakeup_in, 0, true);
     } else {
         if let Some(start) = CURRENT_START_TIME.get() {
             // Only save the session if it lasted 60 seconds or more
