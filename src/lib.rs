@@ -62,6 +62,7 @@ pub fn main() -> isize {
     tick_timer::unsubscribe();
 
     window_manager::deinit();
+    state::commit_state();
     state::deinit_state();
 
     0

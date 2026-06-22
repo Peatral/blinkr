@@ -101,7 +101,6 @@ pub fn revalidate_data() {
 
     full_history.retain(|session| session.end - session.start >= 60);
 
-    save_history(&full_history);
     vibes::short_pulse();
 }
 
@@ -118,11 +117,23 @@ pub fn init_state() {
             CURRENT_START_TIME.set(Some(st));
         }
     } else {
-        if storage::exists(PERSIST_CURRENT_START_KEY) {
-            let _ = storage::delete(PERSIST_CURRENT_START_KEY);
-            CURRENT_START_TIME.set(None);
-        }
+        CURRENT_START_TIME.set(None);
     }
+}
+
+/// Commits the current in-memory state to persistent storage.
+pub fn commit_state() {
+    let _ = storage::write_bool(PERSIST_STATE_KEY, IS_ENABLED.get());
+    let _ = storage::write_int(PERSIST_INTERVAL_KEY, INTERVAL_MINS.get() as i32);
+
+    if let Some(start_time) = CURRENT_START_TIME.get() {
+        let _ = storage::write_int(PERSIST_CURRENT_START_KEY, start_time as i32);
+    } else {
+        let _ = storage::delete(PERSIST_CURRENT_START_KEY);
+    }
+
+    let history = HISTORY.borrow();
+    save_history(&history);
 }
 
 pub fn deinit_state() {
@@ -134,11 +145,9 @@ pub fn deinit_state() {
 }
 
 pub fn toggle_state() {
-    let mut is_enabled = IS_ENABLED.get();
-    is_enabled = !is_enabled;
+    let is_enabled = !IS_ENABLED.get();
     IS_ENABLED.set(is_enabled);
 
-    let _ = storage::write_bool(PERSIST_STATE_KEY, is_enabled);
     let now = get_time();
 
     if is_enabled {
@@ -159,11 +168,9 @@ pub fn toggle_state() {
         if let Some(st) = resume_start {
             start_time = st;
             history.pop();
-            save_history(&history);
         }
 
         CURRENT_START_TIME.set(Some(start_time));
-        let _ = storage::write_int(PERSIST_CURRENT_START_KEY, start_time as i32);
 
         vibes::long_pulse();
         let interval = INTERVAL_MINS.get();
@@ -178,13 +185,10 @@ pub fn toggle_state() {
                 while history.len() > MAX_HISTORY_PAIRS {
                     history.remove(0);
                 }
-
-                save_history(&history);
             }
         }
 
         CURRENT_START_TIME.set(None);
-        let _ = storage::delete(PERSIST_CURRENT_START_KEY);
 
         vibes::double_pulse();
         wakeup::cancel_all();
