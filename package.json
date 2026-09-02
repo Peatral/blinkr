@@ -10,7 +10,7 @@
     "displayName": "Blinkr",
     "versionLabel": "0.1.0",
     "sdkVersion": "3",
-    "enableMultiJS": true,
+    "enableMultiJS": false,
     "targetPlatforms": [
       "emery",
       "gabbro"
@@ -41,8 +41,16 @@
       "MSG_TYPE"
     ],
     "capabilities": [
-      "configurable"
-    ]
+    ],
+    "companionApp": {
+      "android": {
+        "apps": [
+          {
+            "package": "xyz.peatral.blinkr"
+          }
+        ]
+      }
+    }
   },
   "name": "blinkr",
   "license": "MIT",
