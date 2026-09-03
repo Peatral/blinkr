@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">Blinkr</string>
+    <string name="status_waiting">Waiting for Pebble…</string>
+    <string name="status_timer_active">Timer Active: %1$d seconds</string>
+    <string name="status_timer_stopped">Timer Stopped</string>
+    <string name="timeline_title">Today\'s Activity</string>
+</resources>
