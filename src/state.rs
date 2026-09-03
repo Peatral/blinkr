@@ -172,7 +172,8 @@ pub fn toggle_state() {
 
         vibes::long_pulse();
         let interval = INTERVAL_MINS.get();
-        let _ = wakeup::schedule(now + (interval as time_t * 60), 0, true);
+        let wakeup_time = start_time + (interval as time_t * 60);
+        let _ = wakeup::schedule(wakeup_time, 0, true);
 
         if let Ok(dict) = Outbox::begin() {
             let _ = dict.write_int(MESSAGE_KEY_MSG_TYPE, MSG_TYPE_START);
