@@ -21,7 +21,11 @@ interface SessionDao {
     fun getSessionsForTimeframe(startOfDay: Long, endOfDay: Long): Flow<List<SessionEntity>>
 }
 
-@Database(entities = [SessionEntity::class], version = 1)
+@Database(
+    entities = [SessionEntity::class],
+    version = 1,
+    exportSchema = false,
+)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun sessionDao(): SessionDao
 }
