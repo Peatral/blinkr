@@ -11,6 +11,7 @@ on:
     paths:
       - 'android/**'
       - '.github/workflows/android.yml'
+  workflow_call:
 
 jobs:
   build:
@@ -43,3 +44,4 @@ jobs:
           name: blinkr-android-app
           path: android/app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
+
