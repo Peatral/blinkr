@@ -11,9 +11,9 @@ import xyz.peatral.blinkr.data.room.SessionDao
 import xyz.peatral.blinkr.data.room.SessionEntity
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
-import java.util.Calendar
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.time.Instant
 
 @Singleton
 class SyncRepository @Inject constructor(
@@ -38,7 +38,7 @@ class SyncRepository @Inject constructor(
         }
     }
 
-    fun getSessionsForTimeframe(startOfDay: Long, endOfDay: Long): Flow<List<SessionEntity>> {
+    fun getSessionsForTimeframe(startOfDay: Instant, endOfDay: Instant): Flow<List<SessionEntity>> {
         return sessionDao.getSessionsForTimeframe(startOfDay, endOfDay)
     }
 
@@ -71,7 +71,7 @@ class SyncRepository @Inject constructor(
         while (buffer.remaining() >= 8) {
             val start = buffer.getInt().toLong()
             val end = buffer.getInt().toLong()
-            pairs.add(SessionEntity(startTime = start, endTime = end))
+            pairs.add(SessionEntity(startTime = Instant.fromEpochSeconds(start), endTime = Instant.fromEpochSeconds(end)))
         }
         return pairs
     }

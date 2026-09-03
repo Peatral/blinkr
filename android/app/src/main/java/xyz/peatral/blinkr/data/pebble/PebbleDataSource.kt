@@ -7,6 +7,7 @@ import io.rebble.pebblekit2.common.model.PebbleDictionary
 import io.rebble.pebblekit2.common.model.PebbleDictionaryItem
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.first
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -17,7 +18,9 @@ class PebbleDataSource @Inject constructor(
 ) {
     val appUuid: UUID = UUID.fromString("dabb3617-783b-443f-8add-8d74ccc57d07")
 
-    private val _incomingMessages = MutableSharedFlow<PebbleMessage>()
+    private val _incomingMessages = MutableSharedFlow<PebbleMessage>(
+        extraBufferCapacity = 10
+    )
     val incomingMessages = _incomingMessages.asSharedFlow()
 
     private val sender = DefaultPebbleSender(context)

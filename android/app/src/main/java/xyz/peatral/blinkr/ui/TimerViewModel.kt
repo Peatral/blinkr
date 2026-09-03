@@ -10,12 +10,16 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.atStartOfDayIn
+import kotlinx.datetime.toLocalDateTime
 import xyz.peatral.blinkr.data.pebble.PebbleMessage
 import xyz.peatral.blinkr.data.room.SessionEntity
 import xyz.peatral.blinkr.repository.SyncRepository
 import xyz.peatral.blinkr.repository.TrackingRepository
-import java.util.Calendar
 import javax.inject.Inject
+import kotlin.time.Clock
+import kotlin.time.Duration.Companion.days
 
 data class TimerUiState(
     val isTimerRunning: Boolean = false,
@@ -34,21 +38,18 @@ class TimerViewModel @Inject constructor(
     val uiState: StateFlow<TimerUiState> = _uiState.asStateFlow()
 
     val sessionsByDaysAgo: StateFlow<Map<Int, List<SessionEntity>>> = run {
-        val calendar = Calendar.getInstance().apply {
-            set(Calendar.HOUR_OF_DAY, 0)
-            set(Calendar.MINUTE, 0)
-            set(Calendar.SECOND, 0)
-            set(Calendar.MILLISECOND, 0)
-        }
-        val todayStartSeconds = calendar.timeInMillis / 1000L
-        val endOfTodaySeconds = todayStartSeconds + (24 * 60 * 60)
-        val startOf7DaysAgoSeconds = todayStartSeconds - ((numberOfDaysDisplayed - 1) * 24 * 60 * 60)
+        val zone = TimeZone.currentSystemDefault()
+        val startOfToday = Clock.System.now().toLocalDateTime(zone)
+            .date
+            .atStartOfDayIn(zone)
+        val endOfToday = startOfToday + 1.days
+        val startOfNDaysAgo = startOfToday - numberOfDaysDisplayed.days
 
-        syncRepository.getSessionsForTimeframe(startOf7DaysAgoSeconds, endOfTodaySeconds)
+        syncRepository.getSessionsForTimeframe(startOfNDaysAgo, endOfToday)
             .map { allSessions ->
                 (0..<numberOfDaysDisplayed-1).associateWith { daysAgo ->
-                    val dayStart = todayStartSeconds - (daysAgo * 24 * 60 * 60)
-                    val dayEnd = dayStart + (24 * 60 * 60)
+                    val dayStart = startOfToday - daysAgo.days
+                    val dayEnd = dayStart + 1.days
                     allSessions.filter { it.endTime > dayStart && it.startTime < dayEnd }
                 }
             }

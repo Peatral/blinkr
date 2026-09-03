@@ -1,14 +1,24 @@
 package xyz.peatral.blinkr.ui
 
-import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.*
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -19,13 +29,18 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.delay
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.atStartOfDayIn
+import kotlinx.datetime.toLocalDateTime
 import xyz.peatral.blinkr.R
 import xyz.peatral.blinkr.data.room.SessionEntity
 import xyz.peatral.blinkr.ui.components.SessionTimeline
-import java.util.Calendar
-import kotlin.time.Duration
+import kotlin.time.Clock
+import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Instant
 
 @Composable
 fun TimerScreen(
@@ -34,12 +49,12 @@ fun TimerScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val sessionsByDaysAgo by viewModel.sessionsByDaysAgo.collectAsStateWithLifecycle()
 
-    var currentTimeMillis by remember { mutableLongStateOf(System.currentTimeMillis()) }
+    var currentTime by remember { mutableStateOf(Clock.System.now()) }
 
     LaunchedEffect(Unit) {
         while (true) {
-            delay(60_000L)
-            currentTimeMillis = System.currentTimeMillis()
+            delay(1.minutes)
+            currentTime = Clock.System.now()
         }
     }
 
@@ -87,7 +102,7 @@ fun TimerScreen(
                 DayCard(
                     daysAgo = daysAgo,
                     sessions = sessionsByDaysAgo[daysAgo] ?: emptyList(),
-                    currentTimeMillis = currentTimeMillis
+                    currentTime = currentTime
                 )
                 Spacer(modifier = Modifier.height(16.dp))
             }
@@ -99,7 +114,7 @@ fun TimerScreen(
 fun DayCard(
     daysAgo: Int,
     sessions: List<SessionEntity>,
-    currentTimeMillis: Long
+    currentTime: Instant
 ) {
     val title = when (daysAgo) {
         0 -> stringResource(R.string.today)
@@ -107,26 +122,23 @@ fun DayCard(
         else -> stringResource(R.string.n_days_ago, daysAgo)
     }
 
-    val (startMillis, endMillis) = remember(daysAgo, currentTimeMillis) {
-        val calendar = Calendar.getInstance().apply {
-            timeInMillis = currentTimeMillis
-            set(Calendar.HOUR_OF_DAY, 0)
-            set(Calendar.MINUTE, 0)
-            set(Calendar.SECOND, 0)
-            set(Calendar.MILLISECOND, 0)
-        }
-        val todayStart = calendar.timeInMillis
-        val start = todayStart - (daysAgo * 24 * 60 * 60 * 1000L)
-        val end = start + (24 * 60 * 60 * 1000L)
+    val (startTime, endTime) = remember(daysAgo, currentTime) {
+        val zone = TimeZone.currentSystemDefault()
+        val todayStart = currentTime.toLocalDateTime(zone)
+            .date
+            .atStartOfDayIn(zone)
+
+        val start = todayStart - daysAgo.days
+        val end = start + 1.days
 
         start to end
     }
 
-    val totalDuration = remember(startMillis, endMillis, sessions) {
+    val totalDuration = remember(startTime, endTime, sessions) {
         sessions.sumOf { session ->
-            val clampedEnd = Math.clamp(session.endTime * 1000L, startMillis, endMillis)
-            val clampedStart = Math.clamp(session.startTime * 1000L, startMillis, endMillis)
-            clampedEnd - clampedStart
+            val clampedEnd = session.endTime.coerceIn(startTime, endTime)
+            val clampedStart = session.startTime.coerceIn(startTime, endTime)
+            (clampedEnd - clampedStart).inWholeMilliseconds
         }.milliseconds
     }
 
@@ -173,9 +185,9 @@ fun DayCard(
 
             SessionTimeline(
                 sessions = sessions,
-                startMillis = startMillis,
-                endMillis = endMillis,
-                currentTimeMillis = currentTimeMillis,
+                startTime = startTime,
+                endTime = endTime,
+                currentTime = currentTime,
                 modifier = Modifier.fillMaxWidth()
             )
         }

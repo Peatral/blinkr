@@ -13,13 +13,16 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import xyz.peatral.blinkr.data.room.SessionEntity
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.Instant
 
 @Composable
 fun SessionTimeline(
     sessions: List<SessionEntity>,
-    startMillis: Long,
-    endMillis: Long,
-    currentTimeMillis: Long,
+    startTime: Instant,
+    endTime: Instant,
+    currentTime: Instant,
     modifier: Modifier = Modifier
 ) {
     val pastColor = Color(0xFF4CAF50)
@@ -34,16 +37,17 @@ fun SessionTimeline(
     ) {
         val width = size.width
         val height = size.height
-        val timeframeDuration = endMillis - startMillis
+        val timeframeDuration: Duration = endTime - startTime
 
-        if (timeframeDuration <= 0) return@Canvas
+        if (timeframeDuration <= 0.seconds) return@Canvas
 
         drawRect(
             color = futureColor,
             size = Size(width, height)
         )
 
-        val elapsedFraction = ((currentTimeMillis - startMillis).toFloat() / timeframeDuration).coerceIn(0f, 1f)
+        val elapsedTime = currentTime.coerceIn(startTime, endTime) - startTime
+        val elapsedFraction = (elapsedTime / timeframeDuration).coerceIn(0.0, 1.0).toFloat()
         val elapsedWidth = width * elapsedFraction
 
         drawRect(
@@ -51,19 +55,19 @@ fun SessionTimeline(
             size = Size(elapsedWidth, height)
         )
 
-        val effectiveCurrentTime = currentTimeMillis.coerceAtMost(endMillis)
+        val effectiveCurrentTime = currentTime.coerceAtMost(endTime)
 
         for (session in sessions) {
-            val sessionStartMillis = session.startTime * 1000L
-            val sessionEndMillis = session.endTime * 1000L
+            val sessionStart = session.startTime
+            val sessionEnd = session.endTime
 
-            if (sessionEndMillis > startMillis && sessionStartMillis < endMillis) {
-                val clampedStart = sessionStartMillis.coerceAtLeast(startMillis)
+            if (sessionEnd > startTime && sessionStart < endTime) {
+                val clampedStart = sessionStart.coerceAtLeast(startTime)
 
-                val clampedEnd = sessionEndMillis.coerceAtMost(effectiveCurrentTime)
+                val clampedEnd = sessionEnd.coerceAtMost(effectiveCurrentTime)
 
-                val startFraction = ((clampedStart - startMillis).toFloat() / timeframeDuration).coerceIn(0f, 1f)
-                val endFraction = ((clampedEnd - startMillis).toFloat() / timeframeDuration).coerceIn(0f, 1f)
+                val startFraction = ((clampedStart - startTime) / timeframeDuration).coerceIn(0.0, 1.0).toFloat()
+                val endFraction = ((clampedEnd - startTime) / timeframeDuration).coerceIn(0.0, 1.0).toFloat()
 
                 val startX = width * startFraction
                 val sessionWidth = (width * endFraction) - startX

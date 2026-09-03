@@ -17,6 +17,7 @@ import xyz.peatral.blinkr.data.pebble.PebbleMessage
 import xyz.peatral.blinkr.service.TimerForegroundService
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.time.Duration.Companion.seconds
 
 @Singleton
 class TrackingRepository @Inject constructor(
@@ -63,7 +64,7 @@ class TrackingRepository @Inject constructor(
 
                 glyphDataSource.displayTime(timeString)
 
-                delay(1000L)
+                delay(1.seconds)
                 remaining--
             }
 
