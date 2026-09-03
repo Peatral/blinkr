@@ -38,18 +38,8 @@ class SyncRepository @Inject constructor(
         }
     }
 
-    fun getTodaySessions(): Flow<List<SessionEntity>> {
-        val calendar = Calendar.getInstance().apply {
-            set(Calendar.HOUR_OF_DAY, 0)
-            set(Calendar.MINUTE, 0)
-            set(Calendar.SECOND, 0)
-            set(Calendar.MILLISECOND, 0)
-        }
-
-        val startOfDaySeconds = calendar.timeInMillis / 1000L
-        val endOfDaySeconds = startOfDaySeconds + (24 * 60 * 60)
-
-        return sessionDao.getSessionsForTimeframe(startOfDaySeconds, endOfDaySeconds)
+    fun getSessionsForTimeframe(startOfDay: Long, endOfDay: Long): Flow<List<SessionEntity>> {
+        return sessionDao.getSessionsForTimeframe(startOfDay, endOfDay)
     }
 
     private fun handleSyncStart(message: PebbleMessage.SyncStart) {
