@@ -1,6 +1,7 @@
 package xyz.peatral.blinkr.ui
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
@@ -22,6 +23,9 @@ import xyz.peatral.blinkr.R
 import xyz.peatral.blinkr.data.room.SessionEntity
 import xyz.peatral.blinkr.ui.components.SessionTimeline
 import java.util.Calendar
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.hours
+import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
 fun TimerScreen(
@@ -118,6 +122,24 @@ fun DayCard(
         start to end
     }
 
+    val totalDuration = remember(startMillis, endMillis, sessions) {
+        sessions.sumOf { session ->
+            val clampedEnd = Math.clamp(session.endTime * 1000L, startMillis, endMillis)
+            val clampedStart = Math.clamp(session.startTime * 1000L, startMillis, endMillis)
+            clampedEnd - clampedStart
+        }.milliseconds
+    }
+
+    val totalDurationText = remember(totalDuration) {
+        totalDuration.toComponents { hours, minutes, _, _ ->
+            if (totalDuration < 1.hours) {
+                "${minutes}m"
+            } else {
+                "${hours}h ${minutes}m"
+            }
+        }
+    }
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
@@ -128,11 +150,24 @@ fun DayCard(
             modifier = Modifier.padding(16.dp),
             horizontalAlignment = Alignment.Start
         ) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface
-            )
+            Row(
+                modifier = Modifier
+                    .padding(0.dp)
+                    .fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+
+                Text(
+                    text = totalDurationText,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
 
             Spacer(modifier = Modifier.height(16.dp))
 
