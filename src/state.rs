@@ -9,6 +9,8 @@ use pebble_sys::time_t;
 
 pub const MSG_TYPE_START: i32 = 1;
 pub const MSG_TYPE_STOP: i32 = 2;
+pub const MSG_TYPE_SYNC_START: i32 = 3;
+pub const MSG_TYPE_SYNC_CHUNK: i32 = 4;
 
 pub const PERSIST_STATE_KEY: u32 = 1;
 pub const PERSIST_INTERVAL_KEY: u32 = 2;
