@@ -3,6 +3,7 @@ package xyz.peatral.blinkr.ui.components
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -11,7 +12,7 @@ import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
@@ -38,10 +39,14 @@ fun DayTimeline(
     val sessionColor = MaterialTheme.colorScheme.error
     val futureColor = MaterialTheme.colorScheme.surfaceVariant
 
-    Canvas(modifier = modifier.height(24.dp).fillMaxWidth()) {
+    Canvas(
+        modifier = modifier
+            .height(24.dp)
+            .fillMaxWidth()
+            .clip(CircleShape)
+    ) {
         val width = size.width
         val height = size.height
-        val cornerRadius = CornerRadius(height / 2, height / 2)
 
         val calendar = Calendar.getInstance()
         calendar.timeInMillis = currentTimeMillis
@@ -54,19 +59,17 @@ fun DayTimeline(
         val endOfDay = startOfDay + (24 * 60 * 60 * 1000L)
         val dayDuration = endOfDay - startOfDay
 
-        drawRoundRect(
+        drawRect(
             color = futureColor,
-            size = Size(width, height),
-            cornerRadius = cornerRadius
+            size = Size(width, height)
         )
 
         val elapsedFraction = ((currentTimeMillis - startOfDay).toFloat() / dayDuration).coerceIn(0f, 1f)
         val elapsedWidth = width * elapsedFraction
 
-        drawRoundRect(
+        drawRect(
             color = pastColor,
-            size = Size(elapsedWidth, height),
-            cornerRadius = cornerRadius
+            size = Size(elapsedWidth, height)
         )
 
         for (session in sessions) {
@@ -75,7 +78,6 @@ fun DayTimeline(
 
             if (sessionEndMillis > startOfDay && sessionStartMillis < endOfDay) {
                 val clampedStart = sessionStartMillis.coerceAtLeast(startOfDay)
-
                 val clampedEnd = sessionEndMillis.coerceAtMost(currentTimeMillis)
 
                 val startFraction = ((clampedStart - startOfDay).toFloat() / dayDuration).coerceIn(0f, 1f)
@@ -85,11 +87,10 @@ fun DayTimeline(
                 val sessionWidth = (width * endFraction) - startX
 
                 if (sessionWidth > 0) {
-                    drawRoundRect(
+                    drawRect(
                         color = sessionColor,
                         topLeft = Offset(x = startX, y = 0f),
-                        size = Size(sessionWidth, height),
-                        cornerRadius = CornerRadius(2.dp.toPx(), 2.dp.toPx())
+                        size = Size(sessionWidth, height)
                     )
                 }
             }
