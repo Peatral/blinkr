@@ -1,12 +1,11 @@
+use crate::utils::{cancel_wakeup, reschedule_wakeup};
 use alloc::vec::Vec;
 use bytemuck::{Pod, Zeroable};
 use core::mem::size_of;
 use pebble::std::time::get_time;
 use pebble::types::{GlobalCell, GlobalRefCell};
-use pebble::{storage, vibes, wakeup};
-use pebble::app_message::Outbox;
+use pebble::{storage, vibes};
 use pebble_sys::time_t;
-use crate::message_keys::{MESSAGE_KEY_MSG_TYPE, MESSAGE_KEY_TIMESTAMP, MESSAGE_KEY_DURATION};
 
 pub const MSG_TYPE_START: i32 = 1;
 pub const MSG_TYPE_STOP: i32 = 2;
@@ -172,15 +171,9 @@ pub fn toggle_state() {
 
         vibes::long_pulse();
         let interval = INTERVAL_MINS.get();
-        let wakeup_time = start_time + (interval as time_t * 60);
-        let _ = wakeup::schedule(wakeup_time, 0, true);
-
-        if let Ok(dict) = Outbox::begin() {
-            let _ = dict.write_int(MESSAGE_KEY_MSG_TYPE, MSG_TYPE_START);
-            let _ = dict.write_int(MESSAGE_KEY_TIMESTAMP, start_time as i32);
-            let _ = dict.write_int(MESSAGE_KEY_DURATION, interval as time_t * 60);
-            let _ = Outbox::send();
-        }
+        let time_since_start = now - start_time;
+        let wakeup_interval = interval * 60 - time_since_start;
+        let _ = reschedule_wakeup(wakeup_interval);
     } else {
         if let Some(start) = CURRENT_START_TIME.get() {
             // Only save the session if it lasted 60 seconds or more
@@ -200,12 +193,6 @@ pub fn toggle_state() {
         let _ = storage::delete(PERSIST_CURRENT_START_KEY);
 
         vibes::double_pulse();
-        wakeup::cancel_all();
-
-        if let Ok(dict) = Outbox::begin() {
-            let _ = dict.write_int(MESSAGE_KEY_MSG_TYPE, MSG_TYPE_STOP);
-            let _ = dict.write_int(MESSAGE_KEY_TIMESTAMP, now as i32);
-            let _ = Outbox::send();
-        }
+        cancel_wakeup();
     }
 }

@@ -59,7 +59,7 @@ impl MenuLayerDelegate for ReminderMenu {
             let _ = pebble::storage::write_int(state::PERSIST_INTERVAL_KEY, interval as i32);
 
             if state::IS_ENABLED.get() {
-                let _ = reschedule_wakeup(interval);
+                let _ = reschedule_wakeup(interval * 60);
             }
             menu_layer.reload_data();
         } else if row == 2 {
@@ -108,7 +108,7 @@ pub fn inbox_received_handler(dict: Dictionary) {
         let _ = pebble::storage::write_int(state::PERSIST_INTERVAL_KEY, new_interval as time_t);
 
         if state::IS_ENABLED.get() {
-            let _ = reschedule_wakeup(new_interval);
+            let _ = reschedule_wakeup(new_interval * 60);
         }
 
         if let Some(menu) = MENU_REF.borrow().as_ref() {

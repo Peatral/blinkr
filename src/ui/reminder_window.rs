@@ -70,7 +70,7 @@ impl WindowDelegate for ReminderScreen {
 pub fn create() -> AppWindow {
     vibes::double_pulse();
     let interval = INTERVAL_MINS.get();
-    let _ = reschedule_wakeup(interval);
+    let _ = reschedule_wakeup(interval * 60);
     let window = Window::new(ReminderScreen {
         text_main: RefCell::new(None),
         text_sub: RefCell::new(None),
