@@ -2,7 +2,7 @@ use alloc::ffi::CString;
 use pebble::app_message::Outbox;
 use pebble::std::time;
 use pebble_sys::{StatusCode, Tuple, WakeupId, time_t};
-use crate::message_keys::{MESSAGE_KEY_DURATION, MESSAGE_KEY_MSG_TYPE, MESSAGE_KEY_TIMESTAMP};
+use crate::message_keys::{MESSAGE_KEY_MSG_TYPE, MESSAGE_KEY_TIMESTAMP};
 use crate::state::{MSG_TYPE_START, MSG_TYPE_STOP};
 
 pub fn extract_clay_int(tuple: &Tuple, default: i32) -> i32 {
@@ -32,19 +32,19 @@ pub fn extract_clay_int(tuple: &Tuple, default: i32) -> i32 {
 pub fn reschedule_wakeup(interval_secs: time_t) -> Result<WakeupId, StatusCode> {
     pebble::wakeup::cancel_all();
     let now = time::get_time();
-    let wakeup = pebble::wakeup::schedule(now + interval_secs, 0, true);
+    let wakeup_time = now + interval_secs;
+    let wakeup = pebble::wakeup::schedule(wakeup_time, 0, true);
 
     if let Ok(dict) = Outbox::begin() {
         let _ = dict.write_int(MESSAGE_KEY_MSG_TYPE, MSG_TYPE_START);
-        let _ = dict.write_int(MESSAGE_KEY_TIMESTAMP, now);
-        let _ = dict.write_int(MESSAGE_KEY_DURATION, interval_secs);
+        let _ = dict.write_int(MESSAGE_KEY_TIMESTAMP, wakeup_time);
         let _ = Outbox::send();
     }
 
     wakeup
 }
 
-pub fn cancel_wakeup() {
+pub fn stop_session() {
     pebble::wakeup::cancel_all();
 
     let now = time::get_time();

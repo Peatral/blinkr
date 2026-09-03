@@ -1,4 +1,4 @@
-use crate::utils::{cancel_wakeup, reschedule_wakeup};
+use crate::utils::{stop_session, reschedule_wakeup};
 use alloc::vec::Vec;
 use bytemuck::{Pod, Zeroable};
 use core::mem::size_of;
@@ -170,10 +170,13 @@ pub fn toggle_state() {
         let _ = storage::write_int(PERSIST_CURRENT_START_KEY, start_time as i32);
 
         vibes::long_pulse();
-        let interval = INTERVAL_MINS.get();
-        let time_since_start = now - start_time;
-        let wakeup_interval = interval * 60 - time_since_start;
-        let _ = reschedule_wakeup(wakeup_interval);
+        // Before we did a total reset, now we actually resume the running timer
+        // as that is how I thought I wrote the code
+        let interval = INTERVAL_MINS.get() * 60;
+        let elapsed_time = now - start_time;
+        let periods = (elapsed_time / interval) + 1;
+        let next_wakeup = start_time + (periods * interval);
+        let _ = reschedule_wakeup(next_wakeup - now);
     } else {
         if let Some(start) = CURRENT_START_TIME.get() {
             // Only save the session if it lasted 60 seconds or more
@@ -193,6 +196,6 @@ pub fn toggle_state() {
         let _ = storage::delete(PERSIST_CURRENT_START_KEY);
 
         vibes::double_pulse();
-        cancel_wakeup();
+        stop_session();
     }
 }
