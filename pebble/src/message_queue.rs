@@ -17,7 +17,7 @@ pub enum Message {
     StopSession { start_timestamp: i32, end_timestamp: i32 },
     RescheduleWakeup { next_wakeup: i32 },
     SyncStart { total_chunks: i32 },
-    SyncChunk { chunk_index: usize },
+    SyncChunk { chunk_index: usize, is_last: bool },
 }
 
 pub struct MessageQueue {
@@ -63,7 +63,7 @@ impl MessageQueue {
                         let _ = dict.write_int(MESSAGE_KEY_MSG_TYPE, MSG_TYPE_SYNC_START);
                         let _ = dict.write_int(MESSAGE_KEY_SYNC_TOTAL_CHUNKS, *total_chunks);
                     }
-                    Message::SyncChunk { chunk_index } => {
+                    Message::SyncChunk { chunk_index, is_last: _ } => {
                         let history = state::HISTORY.borrow();
                         let chunks: alloc::vec::Vec<&[TimePair]> =
                             history.chunks(state::PAIRS_PER_CHUNK).collect();
@@ -85,7 +85,13 @@ impl MessageQueue {
 
     pub fn on_success(&mut self) {
         self.is_sending = false;
-        self.queue.pop_front();
+
+        if let Some(msg) = self.queue.pop_front() {
+            if let Message::SyncChunk { is_last: true, .. } = msg {
+                pebble::vibes::double_pulse();
+            }
+        }
+
         self.try_send_next();
     }
 

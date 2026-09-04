@@ -13,8 +13,9 @@ pub fn start_sync() {
     push_message(Message::SyncStart { total_chunks });
 
     for i in 0..total_chunks as usize {
-        push_message(Message::SyncChunk { chunk_index: i });
+        push_message(Message::SyncChunk {
+            chunk_index: i,
+            is_last: i == (total_chunks - 1) as usize
+        });
     }
-
-    pebble::vibes::double_pulse();
 }
