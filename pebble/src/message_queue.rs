@@ -57,9 +57,9 @@ impl MessageQueue {
                         let _ = dict.write_int(MESSAGE_KEY_MSG_TYPE, MSG_TYPE_RESCHEDULE_WAKEUP);
                         let _ = dict.write_int(MESSAGE_KEY_TIMESTAMP, *next_wakeup);
                     }
-                    Message::SyncStart { total_chunks: totalChunks } => {
+                    Message::SyncStart { total_chunks } => {
                         let _ = dict.write_int(MESSAGE_KEY_MSG_TYPE, MSG_TYPE_SYNC_START);
-                        let _ = dict.write_int(MESSAGE_KEY_SYNC_TOTAL_CHUNKS, *totalChunks);
+                        let _ = dict.write_int(MESSAGE_KEY_SYNC_TOTAL_CHUNKS, *total_chunks);
                     }
                     Message::SyncChunk { chunk_index } => {
                         let history = state::HISTORY.borrow();
