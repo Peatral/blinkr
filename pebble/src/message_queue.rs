@@ -25,7 +25,7 @@ pub struct MessageQueue {
 }
 
 impl MessageQueue {
-    pub fn new() -> Self {
+    pub const fn new() -> Self {
         Self {
             queue: VecDeque::new(),
             is_sending: false,
