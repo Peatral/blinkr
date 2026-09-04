@@ -1,4 +1,4 @@
-use crate::utils::{stop_session, reschedule_wakeup, start_session};
+use crate::utils::{stop_session, reschedule_wakeup, start_session, cancel_wakeup, DISTANT_PAST_SECONDS};
 use alloc::vec::Vec;
 use bytemuck::{Pod, Zeroable};
 use core::mem::size_of;
@@ -188,12 +188,15 @@ pub fn toggle_state() {
 
                 save_history(&history);
             }
+            stop_session(start, now);
+        } else {
+            stop_session(DISTANT_PAST_SECONDS, now);
         }
 
         CURRENT_START_TIME.set(None);
         let _ = storage::delete(PERSIST_CURRENT_START_KEY);
 
         vibes::double_pulse();
-        stop_session();
+        cancel_wakeup()
     }
 }

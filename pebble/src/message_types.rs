@@ -1,6 +1,6 @@
 
 pub const MSG_TYPE_RESCHEDULE_WAKEUP: i32 = 1;
-pub const MSG_TYPE_STOP_SESSION: i32 = 2;
-pub const MSG_TYPE_SYNC_START: i32 = 3;
-pub const MSG_TYPE_SYNC_CHUNK: i32 = 4;
-pub const MSG_TYPE_START_SESSION: i32 = 5;
+pub const MSG_TYPE_START_SESSION: i32 = 2;
+pub const MSG_TYPE_STOP_SESSION: i32 = 3;
+pub const MSG_TYPE_SYNC_START: i32 = 4;
+pub const MSG_TYPE_SYNC_CHUNK: i32 = 5;

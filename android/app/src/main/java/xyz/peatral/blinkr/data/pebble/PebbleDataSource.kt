@@ -32,11 +32,11 @@ class PebbleDataSource @Inject constructor(
             messageId = PacketIds.TYPE_RESCHEDULE_WAKEUP,
             encoder = { msg ->
                 mapOf(
-                    PebbleKeys.TIMESTAMP to PebbleDictionaryItem.Int32(msg.timestamp.epochSeconds.toInt())
+                    PebbleKeys.NEXT_WAKEUP to PebbleDictionaryItem.Int32(msg.next_wakeup.epochSeconds.toInt())
                 )
             },
             decoder = { dict ->
-                val timestamp = dict.getLong(PebbleKeys.TIMESTAMP) ?: return@registerMessage null
+                val timestamp = dict.getLong(PebbleKeys.NEXT_WAKEUP) ?: return@registerMessage null
                 PebbleMessage.RescheduleTimer(Instant.fromEpochSeconds(timestamp))
             }
         )
@@ -46,11 +46,11 @@ class PebbleDataSource @Inject constructor(
             messageId = PacketIds.TYPE_START_SESSION,
             encoder = { msg ->
                 mapOf(
-                    PebbleKeys.TIMESTAMP to PebbleDictionaryItem.Int32(msg.timestamp.epochSeconds.toInt())
+                    PebbleKeys.START_TIMESTAMP to PebbleDictionaryItem.Int32(msg.startTimestamp.epochSeconds.toInt())
                 )
             },
             decoder = { dict ->
-                val timestamp = dict.getLong(PebbleKeys.TIMESTAMP) ?: return@registerMessage null
+                val timestamp = dict.getLong(PebbleKeys.START_TIMESTAMP) ?: return@registerMessage null
                 PebbleMessage.StartSession(Instant.fromEpochSeconds(timestamp))
             }
         )
@@ -60,12 +60,14 @@ class PebbleDataSource @Inject constructor(
             messageId = PacketIds.TYPE_STOP_SESSION,
             encoder = { msg ->
                 mapOf(
-                    PebbleKeys.TIMESTAMP to PebbleDictionaryItem.Int32(msg.timestamp.epochSeconds.toInt())
+                    PebbleKeys.START_TIMESTAMP to PebbleDictionaryItem.Int32(msg.endTimestamp.epochSeconds.toInt()),
+                    PebbleKeys.END_TIMESTAMP to PebbleDictionaryItem.Int32(msg.endTimestamp.epochSeconds.toInt())
                 )
             },
             decoder = { dict ->
-                val timestamp = dict.getLong(PebbleKeys.TIMESTAMP) ?: return@registerMessage null
-                PebbleMessage.StopSession(Instant.fromEpochSeconds(timestamp))
+                val startTimestamp = dict.getLong(PebbleKeys.START_TIMESTAMP) ?: return@registerMessage null
+                val endTimestamp = dict.getLong(PebbleKeys.END_TIMESTAMP) ?: return@registerMessage null
+                PebbleMessage.StopSession(Instant.fromEpochSeconds(startTimestamp), Instant.fromEpochSeconds(endTimestamp))
             }
         )
 

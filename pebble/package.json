@@ -33,12 +33,13 @@
       ]
     },
     "messageKeys": [
-      "INTERVAL",
+      "MSG_TYPE",
       "SYNC_TOTAL_CHUNKS",
       "SYNC_DATA_CHUNK",
-      "TIMESTAMP",
-      "DURATION",
-      "MSG_TYPE"
+      "NEXT_WAKEUP",
+      "START_TIMESTAMP",
+      "END_TIMESTAMP",
+      "INTERVAL"
     ],
     "capabilities": [
     ],

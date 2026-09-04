@@ -67,7 +67,7 @@ class TimerViewModel @Inject constructor(
             trackingRepository.watchMessages.collect { message ->
                 when (message) {
                     is PebbleMessage.RescheduleTimer -> {
-                        val remaining = (message.timestamp - Clock.System.now())
+                        val remaining = (message.next_wakeup - Clock.System.now())
                         _uiState.value = TimerUiState(
                             isTimerRunning = true,
                             remainingTime = remaining,

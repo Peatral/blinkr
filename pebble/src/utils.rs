@@ -3,6 +3,9 @@ use alloc::ffi::CString;
 use pebble::std::time;
 use pebble_sys::{time_t, StatusCode, Tuple, WakeupId};
 
+pub const DISTANT_PAST_SECONDS: time_t = -3217862419201;
+pub const DISTANT_FUTURE_SECONDS: time_t = 3093527980800;
+
 pub fn extract_clay_int(tuple: &Tuple, default: i32) -> i32 {
     unsafe {
         let ptr = tuple as *const _ as *const u8;
@@ -40,18 +43,19 @@ pub fn reschedule_wakeup(interval_secs: time_t) -> Result<WakeupId, StatusCode> 
     wakeup
 }
 
+pub fn cancel_wakeup() {
+    pebble::wakeup::cancel_all();
+}
+
 pub fn start_session(start_timestamp: time_t) {
     push_message(
-        Message::StartSession { timestamp: start_timestamp }
+        Message::StartSession { start_timestamp }
     );
 }
 
-pub fn stop_session() {
-    pebble::wakeup::cancel_all();
-
-    let now = time::get_time();
+pub fn stop_session(start_timestamp: time_t, end_timestamp: time_t) {
     push_message(
-        Message::StopSession { timestamp: now }
+        Message::StopSession { start_timestamp, end_timestamp }
     );
 }
 

@@ -3,7 +3,7 @@ use alloc::collections::VecDeque;
 use pebble::app_message::{Dictionary, Outbox};
 use pebble::types::GlobalRefCell;
 use pebble_sys::AppMessageResult;
-use crate::message_keys::{MESSAGE_KEY_MSG_TYPE, MESSAGE_KEY_SYNC_DATA_CHUNK, MESSAGE_KEY_SYNC_TOTAL_CHUNKS, MESSAGE_KEY_TIMESTAMP};
+use crate::message_keys::{MESSAGE_KEY_END_TIMESTAMP, MESSAGE_KEY_MSG_TYPE, MESSAGE_KEY_NEXT_WAKEUP, MESSAGE_KEY_START_TIMESTAMP, MESSAGE_KEY_SYNC_DATA_CHUNK, MESSAGE_KEY_SYNC_TOTAL_CHUNKS, MESSAGE_KEY_TIMESTAMP};
 use crate::message_types::{MSG_TYPE_RESCHEDULE_WAKEUP, MSG_TYPE_START_SESSION, MSG_TYPE_STOP_SESSION, MSG_TYPE_SYNC_CHUNK, MSG_TYPE_SYNC_START};
 use crate::state;
 use crate::state::TimePair;
@@ -12,8 +12,8 @@ static MSG_QUEUE: GlobalRefCell<MessageQueue> = GlobalRefCell::new(MessageQueue:
 
 #[derive(Clone)]
 pub enum Message {
-    StartSession { timestamp: i32 },
-    StopSession { timestamp: i32 },
+    StartSession { start_timestamp: i32 },
+    StopSession { start_timestamp: i32, end_timestamp: i32 },
     RescheduleWakeup { next_wakeup: i32 },
     SyncStart { total_chunks: i32 },
     SyncChunk { chunk_index: usize },
@@ -45,17 +45,18 @@ impl MessageQueue {
         if let Some(msg) = self.queue.front() {
             if let Ok(dict) = Outbox::begin() {
                 match &msg {
-                    Message::StartSession { timestamp } => {
+                    Message::StartSession { start_timestamp } => {
                         let _ = dict.write_int(MESSAGE_KEY_MSG_TYPE, MSG_TYPE_START_SESSION);
-                        let _ = dict.write_int(MESSAGE_KEY_TIMESTAMP, *timestamp);
+                        let _ = dict.write_int(MESSAGE_KEY_START_TIMESTAMP, *start_timestamp);
                     }
-                    Message::StopSession { timestamp } => {
+                    Message::StopSession { start_timestamp, end_timestamp } => {
                         let _ = dict.write_int(MESSAGE_KEY_MSG_TYPE, MSG_TYPE_STOP_SESSION);
-                        let _ = dict.write_int(MESSAGE_KEY_TIMESTAMP, *timestamp);
+                        let _ = dict.write_int(MESSAGE_KEY_START_TIMESTAMP, *start_timestamp);
+                        let _ = dict.write_int(MESSAGE_KEY_END_TIMESTAMP, *end_timestamp);
                     }
                     Message::RescheduleWakeup { next_wakeup } => {
                         let _ = dict.write_int(MESSAGE_KEY_MSG_TYPE, MSG_TYPE_RESCHEDULE_WAKEUP);
-                        let _ = dict.write_int(MESSAGE_KEY_TIMESTAMP, *next_wakeup);
+                        let _ = dict.write_int(MESSAGE_KEY_NEXT_WAKEUP, *next_wakeup);
                     }
                     Message::SyncStart { total_chunks } => {
                         let _ = dict.write_int(MESSAGE_KEY_MSG_TYPE, MSG_TYPE_SYNC_START);

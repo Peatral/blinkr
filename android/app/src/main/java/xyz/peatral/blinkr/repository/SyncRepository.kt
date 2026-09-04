@@ -4,6 +4,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.last
 import kotlinx.coroutines.launch
 import xyz.peatral.blinkr.data.pebble.PebbleDataSource
 import xyz.peatral.blinkr.data.pebble.PebbleMessage
@@ -13,6 +14,7 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Instant
 
 @Singleton
@@ -25,8 +27,6 @@ class SyncRepository @Inject constructor(
     private var expectedChunks = 0
     private var receivedChunks = 0
     private val syncBuffer = mutableListOf<SessionEntity>()
-
-    private var currentStartTimestamp: Instant? = null
 
     init {
         syncScope.launch {
@@ -43,21 +43,24 @@ class SyncRepository @Inject constructor(
     }
 
     private suspend fun handleStartSession(message: PebbleMessage.StartSession) {
-        currentStartTimestamp = message.timestamp
         sessionDao.insertSession(SessionEntity(
-            startTime = currentStartTimestamp!!,
+            startTime = message.startTimestamp,
             endTime = Instant.DISTANT_FUTURE,
         ))
     }
 
     private suspend fun handleStopSession(message: PebbleMessage.StopSession) {
-        if (currentStartTimestamp == null) return
-
-        sessionDao.insertSession(SessionEntity(
-            startTime = currentStartTimestamp!!,
-            endTime = message.timestamp,
-        ))
-        currentStartTimestamp = null
+        sessionDao.deleteUnfinishedSession()
+        if (
+            message.startTimestamp > Instant.DISTANT_PAST && message.endTimestamp < Instant.DISTANT_FUTURE
+            && message.startTimestamp < message.endTimestamp
+            && message.endTimestamp - message.startTimestamp < 1.minutes
+        ) {
+            sessionDao.insertSession(SessionEntity(
+                startTime = message.startTimestamp,
+                endTime = message.endTimestamp,
+            ))
+        }
     }
 
     fun getSessionsForTimeframe(startOfDay: Instant, endOfDay: Instant): Flow<List<SessionEntity>> {

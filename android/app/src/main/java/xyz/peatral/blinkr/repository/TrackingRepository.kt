@@ -37,7 +37,7 @@ class TrackingRepository @Inject constructor(
             pebbleDataSource.incomingMessages.collect { message ->
                 when (message) {
                     is PebbleMessage.RescheduleTimer -> {
-                        val remainingSeconds = message.timestamp - Clock.System.now()
+                        val remainingSeconds = message.next_wakeup - Clock.System.now()
                         startTimer(remainingSeconds)
                     }
                     is PebbleMessage.StopSession -> stopTimer()
