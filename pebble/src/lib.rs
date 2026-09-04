@@ -11,6 +11,7 @@ mod ui;
 mod utils;
 pub mod window_manager;
 pub mod message_types;
+pub mod message_queue;
 
 use pebble::event::tick_timer;
 use pebble::{
@@ -33,8 +34,8 @@ pub fn main() -> isize {
     }
 
     AppMessage::register_inbox_received(ui::settings_window::inbox_received_handler);
-    AppMessage::register_outbox_sent(sync::outbox_sent_handler);
-    AppMessage::register_outbox_failed(sync::outbox_failed_handler);
+    AppMessage::register_outbox_sent(message_queue::outbox_sent_handler);
+    AppMessage::register_outbox_failed(message_queue::outbox_failed_handler);
     if AppMessage::open(256, 512).is_err() {
         pebble::pbl_err!(c"Failed to open AppMessage subsystem!");
     }
@@ -64,6 +65,7 @@ pub fn main() -> isize {
 
     window_manager::deinit();
     state::deinit_state();
+    message_queue::deinit();
 
     0
 }
