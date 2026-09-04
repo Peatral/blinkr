@@ -33,7 +33,7 @@ pub fn main() -> isize {
         return 0;
     }
 
-    AppMessage::register_inbox_received(ui::settings_window::inbox_received_handler);
+    AppMessage::register_inbox_received(message_queue::inbox_received_handler);
     AppMessage::register_outbox_sent(message_queue::outbox_sent_handler);
     AppMessage::register_outbox_failed(message_queue::outbox_failed_handler);
     if AppMessage::open(256, 512).is_err() {

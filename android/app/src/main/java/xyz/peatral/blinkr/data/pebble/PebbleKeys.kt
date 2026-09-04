@@ -16,4 +16,5 @@ object PacketIds {
     const val TYPE_STOP_SESSION = 3
     const val TYPE_SYNC_START = 4
     const val TYPE_SYNC_CHUNK = 5
+    const val TYPE_REQUEST_SYNC = 6
 }

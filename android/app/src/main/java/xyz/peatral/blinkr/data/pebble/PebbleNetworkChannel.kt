@@ -33,7 +33,7 @@ class PebbleNetworkChannel {
         return decoder(dict)
     }
 
-    fun encode(message: PebbleMessage): Map<UInt, PebbleDictionaryItem> {
+    fun encode(message: PebbleMessage): PebbleDictionary {
         val encoder = encoders[message::class]
             ?: throw UnsupportedOperationException("No encoder registered for ${message::class.simpleName}. (Is it a receive-only message?)")
 

@@ -64,6 +64,7 @@ class TimerViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
+            syncRepository.requestSync()
             trackingRepository.watchMessages.collect { message ->
                 when (message) {
                     is PebbleMessage.RescheduleTimer -> {

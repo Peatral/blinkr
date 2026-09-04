@@ -90,6 +90,13 @@ class PebbleDataSource @Inject constructor(
                 PebbleMessage.SyncChunk(bytes)
             }
         )
+
+        registerMessage(
+            messageClass = PebbleMessage.RequestSync::class,
+            messageId = PacketIds.TYPE_REQUEST_SYNC,
+            encoder = { _ -> mapOf() },
+            decoder = { _ -> PebbleMessage.RequestSync }
+        )
     }
 
     suspend fun processIncomingMessage(data: PebbleDictionary) {

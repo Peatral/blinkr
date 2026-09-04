@@ -14,6 +14,7 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.time.Clock
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Instant
 
@@ -80,6 +81,7 @@ class SyncRepository @Inject constructor(
 
         if (expectedChunks in 1..receivedChunks) {
             sessionDao.insertSessions(syncBuffer)
+            sessionDao.revalidateData(Clock.System.now())
             syncBuffer.clear()
             expectedChunks = 0
         }
@@ -99,5 +101,11 @@ class SyncRepository @Inject constructor(
             pairs.add(SessionEntity(startTime = Instant.fromEpochSeconds(start), endTime = Instant.fromEpochSeconds(end)))
         }
         return pairs
+    }
+
+    fun requestSync() {
+        syncScope.launch {
+            pebbleDataSource.sendMessageToWatch(PebbleMessage.RequestSync)
+        }
     }
 }
