@@ -3,8 +3,8 @@ use alloc::ffi::CString;
 use pebble::std::time;
 use pebble_sys::{time_t, StatusCode, Tuple, WakeupId};
 
-pub const DISTANT_PAST_SECONDS: time_t = -3217862419201;
-pub const DISTANT_FUTURE_SECONDS: time_t = 3093527980800;
+pub const DISTANT_PAST_SECONDS: time_t = i32::MIN;
+pub const DISTANT_FUTURE_SECONDS: time_t = i32::MAX;
 
 pub fn extract_clay_int(tuple: &Tuple, default: i32) -> i32 {
     unsafe {

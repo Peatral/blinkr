@@ -11,6 +11,7 @@ import androidx.room.RoomDatabase
 import androidx.room.Transaction
 import androidx.room.TypeConverters
 import kotlinx.coroutines.flow.Flow
+import xyz.peatral.blinkr.data.pebble.PebbleConstants
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
@@ -38,7 +39,7 @@ interface SessionDao {
     suspend fun deleteLatestSessionIfUnfinished(distantFuture: Instant)
 
     suspend fun deleteUnfinishedSession() {
-        deleteLatestSessionIfUnfinished(Instant.DISTANT_FUTURE)
+        deleteLatestSessionIfUnfinished(PebbleConstants.DISTANT_FUTURE)
     }
 
     @Query("SELECT * FROM sessions ORDER BY startTime DESC")

@@ -6,6 +6,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.last
 import kotlinx.coroutines.launch
+import xyz.peatral.blinkr.data.pebble.PebbleConstants
 import xyz.peatral.blinkr.data.pebble.PebbleDataSource
 import xyz.peatral.blinkr.data.pebble.PebbleMessage
 import xyz.peatral.blinkr.data.room.SessionDao
@@ -46,14 +47,14 @@ class SyncRepository @Inject constructor(
     private suspend fun handleStartSession(message: PebbleMessage.StartSession) {
         sessionDao.insertSession(SessionEntity(
             startTime = message.startTimestamp,
-            endTime = Instant.DISTANT_FUTURE,
+            endTime = PebbleConstants.DISTANT_FUTURE,
         ))
     }
 
     private suspend fun handleStopSession(message: PebbleMessage.StopSession) {
         sessionDao.deleteUnfinishedSession()
         if (
-            message.startTimestamp > Instant.DISTANT_PAST && message.endTimestamp < Instant.DISTANT_FUTURE
+            message.startTimestamp > PebbleConstants.DISTANT_PAST && message.endTimestamp < PebbleConstants.DISTANT_FUTURE
             && message.startTimestamp < message.endTimestamp
             && message.endTimestamp - message.startTimestamp < 1.minutes
         ) {
