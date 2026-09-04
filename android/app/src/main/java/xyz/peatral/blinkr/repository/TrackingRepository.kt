@@ -17,6 +17,8 @@ import xyz.peatral.blinkr.data.pebble.PebbleMessage
 import xyz.peatral.blinkr.service.TimerForegroundService
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.time.Clock
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 @Singleton
@@ -35,9 +37,8 @@ class TrackingRepository @Inject constructor(
             pebbleDataSource.incomingMessages.collect { message ->
                 when (message) {
                     is PebbleMessage.RescheduleTimer -> {
-                        val currentUnixTime = System.currentTimeMillis() / 1000L
-                        val remainingSeconds = message.timestamp - currentUnixTime
-                        startTimer(remainingSeconds.toInt())
+                        val remainingSeconds = message.timestamp - Clock.System.now()
+                        startTimer(remainingSeconds)
                     }
                     is PebbleMessage.StopSession -> stopTimer()
                     else -> {}
@@ -48,7 +49,7 @@ class TrackingRepository @Inject constructor(
 
     val watchMessages: Flow<PebbleMessage> = pebbleDataSource.incomingMessages
 
-    private fun startTimer(durationSeconds: Int) {
+    private fun startTimer(durationSeconds: Duration) {
         timerJob?.cancel()
 
         val serviceIntent = Intent(context, TimerForegroundService::class.java)
@@ -57,15 +58,13 @@ class TrackingRepository @Inject constructor(
         timerJob = repoScope.launch {
             var remaining = durationSeconds
 
-            while (remaining >= 0) {
-                val minutes = remaining / 60
-                val seconds = remaining % 60
-                val timeString = String.format("%02d:%02d", minutes, seconds)
+            while (remaining >= 0.seconds) {
+                val timeString = remaining.toComponents { minutes, seconds, _ -> String.format("%02d:%02d", minutes, seconds) }
 
                 glyphDataSource.displayTime(timeString)
 
                 delay(1.seconds)
-                remaining--
+                remaining -= 1.seconds
             }
 
             glyphDataSource.clearDisplay()
