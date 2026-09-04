@@ -16,6 +16,7 @@ import kotlinx.datetime.toLocalDateTime
 import xyz.peatral.blinkr.data.pebble.PebbleMessage
 import xyz.peatral.blinkr.data.room.SessionEntity
 import xyz.peatral.blinkr.repository.SyncRepository
+import xyz.peatral.blinkr.repository.SyncState
 import xyz.peatral.blinkr.repository.TrackingRepository
 import javax.inject.Inject
 import kotlin.time.Clock
@@ -26,7 +27,8 @@ import kotlin.time.Duration.Companion.seconds
 data class TimerUiState(
     val isTimerRunning: Boolean = false,
     val remainingTime: Duration = 0.seconds,
-    val isWaiting: Boolean = true
+    val isWaiting: Boolean = true,
+    val isRefreshing: Boolean = false,
 )
 
 @HiltViewModel
@@ -62,9 +64,19 @@ class TimerViewModel @Inject constructor(
             )
     }
 
+    fun refreshSessions() {
+        syncRepository.requestSync()
+        _uiState.value = _uiState.value.copy(isRefreshing = true)
+    }
+
     init {
         viewModelScope.launch {
-            syncRepository.requestSync()
+            syncRepository.syncState.collect { state ->
+                when (state) {
+                    is SyncState.Idle -> _uiState.value = _uiState.value.copy(isRefreshing = false)
+                    is SyncState.Syncing -> _uiState.value = _uiState.value.copy(isRefreshing = true)
+                }
+            }
             trackingRepository.watchMessages.collect { message ->
                 when (message) {
                     is PebbleMessage.RescheduleTimer -> {

@@ -5,10 +5,18 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import io.rebble.pebblekit2.client.DefaultPebbleSender
 import io.rebble.pebblekit2.common.model.PebbleDictionary
 import io.rebble.pebblekit2.common.model.PebbleDictionaryItem
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlin.time.Instant
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import java.util.UUID
+import kotlin.time.Instant
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -16,12 +24,19 @@ import javax.inject.Singleton
 class PebbleDataSource @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
+    private val pebbleNetworkScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+
     val appUuid: UUID = UUID.fromString("dabb3617-783b-443f-8add-8d74ccc57d07")
+
+    private val _appOpen = MutableStateFlow(false)
+    val appOpen = _appOpen.asStateFlow()
 
     private val _incomingMessages = MutableSharedFlow<PebbleMessage>(
         extraBufferCapacity = 10
     )
     val incomingMessages = _incomingMessages.asSharedFlow()
+
+    private val outgoingMessages = Channel<PebbleMessage>(Channel.BUFFERED)
 
     private val sender = DefaultPebbleSender(context)
 
@@ -107,8 +122,27 @@ class PebbleDataSource @Inject constructor(
     }
 
     suspend fun sendMessageToWatch(message: PebbleMessage) {
-        val payload = channel.encode(message)
-        sender.sendDataToPebble(appUuid, payload)
+        val wasAppOpen = appOpen.value
+        if (!wasAppOpen) {
+            sender.startAppOnTheWatch(appUuid)
+        }
+        outgoingMessages.send(message)
+    }
+
+    fun setAppOpen(watchappUUID: UUID, open: Boolean) {
+        if (watchappUUID.equals(appUuid)) {
+            _appOpen.value = open
+        }
+    }
+
+    init {
+        pebbleNetworkScope.launch {
+            for (message in outgoingMessages) {
+                appOpen.first { it }
+                val payload = channel.encode(message)
+                sender.sendDataToPebble(appUuid, payload)
+            }
+        }
     }
 
     fun cleanup() {

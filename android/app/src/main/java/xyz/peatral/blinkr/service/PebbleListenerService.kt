@@ -35,10 +35,10 @@ class PebbleListenerService : BasePebbleListenerService() {
     }
 
     override fun onAppOpened(watchappUUID: UUID, watch: WatchIdentifier) {
-        // Optional: Trigger connection state updates in your repository
+        pebbleDataSource.setAppOpen(watchappUUID, true)
     }
 
     override fun onAppClosed(watchappUUID: UUID, watch: WatchIdentifier) {
-        // Optional: Handle disconnects
+        pebbleDataSource.setAppOpen(watchappUUID, false)
     }
 }

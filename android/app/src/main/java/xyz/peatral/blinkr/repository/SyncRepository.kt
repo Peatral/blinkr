@@ -4,7 +4,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.last
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import xyz.peatral.blinkr.data.pebble.PebbleConstants
 import xyz.peatral.blinkr.data.pebble.PebbleDataSource
@@ -19,6 +21,11 @@ import kotlin.time.Clock
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Instant
 
+sealed interface SyncState {
+    object Idle : SyncState
+    class Syncing(progress: Float) : SyncState
+}
+
 @Singleton
 class SyncRepository @Inject constructor(
     private val pebbleDataSource: PebbleDataSource,
@@ -29,6 +36,9 @@ class SyncRepository @Inject constructor(
     private var expectedChunks = 0
     private var receivedChunks = 0
     private val syncBuffer = mutableListOf<SessionEntity>()
+
+    private val _syncState = MutableStateFlow<SyncState>(SyncState.Idle)
+    val syncState = _syncState.asStateFlow()
 
     init {
         syncScope.launch {
@@ -80,11 +90,15 @@ class SyncRepository @Inject constructor(
         syncBuffer.addAll(pairs)
         receivedChunks++
 
+
+        _syncState.value = SyncState.Syncing((receivedChunks.toFloat() / expectedChunks.toFloat()).coerceIn(0.0f, 1.0f))
+
         if (expectedChunks in 1..receivedChunks) {
             sessionDao.insertSessions(syncBuffer)
             sessionDao.revalidateData(Clock.System.now())
             syncBuffer.clear()
             expectedChunks = 0
+            _syncState.value = SyncState.Idle
         }
     }
 
@@ -105,6 +119,7 @@ class SyncRepository @Inject constructor(
     }
 
     fun requestSync() {
+        _syncState.value = SyncState.Syncing(0.0f)
         syncScope.launch {
             pebbleDataSource.sendMessageToWatch(PebbleMessage.RequestSync)
         }
