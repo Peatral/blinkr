@@ -7,8 +7,10 @@ import io.rebble.pebblekit2.common.model.PebbleDictionary
 import io.rebble.pebblekit2.common.model.PebbleDictionaryItem
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -16,10 +18,14 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.util.UUID
-import kotlin.time.Instant
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.concurrent.atomics.AtomicBoolean
+import kotlin.concurrent.atomics.ExperimentalAtomicApi
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.Instant
 
+@OptIn(ExperimentalAtomicApi::class, ExperimentalCoroutinesApi::class)
 @Singleton
 class PebbleDataSource @Inject constructor(
     @ApplicationContext private val context: Context
@@ -30,6 +36,9 @@ class PebbleDataSource @Inject constructor(
 
     private val _appOpen = MutableStateFlow(false)
     val appOpen = _appOpen.asStateFlow()
+
+    private val autoOpened = AtomicBoolean(false)
+
 
     private val _incomingMessages = MutableSharedFlow<PebbleMessage>(
         extraBufferCapacity = 10
@@ -122,15 +131,15 @@ class PebbleDataSource @Inject constructor(
     }
 
     suspend fun sendMessageToWatch(message: PebbleMessage) {
-        val wasAppOpen = appOpen.value
-        if (!wasAppOpen) {
+        if (!appOpen.value) {
             sender.startAppOnTheWatch(appUuid)
+            autoOpened.store(true)
         }
         outgoingMessages.send(message)
     }
 
     fun setAppOpen(watchappUUID: UUID, open: Boolean) {
-        if (watchappUUID.equals(appUuid)) {
+        if (watchappUUID == appUuid) {
             _appOpen.value = open
         }
     }
@@ -141,6 +150,19 @@ class PebbleDataSource @Inject constructor(
                 appOpen.first { it }
                 val payload = channel.encode(message)
                 sender.sendDataToPebble(appUuid, payload)
+
+                if (outgoingMessages.isEmpty && autoOpened.load()) {
+                    delay(1.seconds)
+
+                    if (
+                        outgoingMessages.isEmpty && autoOpened.compareAndSet(
+                            expectedValue = true,
+                            newValue = false
+                        )
+                    ) {
+                        sender.stopAppOnTheWatch(appUuid)
+                    }
+                }
             }
         }
     }
