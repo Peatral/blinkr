@@ -83,7 +83,7 @@ fun TimerScreen(
                     stringResource(R.string.status_waiting) to MaterialTheme.colorScheme.onSurfaceVariant
                 }
                 uiState.isTimerRunning -> {
-                    stringResource(R.string.status_timer_active, uiState.remainingSeconds) to MaterialTheme.colorScheme.primary
+                    stringResource(R.string.status_timer_active, uiState.remainingTime.inWholeSeconds) to MaterialTheme.colorScheme.primary
                 }
                 else -> {
                     stringResource(R.string.status_timer_stopped) to MaterialTheme.colorScheme.onSurfaceVariant

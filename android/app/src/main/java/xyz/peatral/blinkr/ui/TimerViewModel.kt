@@ -19,11 +19,13 @@ import xyz.peatral.blinkr.repository.SyncRepository
 import xyz.peatral.blinkr.repository.TrackingRepository
 import javax.inject.Inject
 import kotlin.time.Clock
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.days
+import kotlin.time.Duration.Companion.seconds
 
 data class TimerUiState(
     val isTimerRunning: Boolean = false,
-    val remainingSeconds: Int = 0,
+    val remainingTime: Duration = 0.seconds,
     val isWaiting: Boolean = true
 )
 
@@ -65,18 +67,17 @@ class TimerViewModel @Inject constructor(
             trackingRepository.watchMessages.collect { message ->
                 when (message) {
                     is PebbleMessage.RescheduleTimer -> {
-                        val currentUnixTime = System.currentTimeMillis() / 1000L
-                        val remaining = (message.timestamp - currentUnixTime).toInt()
+                        val remaining = (message.timestamp - Clock.System.now())
                         _uiState.value = TimerUiState(
                             isTimerRunning = true,
-                            remainingSeconds = remaining,
+                            remainingTime = remaining,
                             isWaiting = false
                         )
                     }
                     is PebbleMessage.StopSession -> {
                         _uiState.value = TimerUiState(
                             isTimerRunning = false,
-                            remainingSeconds = 0,
+                            remainingTime = 0.seconds,
                             isWaiting = false
                         )
                     }
