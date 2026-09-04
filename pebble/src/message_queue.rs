@@ -1,13 +1,13 @@
 extern crate alloc;
+use crate::message_keys::{MESSAGE_KEY_END_TIMESTAMP, MESSAGE_KEY_MSG_TYPE, MESSAGE_KEY_NEXT_WAKEUP, MESSAGE_KEY_START_TIMESTAMP, MESSAGE_KEY_SYNC_DATA_CHUNK, MESSAGE_KEY_SYNC_TOTAL_CHUNKS};
+use crate::message_types::{MSG_TYPE_REQUEST_SYNC, MSG_TYPE_RESCHEDULE_WAKEUP, MSG_TYPE_START_SESSION, MSG_TYPE_STOP_SESSION, MSG_TYPE_SYNC_CHUNK, MSG_TYPE_SYNC_START};
+use crate::state::TimePair;
+use crate::sync::start_sync;
+use crate::{state, ui};
 use alloc::collections::VecDeque;
 use pebble::app_message::{Dictionary, Outbox};
 use pebble::types::GlobalRefCell;
 use pebble_sys::AppMessageResult;
-use crate::message_keys::{MESSAGE_KEY_END_TIMESTAMP, MESSAGE_KEY_MSG_TYPE, MESSAGE_KEY_NEXT_WAKEUP, MESSAGE_KEY_START_TIMESTAMP, MESSAGE_KEY_SYNC_DATA_CHUNK, MESSAGE_KEY_SYNC_TOTAL_CHUNKS, MESSAGE_KEY_TIMESTAMP};
-use crate::message_types::{MSG_TYPE_REQUEST_SYNC, MSG_TYPE_RESCHEDULE_WAKEUP, MSG_TYPE_START_SESSION, MSG_TYPE_STOP_SESSION, MSG_TYPE_SYNC_CHUNK, MSG_TYPE_SYNC_START};
-use crate::{message_keys, state, ui};
-use crate::state::TimePair;
-use crate::sync::start_sync;
 
 static MSG_QUEUE: GlobalRefCell<MessageQueue> = GlobalRefCell::new(MessageQueue::new());
 
@@ -107,14 +107,16 @@ pub fn push_message(message: Message) {
 pub fn inbox_received_handler(dict: Dictionary) {
     if let Some(tuple) = dict.find(MESSAGE_KEY_MSG_TYPE) {
         if tuple.type_() == pebble_sys::TupleType::TUPLE_INT && tuple.length == 4 {
-            let msg_type = unsafe {
-                let value_ptr = tuple.value.as_ptr() as *const i32;
-                core::ptr::read_unaligned(value_ptr)
+            let msg_type_opt = unsafe {
+                let value_ptr = core::ptr::addr_of!(tuple.value) as *const i32;
+                Some(core::ptr::read_unaligned(value_ptr))
             };
 
-            match msg_type {
-                MSG_TYPE_REQUEST_SYNC => start_sync(),
-                _ => {},
+            if let Some(msg_type) = msg_type_opt {
+                match msg_type {
+                    MSG_TYPE_REQUEST_SYNC => start_sync(),
+                    _ => {},
+                }
             }
         }
     } else {
