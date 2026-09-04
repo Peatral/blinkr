@@ -34,6 +34,7 @@ import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.toLocalDateTime
 import xyz.peatral.blinkr.R
 import xyz.peatral.blinkr.data.room.SessionEntity
+import xyz.peatral.blinkr.ui.components.DayCard
 import xyz.peatral.blinkr.ui.components.SessionTimeline
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.days
@@ -106,90 +107,6 @@ fun TimerScreen(
                 )
                 Spacer(modifier = Modifier.height(16.dp))
             }
-        }
-    }
-}
-
-@Composable
-fun DayCard(
-    daysAgo: Int,
-    sessions: List<SessionEntity>,
-    currentTime: Instant
-) {
-    val title = when (daysAgo) {
-        0 -> stringResource(R.string.today)
-        1 -> stringResource(R.string.yesterday)
-        else -> stringResource(R.string.n_days_ago, daysAgo)
-    }
-
-    val (startTime, endTime) = remember(daysAgo, currentTime) {
-        val zone = TimeZone.currentSystemDefault()
-        val todayStart = currentTime.toLocalDateTime(zone)
-            .date
-            .atStartOfDayIn(zone)
-
-        val start = todayStart - daysAgo.days
-        val end = start + 1.days
-
-        start to end
-    }
-
-    val totalDuration = remember(startTime, endTime, sessions) {
-        sessions.sumOf { session ->
-            val clampedEnd = session.endTime.coerceIn(startTime, endTime)
-            val clampedStart = session.startTime.coerceIn(startTime, endTime)
-            (clampedEnd - clampedStart).inWholeMilliseconds
-        }.milliseconds
-    }
-
-    val totalDurationText = remember(totalDuration) {
-        totalDuration.toComponents { hours, minutes, _, _ ->
-            if (totalDuration < 1.hours) {
-                "${minutes}m"
-            } else {
-                "${hours}h ${minutes}m"
-            }
-        }
-    }
-
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-        )
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            horizontalAlignment = Alignment.Start
-        ) {
-            Row(
-                modifier = Modifier
-                    .padding(0.dp)
-                    .fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-            ) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-
-                Text(
-                    text = totalDurationText,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            SessionTimeline(
-                sessions = sessions,
-                startTime = startTime,
-                endTime = endTime,
-                currentTime = currentTime,
-                modifier = Modifier.fillMaxWidth()
-            )
         }
     }
 }
