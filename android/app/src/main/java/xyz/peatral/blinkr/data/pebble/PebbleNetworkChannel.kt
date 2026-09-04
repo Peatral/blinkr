@@ -21,14 +21,14 @@ class PebbleNetworkChannel {
         if (encoder != null) {
             encoders[messageClass] = { msg ->
                 val payload = encoder(msg as T).toMutableMap()
-                payload[PebbleKeys.MSG_TYPE] = PebbleDictionaryItem.Int32(messageId)
+                payload[MessageKeys.MSG_TYPE] = PebbleDictionaryItem.Int32(messageId)
                 payload
             }
         }
     }
 
     fun decode(dict: PebbleDictionary): PebbleMessage? {
-        val msgType = dict.getInt(PebbleKeys.MSG_TYPE) ?: return null
+        val msgType = dict.getInt(MessageKeys.MSG_TYPE) ?: return null
         val decoder = decoders[msgType] ?: return null
         return decoder(dict)
     }

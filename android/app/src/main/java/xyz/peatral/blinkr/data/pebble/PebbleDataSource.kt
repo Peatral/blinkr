@@ -53,71 +53,71 @@ class PebbleDataSource @Inject constructor(
 
         registerMessage(
             messageClass = PebbleMessage.RescheduleTimer::class,
-            messageId = PacketIds.TYPE_RESCHEDULE_WAKEUP,
+            messageId = MessageTypes.TYPE_RESCHEDULE_WAKEUP,
             encoder = { msg ->
                 mapOf(
-                    PebbleKeys.NEXT_WAKEUP to PebbleDictionaryItem.Int32(msg.next_wakeup.epochSeconds.toInt())
+                    MessageKeys.NEXT_WAKEUP to PebbleDictionaryItem.Int32(msg.next_wakeup.epochSeconds.toInt())
                 )
             },
             decoder = { dict ->
-                val timestamp = dict.getLong(PebbleKeys.NEXT_WAKEUP) ?: return@registerMessage null
+                val timestamp = dict.getLong(MessageKeys.NEXT_WAKEUP) ?: return@registerMessage null
                 PebbleMessage.RescheduleTimer(Instant.fromEpochSeconds(timestamp))
             }
         )
 
         registerMessage(
             messageClass = PebbleMessage.StartSession::class,
-            messageId = PacketIds.TYPE_START_SESSION,
+            messageId = MessageTypes.TYPE_START_SESSION,
             encoder = { msg ->
                 mapOf(
-                    PebbleKeys.START_TIMESTAMP to PebbleDictionaryItem.Int32(msg.startTimestamp.epochSeconds.toInt())
+                    MessageKeys.START_TIMESTAMP to PebbleDictionaryItem.Int32(msg.startTimestamp.epochSeconds.toInt())
                 )
             },
             decoder = { dict ->
-                val timestamp = dict.getLong(PebbleKeys.START_TIMESTAMP) ?: return@registerMessage null
+                val timestamp = dict.getLong(MessageKeys.START_TIMESTAMP) ?: return@registerMessage null
                 PebbleMessage.StartSession(Instant.fromEpochSeconds(timestamp))
             }
         )
 
         registerMessage(
             messageClass = PebbleMessage.StopSession::class,
-            messageId = PacketIds.TYPE_STOP_SESSION,
+            messageId = MessageTypes.TYPE_STOP_SESSION,
             encoder = { msg ->
                 mapOf(
-                    PebbleKeys.START_TIMESTAMP to PebbleDictionaryItem.Int32(msg.endTimestamp.epochSeconds.toInt()),
-                    PebbleKeys.END_TIMESTAMP to PebbleDictionaryItem.Int32(msg.endTimestamp.epochSeconds.toInt())
+                    MessageKeys.START_TIMESTAMP to PebbleDictionaryItem.Int32(msg.endTimestamp.epochSeconds.toInt()),
+                    MessageKeys.END_TIMESTAMP to PebbleDictionaryItem.Int32(msg.endTimestamp.epochSeconds.toInt())
                 )
             },
             decoder = { dict ->
-                val startTimestamp = dict.getLong(PebbleKeys.START_TIMESTAMP) ?: return@registerMessage null
-                val endTimestamp = dict.getLong(PebbleKeys.END_TIMESTAMP) ?: return@registerMessage null
+                val startTimestamp = dict.getLong(MessageKeys.START_TIMESTAMP) ?: return@registerMessage null
+                val endTimestamp = dict.getLong(MessageKeys.END_TIMESTAMP) ?: return@registerMessage null
                 PebbleMessage.StopSession(Instant.fromEpochSeconds(startTimestamp), Instant.fromEpochSeconds(endTimestamp))
             }
         )
 
         registerMessage(
             messageClass = PebbleMessage.SyncStart::class,
-            messageId = PacketIds.TYPE_SYNC_START,
+            messageId = MessageTypes.TYPE_SYNC_START,
             encoder = null,
             decoder = { dict ->
-                val total = dict.getInt(PebbleKeys.SYNC_TOTAL_CHUNKS) ?: return@registerMessage null
+                val total = dict.getInt(MessageKeys.SYNC_TOTAL_CHUNKS) ?: return@registerMessage null
                 PebbleMessage.SyncStart(total)
             }
         )
 
         registerMessage(
             messageClass = PebbleMessage.SyncChunk::class,
-            messageId = PacketIds.TYPE_SYNC_CHUNK,
+            messageId = MessageTypes.TYPE_SYNC_CHUNK,
             encoder = null,
             decoder = { dict ->
-                val bytes = dict.getBytes(PebbleKeys.SYNC_DATA_CHUNK) ?: return@registerMessage null
+                val bytes = dict.getBytes(MessageKeys.SYNC_DATA_CHUNK) ?: return@registerMessage null
                 PebbleMessage.SyncChunk(bytes)
             }
         )
 
         registerMessage(
             messageClass = PebbleMessage.RequestSync::class,
-            messageId = PacketIds.TYPE_REQUEST_SYNC,
+            messageId = MessageTypes.TYPE_REQUEST_SYNC,
             encoder = { _ -> mapOf() },
             decoder = { _ -> PebbleMessage.RequestSync }
         )
