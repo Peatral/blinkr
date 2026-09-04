@@ -8,6 +8,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
@@ -23,12 +24,11 @@ fun SessionTimeline(
     startTime: Instant,
     endTime: Instant,
     currentTime: Instant,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    pastColor: Color = MaterialTheme.colorScheme.secondaryContainer,
+    futureColor: Color = MaterialTheme.colorScheme.surfaceVariant,
+    sessionColor: Color = MaterialTheme.colorScheme.primary,
 ) {
-    val pastColor = Color(0xFF4CAF50)
-    val sessionColor = MaterialTheme.colorScheme.error
-    val futureColor = MaterialTheme.colorScheme.surfaceVariant
-
     Canvas(
         modifier = modifier
             .height(24.dp)
@@ -50,9 +50,10 @@ fun SessionTimeline(
         val elapsedFraction = (elapsedTime / timeframeDuration).coerceIn(0.0, 1.0).toFloat()
         val elapsedWidth = width * elapsedFraction
 
-        drawRect(
+        drawRoundRect(
             color = pastColor,
-            size = Size(elapsedWidth, height)
+            size = Size(elapsedWidth, height),
+            cornerRadius = CornerRadius(12f, 12f)
         )
 
         val effectiveCurrentTime = currentTime.coerceAtMost(endTime)
@@ -73,10 +74,11 @@ fun SessionTimeline(
                 val sessionWidth = (width * endFraction) - startX
 
                 if (sessionWidth > 0) {
-                    drawRect(
+                    drawRoundRect(
                         color = sessionColor,
                         topLeft = Offset(x = startX, y = 0f),
-                        size = Size(sessionWidth, height)
+                        size = Size(sessionWidth, height),
+                        cornerRadius = CornerRadius(12f, 12f)
                     )
                 }
             }
