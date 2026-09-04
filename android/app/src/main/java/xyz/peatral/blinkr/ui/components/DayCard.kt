@@ -52,10 +52,11 @@ fun DayCard(
         start to end
     }
 
-    val totalDuration = remember(startTime, endTime, sessions) {
+    val totalDuration = remember(startTime, endTime, currentTime, sessions) {
         sessions.sumOf { session ->
-            val clampedEnd = session.endTime.coerceIn(startTime, endTime)
-            val clampedStart = session.startTime.coerceIn(startTime, endTime)
+            val minEndTime = minOf(endTime, currentTime)
+            val clampedEnd = session.endTime.coerceIn(startTime, minEndTime)
+            val clampedStart = session.startTime.coerceIn(startTime, minEndTime)
             (clampedEnd - clampedStart).inWholeMilliseconds
         }.milliseconds
     }
