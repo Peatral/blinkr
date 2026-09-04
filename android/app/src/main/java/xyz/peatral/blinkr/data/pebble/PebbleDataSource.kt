@@ -32,7 +32,7 @@ class PebbleDataSource @Inject constructor(
 ) {
     private val pebbleNetworkScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
-    val appUuid: UUID = UUID.fromString("dabb3617-783b-443f-8add-8d74ccc57d07")
+    private val appUuid: UUID = UUID.fromString("dabb3617-783b-443f-8add-8d74ccc57d07")
 
     private val _appOpen = MutableStateFlow(false)
     val appOpen = _appOpen.asStateFlow()
@@ -123,11 +123,13 @@ class PebbleDataSource @Inject constructor(
         )
     }
 
-    suspend fun processIncomingMessage(data: PebbleDictionary) {
+    suspend fun processIncomingMessage(watchappUUID: UUID, data: PebbleDictionary): Boolean {
+        if (watchappUUID != appUuid) return false
         val message = channel.decode(data)
         if (message != null) {
             _incomingMessages.emit(message)
         }
+        return true
     }
 
     suspend fun sendMessageToWatch(message: PebbleMessage) {

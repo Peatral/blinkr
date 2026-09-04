@@ -30,8 +30,12 @@ class PebbleListenerService : BasePebbleListenerService() {
         data: PebbleDictionary,
         watch: WatchIdentifier
     ): ReceiveResult {
-        pebbleDataSource.processIncomingMessage(data)
-        return ReceiveResult.Ack
+        val handled = pebbleDataSource.processIncomingMessage(watchappUUID, data)
+        return if (handled) {
+            ReceiveResult.Ack
+        } else {
+            ReceiveResult.Nack
+        }
     }
 
     override fun onAppOpened(watchappUUID: UUID, watch: WatchIdentifier) {
