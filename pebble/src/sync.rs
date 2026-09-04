@@ -1,4 +1,4 @@
-use crate::message_queue::{Message, MSG_QUEUE};
+use crate::message_queue::{push_message, Message};
 use crate::state;
 use pebble::types::GlobalCell;
 
@@ -21,10 +21,10 @@ pub fn start_sync() {
     SYNC_IN_PROGRESS.set(true);
     CURRENT_CHUNK_INDEX.set(0);
 
-    MSG_QUEUE.borrow_mut().push(Message::SyncStart { total_chunks });
+    push_message(Message::SyncStart { total_chunks });
 
     for i in 0..total_chunks as usize {
-        MSG_QUEUE.borrow_mut().push(Message::SyncChunk { chunk_index: i });
+        push_message(Message::SyncChunk { chunk_index: i });
     }
 
     pebble::vibes::double_pulse();

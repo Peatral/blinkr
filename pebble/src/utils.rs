@@ -1,5 +1,4 @@
-use crate::message_queue;
-use crate::message_queue::Message;
+use crate::message_queue::{push_message, Message};
 use alloc::ffi::CString;
 use pebble::std::time;
 use pebble_sys::{time_t, StatusCode, Tuple, WakeupId};
@@ -34,7 +33,7 @@ pub fn reschedule_wakeup(interval_secs: time_t) -> Result<WakeupId, StatusCode> 
     let wakeup_time = now + interval_secs;
     let wakeup = pebble::wakeup::schedule(wakeup_time, 0, true);
 
-    message_queue::MSG_QUEUE.borrow().push(
+    push_message(
         Message::RescheduleWakeup { next_wakeup: wakeup_time }.into()
     );
 
@@ -42,7 +41,7 @@ pub fn reschedule_wakeup(interval_secs: time_t) -> Result<WakeupId, StatusCode> 
 }
 
 pub fn start_session(start_timestamp: time_t) {
-    message_queue::MSG_QUEUE.borrow().push(
+    push_message(
         Message::StartSession { timestamp: start_timestamp }
     );
 }
@@ -51,7 +50,7 @@ pub fn stop_session() {
     pebble::wakeup::cancel_all();
 
     let now = time::get_time();
-    message_queue::MSG_QUEUE.borrow().push(
+    push_message(
         Message::StopSession { timestamp: now }
     );
 }

@@ -8,7 +8,7 @@ use crate::message_types::{MSG_TYPE_RESCHEDULE_WAKEUP, MSG_TYPE_START_SESSION, M
 use crate::state;
 use crate::state::TimePair;
 
-pub static MSG_QUEUE: GlobalRefCell<MessageQueue> = GlobalRefCell::new(MessageQueue::new());
+static MSG_QUEUE: GlobalRefCell<MessageQueue> = GlobalRefCell::new(MessageQueue::new());
 
 #[derive(Clone)]
 pub enum Message {
@@ -96,6 +96,10 @@ impl MessageQueue {
         self.queue.clear();
         self.is_sending = false;
     }
+}
+
+pub fn push_message(message: Message) {
+    MSG_QUEUE.borrow_mut().push(message);
 }
 
 pub fn outbox_sent_handler(_dict: Dictionary) {
