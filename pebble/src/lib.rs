@@ -10,6 +10,7 @@ pub mod sync;
 mod ui;
 mod utils;
 pub mod window_manager;
+pub mod message_types;
 
 use pebble::event::tick_timer;
 use pebble::{

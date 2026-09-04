@@ -26,16 +26,38 @@ class SyncRepository @Inject constructor(
     private var receivedChunks = 0
     private val syncBuffer = mutableListOf<SessionEntity>()
 
+    private var currentStartTimestamp: Instant? = null
+
     init {
         syncScope.launch {
             pebbleDataSource.incomingMessages.collect { message ->
                 when (message) {
                     is PebbleMessage.SyncStart -> handleSyncStart(message)
                     is PebbleMessage.SyncChunk -> handleSyncChunk(message)
+                    is PebbleMessage.StartSession -> handleStartSession(message)
+                    is PebbleMessage.StopSession -> handleStopSession(message)
                     else -> {}
                 }
             }
         }
+    }
+
+    private suspend fun handleStartSession(message: PebbleMessage.StartSession) {
+        currentStartTimestamp = message.timestamp
+        sessionDao.insertSession(SessionEntity(
+            startTime = currentStartTimestamp!!,
+            endTime = Instant.DISTANT_FUTURE,
+        ))
+    }
+
+    private suspend fun handleStopSession(message: PebbleMessage.StopSession) {
+        if (currentStartTimestamp == null) return
+
+        sessionDao.insertSession(SessionEntity(
+            startTime = currentStartTimestamp!!,
+            endTime = message.timestamp,
+        ))
+        currentStartTimestamp = null
     }
 
     fun getSessionsForTimeframe(startOfDay: Instant, endOfDay: Instant): Flow<List<SessionEntity>> {

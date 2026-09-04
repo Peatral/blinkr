@@ -1,4 +1,4 @@
-use crate::utils::{stop_session, reschedule_wakeup};
+use crate::utils::{stop_session, reschedule_wakeup, start_session};
 use alloc::vec::Vec;
 use bytemuck::{Pod, Zeroable};
 use core::mem::size_of;
@@ -6,11 +6,6 @@ use pebble::std::time::get_time;
 use pebble::types::{GlobalCell, GlobalRefCell};
 use pebble::{storage, vibes};
 use pebble_sys::time_t;
-
-pub const MSG_TYPE_START: i32 = 1;
-pub const MSG_TYPE_STOP: i32 = 2;
-pub const MSG_TYPE_SYNC_START: i32 = 3;
-pub const MSG_TYPE_SYNC_CHUNK: i32 = 4;
 
 pub const PERSIST_STATE_KEY: u32 = 1;
 pub const PERSIST_INTERVAL_KEY: u32 = 2;
@@ -179,6 +174,7 @@ pub fn toggle_state() {
         let periods = (elapsed_time / interval) + 1;
         let next_wakeup = start_time + (periods * interval);
         let _ = reschedule_wakeup(next_wakeup - now);
+        start_session(start_time);
     } else {
         if let Some(start) = CURRENT_START_TIME.get() {
             // Only save the session if it lasted 60 seconds or more

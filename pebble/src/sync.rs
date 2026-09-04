@@ -2,7 +2,7 @@ use crate::message_keys::{MESSAGE_KEY_MSG_TYPE, MESSAGE_KEY_SYNC_DATA_CHUNK, MES
 use crate::state;
 use pebble::app_message::{Dictionary, Outbox};
 use pebble::types::GlobalCell;
-use crate::state::{MSG_TYPE_SYNC_CHUNK, MSG_TYPE_SYNC_START};
+use crate::message_types::{MSG_TYPE_SYNC_CHUNK, MSG_TYPE_SYNC_START};
 
 static SYNC_IN_PROGRESS: GlobalCell<bool> = GlobalCell::new(false);
 static CURRENT_CHUNK_INDEX: GlobalCell<usize> = GlobalCell::new(0);
