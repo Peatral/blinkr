@@ -17,7 +17,7 @@ import xyz.peatral.blinkr.data.pebble.PebbleMessage
 import xyz.peatral.blinkr.data.room.SessionEntity
 import xyz.peatral.blinkr.repository.SyncRepository
 import xyz.peatral.blinkr.repository.SyncState
-import xyz.peatral.blinkr.repository.TrackingRepository
+import xyz.peatral.blinkr.repository.TimerRepository
 import javax.inject.Inject
 import kotlin.time.Clock
 import kotlin.time.Duration
@@ -33,7 +33,7 @@ data class TimerUiState(
 
 @HiltViewModel
 class TimerViewModel @Inject constructor(
-    private val trackingRepository: TrackingRepository,
+    private val timerRepository: TimerRepository,
     private val syncRepository: SyncRepository
 ) : ViewModel() {
     private val numberOfDaysDisplayed = 7
@@ -77,7 +77,7 @@ class TimerViewModel @Inject constructor(
                     is SyncState.Syncing -> _uiState.value = _uiState.value.copy(isRefreshing = true)
                 }
             }
-            trackingRepository.watchMessages.collect { message ->
+            timerRepository.watchMessages.collect { message ->
                 when (message) {
                     is PebbleMessage.RescheduleTimer -> {
                         val remaining = (message.next_wakeup - Clock.System.now())

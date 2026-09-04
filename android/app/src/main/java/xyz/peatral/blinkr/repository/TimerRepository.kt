@@ -22,7 +22,7 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 @Singleton
-class TrackingRepository @Inject constructor(
+class TimerRepository @Inject constructor(
     @ApplicationContext private val context: Context,
     private val pebbleDataSource: PebbleDataSource,
     private val glyphDataSource: GlyphDataSource,

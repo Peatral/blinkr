@@ -7,7 +7,7 @@ import io.rebble.pebblekit2.common.model.ReceiveResult
 import io.rebble.pebblekit2.common.model.WatchIdentifier
 import xyz.peatral.blinkr.data.pebble.PebbleDataSource
 import xyz.peatral.blinkr.repository.SyncRepository
-import xyz.peatral.blinkr.repository.TrackingRepository
+import xyz.peatral.blinkr.repository.TimerRepository
 import java.util.UUID
 import javax.inject.Inject
 
@@ -20,7 +20,7 @@ class PebbleListenerService : BasePebbleListenerService() {
     // Injected purely to ensure Hilt initializes them and their
     // init {} blocks start collecting from pebbleDataSource
     @Inject
-    lateinit var trackingRepository: TrackingRepository
+    lateinit var timerRepository: TimerRepository
 
     @Inject
     lateinit var syncRepository: SyncRepository
