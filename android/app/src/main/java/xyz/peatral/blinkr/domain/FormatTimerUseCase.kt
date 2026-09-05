@@ -1,7 +1,6 @@
 package xyz.peatral.blinkr.domain
 
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -18,7 +17,7 @@ import kotlin.time.Duration.Companion.seconds
 @OptIn(ExperimentalCoroutinesApi::class)
 class FormatTimerUseCase @Inject constructor(
     private val timerRepository: TimerRepository,
-    @DefaultDispatcher private val defaultDispatcher: CoroutineDispatcher = Dispatchers.Default,
+    @DefaultDispatcher private val defaultDispatcher: CoroutineDispatcher,
 ) {
     operator fun invoke(): Flow<String> = timerRepository.nextWakeup
         .flatMapLatest{ nextWakeup ->

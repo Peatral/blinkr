@@ -1,7 +1,6 @@
 package xyz.peatral.blinkr.domain
 
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
@@ -11,7 +10,7 @@ import kotlin.time.Clock
 import kotlin.time.Duration.Companion.minutes
 
 class CurrentTimeUseCase @Inject constructor(
-    @DefaultDispatcher private val defaultDispatcher: CoroutineDispatcher = Dispatchers.Default,
+    @DefaultDispatcher private val defaultDispatcher: CoroutineDispatcher,
 ) {
     operator fun invoke() = flow {
         while (true) {
