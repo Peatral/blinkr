@@ -4,14 +4,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -21,11 +19,10 @@ import kotlinx.datetime.toLocalDateTime
 import xyz.peatral.blinkr.data.datasource.room.SessionEntity
 import xyz.peatral.blinkr.data.repository.SyncRepository
 import xyz.peatral.blinkr.data.repository.SyncState
+import xyz.peatral.blinkr.domain.CurrentTimeUseCase
 import xyz.peatral.blinkr.domain.FormatTimerUseCase
 import javax.inject.Inject
-import kotlin.time.Clock
 import kotlin.time.Duration.Companion.days
-import kotlin.time.Duration.Companion.minutes
 
 data class TimerUiState(
     val isRefreshing: Boolean = false,
@@ -34,19 +31,15 @@ data class TimerUiState(
 @HiltViewModel
 class TimerViewModel @Inject constructor(
     private val formatTimerUseCase: FormatTimerUseCase,
-    private val syncRepository: SyncRepository
+    private val syncRepository: SyncRepository,
+    private val currentTimeUseCase: CurrentTimeUseCase,
 ) : ViewModel() {
     private val numberOfDaysDisplayed = 7
 
     private val _uiState = MutableStateFlow(TimerUiState())
     val uiState: StateFlow<TimerUiState> = _uiState.asStateFlow()
 
-    val currentTime = flow {
-        while (true) {
-            emit(Clock.System.now())
-            delay(1.minutes)
-        }
-    }
+    val currentTime = currentTimeUseCase()
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val sessionsByDaysAgo: StateFlow<Map<Int, List<SessionEntity>>> = currentTime
@@ -57,7 +50,7 @@ class TimerViewModel @Inject constructor(
         .distinctUntilChanged()
         .flatMapLatest { startOfToday ->
             val endOfToday = startOfToday + 1.days
-            val startOfNDaysAgo = startOfToday - numberOfDaysDisplayed.days
+            val startOfNDaysAgo = startOfToday - (numberOfDaysDisplayed - 1).days
 
             syncRepository.getSessionsForTimeframe(startOfNDaysAgo, endOfToday)
                 .map { allSessions ->
