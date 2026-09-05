@@ -1,4 +1,4 @@
-package xyz.peatral.blinkr.data.room
+package xyz.peatral.blinkr.data.datasource.room
 
 import androidx.room.TypeConverter
 import kotlin.time.Instant

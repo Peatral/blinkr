@@ -1,8 +1,7 @@
-package xyz.peatral.blinkr.data
+package xyz.peatral.blinkr.data.datasource
 
 import android.content.ComponentName
 import android.content.Context
-import com.nothing.ketchum.Common
 import com.nothing.ketchum.Glyph
 import com.nothing.ketchum.GlyphMatrixFrame
 import com.nothing.ketchum.GlyphMatrixManager
@@ -34,20 +33,12 @@ class GlyphDataSource @Inject constructor(
         })
     }
 
-    fun displayTime(timeString: String) {
-        if (!isConnected) return
-
-        val matrixSize = Common.getDeviceMatrixLength()
-
-        val approxTextHeight = 5
-        val approxTextWidth = 4 * 4 + 4 + 1 // 4 numbers a 4 px, 4 paddings, the colon
-
-        val centerY = (matrixSize - approxTextHeight) / 2
-        val centerX = (matrixSize - approxTextWidth) / 2
+    fun displayText(text: String, x: Int, y: Int) {
+        if (!isConnected || text.isBlank()) return
 
         val textObject = GlyphMatrixObject.Builder()
-            .setText(timeString)
-            .setPosition(centerX, centerY)
+            .setText(text)
+            .setPosition(x, y)
             .setBrightness(255)
             .build()
 

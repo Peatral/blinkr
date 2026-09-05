@@ -1,9 +1,12 @@
 <resources>
     <string name="app_name">Blinkr</string>
     <string name="status_waiting">Waiting for Pebble…</string>
-    <string name="status_timer_active">Timer Active: %1$d seconds</string>
+    <string name="status_timer_active">Timer Active: %1$s</string>
     <string name="status_timer_stopped">Timer Stopped</string>
     <string name="today">Today</string>
     <string name="yesterday">yesterday</string>
     <string name="n_days_ago">%1$d days ago</string>
+    <string name="glyph_notification_channel_name">Glyph Timer</string>
+    <string name="glyph_notification_title">Glyph Timer Active</string>
+    <string name="glyph_notification_text">Running timer on the back of the phone</string>
 </resources>

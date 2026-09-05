@@ -1,4 +1,4 @@
-package xyz.peatral.blinkr.data.pebble
+package xyz.peatral.blinkr.data.datasource.pebble
 
 import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -167,9 +167,5 @@ class PebbleDataSource @Inject constructor(
                 }
             }
         }
-    }
-
-    fun cleanup() {
-        sender.close()
     }
 }

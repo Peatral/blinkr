@@ -1,4 +1,4 @@
-package xyz.peatral.blinkr.data.room
+package xyz.peatral.blinkr.data.datasource.room
 
 import androidx.room.Dao
 import androidx.room.Database
@@ -11,10 +11,9 @@ import androidx.room.RoomDatabase
 import androidx.room.Transaction
 import androidx.room.TypeConverters
 import kotlinx.coroutines.flow.Flow
-import xyz.peatral.blinkr.data.pebble.PebbleConstants
+import xyz.peatral.blinkr.data.datasource.pebble.PebbleConstants
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.minutes
-import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 
 @Entity(tableName = "sessions")

@@ -21,7 +21,7 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.toLocalDateTime
 import xyz.peatral.blinkr.R
-import xyz.peatral.blinkr.data.room.SessionEntity
+import xyz.peatral.blinkr.data.datasource.room.SessionEntity
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.milliseconds

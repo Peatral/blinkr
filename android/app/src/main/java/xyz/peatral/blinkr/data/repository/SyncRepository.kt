@@ -1,18 +1,17 @@
-package xyz.peatral.blinkr.repository
+package xyz.peatral.blinkr.data.repository
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import xyz.peatral.blinkr.data.pebble.PebbleConstants
-import xyz.peatral.blinkr.data.pebble.PebbleDataSource
-import xyz.peatral.blinkr.data.pebble.PebbleMessage
-import xyz.peatral.blinkr.data.room.SessionDao
-import xyz.peatral.blinkr.data.room.SessionEntity
+import xyz.peatral.blinkr.data.datasource.pebble.PebbleConstants
+import xyz.peatral.blinkr.data.datasource.pebble.PebbleDataSource
+import xyz.peatral.blinkr.data.datasource.pebble.PebbleMessage
+import xyz.peatral.blinkr.data.datasource.room.SessionDao
+import xyz.peatral.blinkr.data.datasource.room.SessionEntity
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import javax.inject.Inject

@@ -13,7 +13,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import xyz.peatral.blinkr.data.room.SessionEntity
+import xyz.peatral.blinkr.data.datasource.room.SessionEntity
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant

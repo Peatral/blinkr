@@ -7,8 +7,8 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
-import xyz.peatral.blinkr.data.room.AppDatabase
-import xyz.peatral.blinkr.data.room.SessionDao
+import xyz.peatral.blinkr.data.datasource.room.AppDatabase
+import xyz.peatral.blinkr.data.datasource.room.SessionDao
 import javax.inject.Singleton
 
 @Module
