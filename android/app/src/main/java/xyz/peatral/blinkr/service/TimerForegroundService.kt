@@ -55,7 +55,7 @@ class TimerForegroundService : Service() {
         val notificationBuilder = NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle(getString(R.string.glyph_notification_title))
             .setContentText(getString(R.string.glyph_notification_text))
-            .setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setSmallIcon(R.drawable.ic_notification_timer)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setOngoing(true)
             .setRequestPromotedOngoing(true)
