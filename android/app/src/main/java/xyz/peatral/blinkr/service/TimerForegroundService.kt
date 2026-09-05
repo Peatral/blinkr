@@ -57,6 +57,8 @@ class TimerForegroundService : Service() {
             .setContentText(getString(R.string.glyph_notification_text))
             .setSmallIcon(android.R.drawable.ic_dialog_info)
             .setPriority(NotificationCompat.PRIORITY_LOW)
+            .setOngoing(true)
+            .setRequestPromotedOngoing(true)
 
         startForeground(notificationId, notificationBuilder.build())
 
@@ -79,6 +81,13 @@ class TimerForegroundService : Service() {
         val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
         timerRepository.timer.collectLatest { timer ->
             if (timer != null) {
+
+                notificationBuilder
+                    .setUsesChronometer(true)
+                    .setChronometerCountDown(true)
+                    .setWhen(timer.end.toEpochMilliseconds())
+                    .setShowWhen(true)
+
                 currentTimeUseCase(1.seconds, timer.end).collectLatest { currentTime ->
                     run {
                         val duration = timer.end - timer.start
@@ -95,7 +104,10 @@ class TimerForegroundService : Service() {
                     }
                 }
             } else {
-                notificationBuilder.setProgress(0, 0, true)
+                notificationBuilder
+                    .setShowWhen(false)
+                    .setUsesChronometer(false)
+                    .setProgress(0, 0, true)
                 notificationManager.notify(notificationId, notificationBuilder.build())
             }
         }
