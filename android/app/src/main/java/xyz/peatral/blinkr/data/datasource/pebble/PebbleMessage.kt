@@ -3,7 +3,7 @@ package xyz.peatral.blinkr.data.datasource.pebble
 import kotlin.time.Instant
 
 sealed class PebbleMessage {
-    data class RescheduleTimer(val next_wakeup: Instant) : PebbleMessage()
+    data class RescheduleTimer(val startTimestamp: Instant, val endTimestamp: Instant) : PebbleMessage()
     data class StartSession(val startTimestamp: Instant) : PebbleMessage()
     data class StopSession(val startTimestamp: Instant, val endTimestamp: Instant) : PebbleMessage()
 

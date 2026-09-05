@@ -1,6 +1,6 @@
 extern crate alloc;
-use crate::message_keys::{MESSAGE_KEY_END_TIMESTAMP, MESSAGE_KEY_MSG_TYPE, MESSAGE_KEY_NEXT_WAKEUP, MESSAGE_KEY_START_TIMESTAMP, MESSAGE_KEY_SYNC_DATA_CHUNK, MESSAGE_KEY_SYNC_TOTAL_CHUNKS};
-use crate::message_types::{MSG_TYPE_REQUEST_SYNC, MSG_TYPE_RESCHEDULE_WAKEUP, MSG_TYPE_START_SESSION, MSG_TYPE_STOP_SESSION, MSG_TYPE_SYNC_CHUNK, MSG_TYPE_SYNC_START};
+use crate::message_keys::{MESSAGE_KEY_END_TIMESTAMP, MESSAGE_KEY_MSG_TYPE, MESSAGE_KEY_START_TIMESTAMP, MESSAGE_KEY_SYNC_DATA_CHUNK, MESSAGE_KEY_SYNC_TOTAL_CHUNKS};
+use crate::message_types::{MSG_TYPE_REQUEST_SYNC, MSG_TYPE_RESCHEDULE_TIMER, MSG_TYPE_START_SESSION, MSG_TYPE_STOP_SESSION, MSG_TYPE_SYNC_CHUNK, MSG_TYPE_SYNC_START};
 use crate::state::TimePair;
 use crate::sync::start_sync;
 use crate::{state, ui};
@@ -15,7 +15,7 @@ static MSG_QUEUE: GlobalRefCell<MessageQueue> = GlobalRefCell::new(MessageQueue:
 pub enum Message {
     StartSession { start_timestamp: i32 },
     StopSession { start_timestamp: i32, end_timestamp: i32 },
-    RescheduleWakeup { next_wakeup: i32 },
+    RescheduleWakeup { start_timestamp: i32, end_timestamp: i32 },
     SyncStart { total_chunks: i32 },
     SyncChunk { chunk_index: usize, is_last: bool },
 }
@@ -55,9 +55,10 @@ impl MessageQueue {
                         let _ = dict.write_int(MESSAGE_KEY_START_TIMESTAMP, *start_timestamp);
                         let _ = dict.write_int(MESSAGE_KEY_END_TIMESTAMP, *end_timestamp);
                     }
-                    Message::RescheduleWakeup { next_wakeup } => {
-                        let _ = dict.write_int(MESSAGE_KEY_MSG_TYPE, MSG_TYPE_RESCHEDULE_WAKEUP);
-                        let _ = dict.write_int(MESSAGE_KEY_NEXT_WAKEUP, *next_wakeup);
+                    Message::RescheduleWakeup { start_timestamp, end_timestamp } => {
+                        let _ = dict.write_int(MESSAGE_KEY_MSG_TYPE, MSG_TYPE_RESCHEDULE_TIMER);
+                        let _ = dict.write_int(MESSAGE_KEY_START_TIMESTAMP, *start_timestamp);
+                        let _ = dict.write_int(MESSAGE_KEY_END_TIMESTAMP, *end_timestamp);
                     }
                     Message::SyncStart { total_chunks } => {
                         let _ = dict.write_int(MESSAGE_KEY_MSG_TYPE, MSG_TYPE_SYNC_START);

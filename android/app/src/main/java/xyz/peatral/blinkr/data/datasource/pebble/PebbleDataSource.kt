@@ -53,15 +53,17 @@ class PebbleDataSource @Inject constructor(
 
         registerMessage(
             messageClass = PebbleMessage.RescheduleTimer::class,
-            messageId = MessageTypes.TYPE_RESCHEDULE_WAKEUP,
+            messageId = MessageTypes.TYPE_RESCHEDULE_TIMER,
             encoder = { msg ->
                 mapOf(
-                    MessageKeys.NEXT_WAKEUP to PebbleDictionaryItem.Int32(msg.next_wakeup.epochSeconds.toInt())
+                    MessageKeys.START_TIMESTAMP to PebbleDictionaryItem.Int32(msg.endTimestamp.epochSeconds.toInt()),
+                    MessageKeys.END_TIMESTAMP to PebbleDictionaryItem.Int32(msg.endTimestamp.epochSeconds.toInt())
                 )
             },
             decoder = { dict ->
-                val timestamp = dict.getLong(MessageKeys.NEXT_WAKEUP) ?: return@registerMessage null
-                PebbleMessage.RescheduleTimer(Instant.fromEpochSeconds(timestamp))
+                val startTimestamp = dict.getLong(MessageKeys.START_TIMESTAMP) ?: return@registerMessage null
+                val endTimestamp = dict.getLong(MessageKeys.END_TIMESTAMP) ?: return@registerMessage null
+                PebbleMessage.RescheduleTimer(Instant.fromEpochSeconds(startTimestamp), Instant.fromEpochSeconds(endTimestamp))
             }
         )
 

@@ -1,8 +1,8 @@
 use crate::state::INTERVAL_MINS;
 use crate::ui::history_window;
-use crate::utils::reschedule_wakeup;
+use crate::utils::reschedule_timer_interval;
 use crate::window_manager;
-use crate::window_manager::{AppWindow, release};
+use crate::window_manager::{release, AppWindow};
 use core::cell::RefCell;
 use pebble::clicks::{ClickConfigurator, ClickDelegate, ClickRecognizer};
 use pebble::graphics::types::{Point, Rect, Size};
@@ -70,7 +70,7 @@ impl WindowDelegate for ReminderScreen {
 pub fn create() -> AppWindow {
     vibes::double_pulse();
     let interval = INTERVAL_MINS.get();
-    let _ = reschedule_wakeup(interval * 60);
+    let _ = reschedule_timer_interval(interval * 60);
     let window = Window::new(ReminderScreen {
         text_main: RefCell::new(None),
         text_sub: RefCell::new(None),

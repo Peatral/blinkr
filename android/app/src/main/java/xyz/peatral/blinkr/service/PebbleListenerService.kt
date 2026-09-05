@@ -1,10 +1,8 @@
 package xyz.peatral.blinkr.service
 
-import android.content.Context
 import android.content.Intent
 import androidx.core.content.ContextCompat
 import dagger.hilt.android.AndroidEntryPoint
-import dagger.hilt.android.qualifiers.ApplicationContext
 import io.rebble.pebblekit2.client.BasePebbleListenerService
 import io.rebble.pebblekit2.common.model.PebbleDictionary
 import io.rebble.pebblekit2.common.model.ReceiveResult
@@ -38,8 +36,8 @@ class PebbleListenerService : BasePebbleListenerService() {
         val serviceIntent = Intent(this, TimerForegroundService::class.java)
 
         scope.launch {
-            timerRepository.nextWakeup.collect { nextWakeup ->
-                if (nextWakeup != null) {
+            timerRepository.timer.collect { timer ->
+                if (timer != null) {
                     ContextCompat.startForegroundService(this@PebbleListenerService, serviceIntent)
                 } else {
                     stopService(serviceIntent)

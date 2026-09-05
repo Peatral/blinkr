@@ -15,23 +15,25 @@ import javax.inject.Singleton
 import kotlin.time.Clock
 import kotlin.time.Instant
 
+class Timer(val start: Instant, val end: Instant)
+
 @Singleton
 class TimerRepository @Inject constructor(
     private val pebbleDataSource: PebbleDataSource,
 ) {
     private val repoScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
-    private val _nextWakeup = MutableStateFlow<Instant?>(null)
-    val nextWakeup = _nextWakeup.asStateFlow()
+    private val _currentTimer = MutableStateFlow<Timer?>(null)
+    val timer = _currentTimer.asStateFlow()
 
     init {
         repoScope.launch {
             pebbleDataSource.incomingMessages.collect { message ->
                 when (message) {
                     is PebbleMessage.RescheduleTimer -> {
-                        _nextWakeup.value = message.next_wakeup
+                        _currentTimer.value = Timer(message.startTimestamp, message.endTimestamp)
                     }
                     is PebbleMessage.StopSession -> {
-                        _nextWakeup.value = null
+                        _currentTimer.value = null
                     }
                     else -> {}
                 }
@@ -39,15 +41,15 @@ class TimerRepository @Inject constructor(
         }
 
         repoScope.launch {
-            _nextWakeup.collectLatest { nextWakeup ->
-                if (nextWakeup != null) {
+            _currentTimer.collectLatest { currentTimer ->
+                if (currentTimer != null) {
                     val currentTime = Clock.System.now()
 
-                    if (currentTime < nextWakeup) {
-                        delay(nextWakeup - currentTime)
+                    if (currentTime < currentTimer.end) {
+                        delay(currentTimer.end - currentTime)
                     }
 
-                    _nextWakeup.value = null
+                    _currentTimer.value = null
                 }
             }
         }

@@ -30,14 +30,18 @@ pub fn extract_clay_int(tuple: &Tuple, default: i32) -> i32 {
     }
 }
 
-pub fn reschedule_wakeup(interval_secs: time_t) -> Result<WakeupId, StatusCode> {
-    pebble::wakeup::cancel_all();
+pub fn reschedule_timer_interval(interval: time_t) -> Result<WakeupId, StatusCode> {
     let now = time::get_time();
-    let wakeup_time = now + interval_secs;
-    let wakeup = pebble::wakeup::schedule(wakeup_time, 0, true);
+    reschedule_timer(now, now + interval)
+}
+
+pub fn reschedule_timer(start_timestamp: time_t, end_timestamp: time_t) -> Result<WakeupId, StatusCode> {
+    pebble::wakeup::cancel_all();
+
+    let wakeup = pebble::wakeup::schedule(end_timestamp, 0, true);
 
     push_message(
-        Message::RescheduleWakeup { next_wakeup: wakeup_time }.into()
+        Message::RescheduleWakeup { start_timestamp, end_timestamp }.into()
     );
 
     wakeup

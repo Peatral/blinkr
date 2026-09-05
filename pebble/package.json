@@ -36,7 +36,6 @@
       "MSG_TYPE",
       "SYNC_TOTAL_CHUNKS",
       "SYNC_DATA_CHUNK",
-      "NEXT_WAKEUP",
       "START_TIMESTAMP",
       "END_TIMESTAMP",
       "INTERVAL"

@@ -1,4 +1,4 @@
-use crate::utils::{stop_session, reschedule_wakeup, start_session, cancel_wakeup, DISTANT_PAST_SECONDS};
+use crate::utils::{stop_session, reschedule_timer, start_session, cancel_wakeup, DISTANT_PAST_SECONDS};
 use alloc::vec::Vec;
 use bytemuck::{Pod, Zeroable};
 use core::mem::size_of;
@@ -171,9 +171,10 @@ pub fn toggle_state() {
         // as that is how I thought I wrote the code
         let interval = INTERVAL_MINS.get() * 60;
         let elapsed_time = now - start_time;
-        let periods = (elapsed_time / interval) + 1;
-        let next_wakeup = start_time + (periods * interval);
-        let _ = reschedule_wakeup(next_wakeup - now);
+        let periods = (elapsed_time / interval);
+        let start_timestamp = start_time + periods * interval;
+        let end_timestamp = start_time + (periods + 1) * interval;
+        let _ = reschedule_timer(start_timestamp, end_timestamp);
         start_session(start_time);
     } else {
         if let Some(start) = CURRENT_START_TIME.get() {
