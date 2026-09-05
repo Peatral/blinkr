@@ -30,9 +30,11 @@ import kotlin.time.Instant
 class PebbleDataSource @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
-    private val pebbleNetworkScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    companion object {
+        val APP_UUID: UUID = UUID.fromString("dabb3617-783b-443f-8add-8d74ccc57d07")
+    }
 
-    private val appUuid: UUID = UUID.fromString("dabb3617-783b-443f-8add-8d74ccc57d07")
+    private val pebbleNetworkScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     private val _appOpen = MutableStateFlow(false)
     val appOpen = _appOpen.asStateFlow()
@@ -126,7 +128,7 @@ class PebbleDataSource @Inject constructor(
     }
 
     suspend fun processIncomingMessage(watchappUUID: UUID, data: PebbleDictionary): Boolean {
-        if (watchappUUID != appUuid) return false
+        if (watchappUUID != APP_UUID) return false
         val message = channel.decode(data)
         if (message != null) {
             _incomingMessages.emit(message)
@@ -136,14 +138,14 @@ class PebbleDataSource @Inject constructor(
 
     suspend fun sendMessageToWatch(message: PebbleMessage) {
         if (!appOpen.value) {
-            sender.startAppOnTheWatch(appUuid)
+            sender.startAppOnTheWatch(APP_UUID)
             autoOpened.store(true)
         }
         outgoingMessages.send(message)
     }
 
     fun setAppOpen(watchappUUID: UUID, open: Boolean) {
-        if (watchappUUID == appUuid) {
+        if (watchappUUID == APP_UUID) {
             _appOpen.value = open
         }
     }
@@ -153,7 +155,7 @@ class PebbleDataSource @Inject constructor(
             for (message in outgoingMessages) {
                 appOpen.first { it }
                 val payload = channel.encode(message)
-                sender.sendDataToPebble(appUuid, payload)
+                sender.sendDataToPebble(APP_UUID, payload)
 
                 if (outgoingMessages.isEmpty && autoOpened.load()) {
                     delay(1.seconds)
@@ -164,7 +166,7 @@ class PebbleDataSource @Inject constructor(
                             newValue = false
                         )
                     ) {
-                        sender.stopAppOnTheWatch(appUuid)
+                        sender.stopAppOnTheWatch(APP_UUID)
                     }
                 }
             }
