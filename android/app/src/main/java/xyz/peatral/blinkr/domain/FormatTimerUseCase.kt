@@ -18,7 +18,6 @@ import kotlin.time.Duration.Companion.seconds
 @OptIn(ExperimentalCoroutinesApi::class)
 class FormatTimerUseCase @Inject constructor(
     private val timerRepository: TimerRepository,
-    private val formatDurationUseCase: FormatDurationUseCase,
     @DefaultDispatcher private val defaultDispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) {
     operator fun invoke(): Flow<String> = timerRepository.nextWakeup
@@ -30,7 +29,10 @@ class FormatTimerUseCase @Inject constructor(
                     var currentTime = Clock.System.now()
                     while (currentTime <= nextWakeup) {
                         val remaining = nextWakeup - currentTime
-                        emit(formatDurationUseCase(remaining))
+                        val formattedDuration = remaining.toComponents { minutes, seconds, _ ->
+                            String.format("%02d:%02d", minutes, seconds)
+                        }
+                        emit(formattedDuration)
                         delay(1.seconds)
                         currentTime = Clock.System.now()
                     }
