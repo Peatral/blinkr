@@ -65,7 +65,7 @@ class SyncRepository @Inject constructor(
         if (
             message.startTimestamp > PebbleConstants.DISTANT_PAST && message.endTimestamp < PebbleConstants.DISTANT_FUTURE
             && message.startTimestamp < message.endTimestamp
-            && message.endTimestamp - message.startTimestamp < 1.minutes
+            && message.endTimestamp - message.startTimestamp > 1.minutes
         ) {
             sessionDao.insertSession(SessionEntity(
                 startTime = message.startTimestamp,
