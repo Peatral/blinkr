@@ -12,6 +12,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.FloatingToolbarDefaults.ScreenOffset
 import androidx.compose.material3.HorizontalFloatingToolbar
 import androidx.compose.material3.ListItemDefaults
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -56,11 +57,15 @@ fun TimerScreen(
                     Box(
                         modifier = Modifier.padding(8.dp)
                     ) {
-
                         if (timer.isBlank()) {
                             Text(stringResource(R.string.status_timer_stopped))
                         } else {
-                            Text(stringResource(R.string.status_timer_active, timer))
+                            Text(
+                                stringResource(R.string.status_timer_active, timer),
+                                style = LocalTextStyle.current.copy(
+                                    fontFeatureSettings = "tnum"
+                                ),
+                            )
                         }
                     }
                 }
