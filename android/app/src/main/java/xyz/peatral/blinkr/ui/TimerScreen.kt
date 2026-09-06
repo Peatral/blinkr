@@ -7,8 +7,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.FloatingToolbarDefaults.ScreenOffset
 import androidx.compose.material3.HorizontalFloatingToolbar
 import androidx.compose.material3.ListItemDefaults
@@ -26,6 +25,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.paging.compose.collectAsLazyPagingItems
+import androidx.paging.compose.itemKey
 import xyz.peatral.blinkr.R
 import xyz.peatral.blinkr.ui.components.DayItem
 import kotlin.time.Clock
@@ -35,7 +36,7 @@ fun TimerScreen(
     viewModel: TimerViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val sessionsByDaysAgo by viewModel.sessionsByDaysAgo.collectAsStateWithLifecycle()
+    val lazyPagingItems = viewModel.pagedTimeline.flow.collectAsLazyPagingItems()
 
     val currentTime by viewModel.currentTime.collectAsStateWithLifecycle(Clock.System.now())
 
@@ -74,7 +75,7 @@ fun TimerScreen(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(24.dp),
+                    .padding(horizontal = 24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 PullToRefreshBox(
@@ -82,17 +83,19 @@ fun TimerScreen(
                     onRefresh = viewModel::refreshSessions,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Column(
+                    LazyColumn(
                         modifier = Modifier
-                            .fillMaxSize()
-                            .verticalScroll(rememberScrollState()),
+                            .fillMaxSize(),
                         verticalArrangement = Arrangement.spacedBy(ListItemDefaults.SegmentedGap)
                     ) {
-                        for (daysAgo in 0..<sessionsByDaysAgo.size) {
+                        items(
+                            lazyPagingItems.itemCount,
+                            key = lazyPagingItems.itemKey { it.daysAgo }
+                        ) { daysAgo ->
                             DayItem(
                                 daysAgo = daysAgo,
-                                daysCount = sessionsByDaysAgo.size,
-                                sessions = sessionsByDaysAgo[daysAgo] ?: emptyList(),
+                                daysCount = lazyPagingItems.itemCount,
+                                sessions = lazyPagingItems[daysAgo]?.sessions ?: emptyList(),
                                 currentTime = currentTime
                             )
                         }

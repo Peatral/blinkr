@@ -92,6 +92,9 @@ interface SessionDao {
 
     @Query("SELECT * FROM sessions WHERE endTime >= :startOfDay AND startTime < :endOfDay ORDER BY startTime ASC")
     fun getSessionsForTimeframe(startOfDay: Instant, endOfDay: Instant): Flow<List<SessionEntity>>
+
+    @Query("SELECT MIN(startTime) FROM sessions")
+    suspend fun getOldestSessionStartTime(): Instant?
 }
 
 @Database(

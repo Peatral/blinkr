@@ -123,4 +123,8 @@ class SyncRepository @Inject constructor(
             pebbleDataSource.sendMessageToWatch(PebbleMessage.RequestSync)
         }
     }
+
+    suspend fun getOldestSessionStartTime(): Instant? {
+        return sessionDao.getOldestSessionStartTime()
+    }
 }
