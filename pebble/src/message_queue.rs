@@ -87,11 +87,11 @@ impl MessageQueue {
     pub fn on_success(&mut self) {
         self.is_sending = false;
 
-        // if let Some(msg) = self.queue.pop_front() {
+        if let Some(msg) = self.queue.pop_front() {
         //     if let Message::SyncChunk { is_last: true, .. } = msg {
         //         pebble::vibes::double_pulse();
         //     }
-        // }
+        }
 
         self.try_send_next();
     }
