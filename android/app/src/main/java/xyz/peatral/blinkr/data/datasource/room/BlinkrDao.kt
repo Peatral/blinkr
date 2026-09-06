@@ -25,10 +25,10 @@ data class SessionEntity(
 @Dao
 interface SessionDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertSessions(sessions: List<SessionEntity>)
+    suspend fun insertAll(sessions: List<SessionEntity>)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertSession(sessions: SessionEntity)
+    suspend fun insert(sessions: SessionEntity)
 
     @Query("""
         DELETE FROM sessions 
@@ -50,13 +50,12 @@ interface SessionDao {
     @Query("DELETE FROM sessions")
     suspend fun deleteAll()
 
-    @Insert
-    suspend fun insertAll(sessions: List<SessionEntity>)
-
     @Transaction
     suspend fun revalidateData(currentTime: Instant) {
         val history = getAllSessionsAsc()
         if (history.isEmpty()) return
+
+        val latestSession = history.last()
 
         val maxAllowedTime = currentTime + 1.days
 
@@ -85,6 +84,10 @@ interface SessionDao {
 
         deleteAll()
         insertAll(finalHistory)
+
+        if (latestSession.endTime >= PebbleConstants.DISTANT_FUTURE) {
+            insert(latestSession)
+        }
     }
 
     @Query("SELECT * FROM sessions WHERE endTime >= :startOfDay AND startTime < :endOfDay ORDER BY startTime ASC")

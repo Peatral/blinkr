@@ -4,9 +4,11 @@
     <string name="status_timer_active">Timer Active: %1$s</string>
     <string name="status_timer_stopped">Timer Stopped</string>
     <string name="today">Today</string>
-    <string name="yesterday">yesterday</string>
+    <string name="yesterday">Yesterday</string>
     <string name="n_days_ago">%1$d days ago</string>
-    <string name="glyph_notification_channel_name">Glyph Timer</string>
-    <string name="glyph_notification_title">Glyph Timer Active</string>
-    <string name="glyph_notification_text">Running timer on the back of the phone</string>
+    <string name="reminder_notification_channel_name">Reminder</string>
+    <string name="reminder_notification_channel_description">Used to display the timer in the status bar and the glyph timer on the back of the phone</string>
+    <string name="reminder_notification_title">Blinkr</string>
+    <string name="reminder_notification_text">Remember to blink and look into the distance when the time is up</string>
+    <string name="overview">Overview</string>
 </resources>

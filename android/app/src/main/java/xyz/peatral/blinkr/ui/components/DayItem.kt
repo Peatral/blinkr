@@ -1,21 +1,19 @@
 package xyz.peatral.blinkr.ui.components
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SegmentedListItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
@@ -29,15 +27,21 @@ import kotlin.time.Instant
 
 
 @Composable
-fun DayCard(
+fun DayItem (
     daysAgo: Int,
     sessions: List<SessionEntity>,
-    currentTime: Instant
+    currentTime: Instant,
+    daysCount: Int
 ) {
     val title = when (daysAgo) {
         0 -> stringResource(R.string.today)
         1 -> stringResource(R.string.yesterday)
-        else -> stringResource(R.string.n_days_ago, daysAgo)
+        else -> if (daysAgo < 7) {
+            stringResource(R.string.n_days_ago, daysAgo)
+        } else {
+            // TODO: Display date
+            stringResource(R.string.n_days_ago, daysAgo)
+        }
     }
 
     val (startTime, endTime) = remember(daysAgo, currentTime) {
@@ -71,37 +75,42 @@ fun DayCard(
         }
     }
 
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-        )
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            horizontalAlignment = Alignment.Start
-        ) {
-            Row(
-                modifier = Modifier
-                    .padding(0.dp)
-                    .fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-            ) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
+    val textMeasurer = rememberTextMeasurer()
+    val titleStyle = MaterialTheme.typography.titleMedium
+    val density = LocalDensity.current
 
-                Text(
-                    text = totalDurationText,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-            }
+    val durationMinWidth = remember(titleStyle, density) {
+        with(density) {
+            textMeasurer.measure("00h 00m", titleStyle).size.width.toDp()
+        }
+    }
 
-            Spacer(modifier = Modifier.height(16.dp))
-
+    SegmentedListItem(
+        shapes = ListItemDefaults.segmentedShapes(index = daysAgo, count = daysCount),
+        colors = ListItemDefaults.colors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+        ),
+        content = {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.padding(bottom = 8.dp),
+            )
+        },
+        trailingContent = {
+            Text(
+                text = totalDurationText,
+                style = MaterialTheme.typography.titleMedium.copy(
+                    fontFeatureSettings = "tnum"
+                ),
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.widthIn(durationMinWidth),
+                textAlign = TextAlign.Right,
+                softWrap = false,
+            )
+        },
+        supportingContent = {
             SessionTimeline(
                 sessions = sessions,
                 startTime = startTime,
@@ -110,5 +119,5 @@ fun DayCard(
                 modifier = Modifier.fillMaxWidth()
             )
         }
-    }
+    )
 }

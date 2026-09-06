@@ -53,8 +53,8 @@ class TimerForegroundService : Service() {
         createNotificationChannel()
         val notificationId = 1
         val notificationBuilder = NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle(getString(R.string.glyph_notification_title))
-            .setContentText(getString(R.string.glyph_notification_text))
+            .setContentTitle(getString(R.string.reminder_notification_title))
+            .setContentText(getString(R.string.reminder_notification_text))
             .setSmallIcon(R.drawable.ic_notification_timer)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setOngoing(true)
@@ -135,9 +135,10 @@ class TimerForegroundService : Service() {
     private fun createNotificationChannel() {
         val channel = NotificationChannel(
             CHANNEL_ID,
-            getString(R.string.glyph_notification_channel_name),
-            NotificationManager.IMPORTANCE_LOW
+            getString(R.string.reminder_notification_channel_name),
+            NotificationManager.IMPORTANCE_LOW,
         )
+        channel.description = getString(R.string.reminder_notification_channel_description)
         val manager = getSystemService(NotificationManager::class.java)
         manager.createNotificationChannel(channel)
     }

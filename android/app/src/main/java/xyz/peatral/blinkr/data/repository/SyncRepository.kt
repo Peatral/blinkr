@@ -54,7 +54,7 @@ class SyncRepository @Inject constructor(
     }
 
     private suspend fun handleStartSession(message: PebbleMessage.StartSession) {
-        sessionDao.insertSession(SessionEntity(
+        sessionDao.insert(SessionEntity(
             startTime = message.startTimestamp,
             endTime = PebbleConstants.DISTANT_FUTURE,
         ))
@@ -67,7 +67,7 @@ class SyncRepository @Inject constructor(
             && message.startTimestamp < message.endTimestamp
             && message.endTimestamp - message.startTimestamp > 1.minutes
         ) {
-            sessionDao.insertSession(SessionEntity(
+            sessionDao.insert(SessionEntity(
                 startTime = message.startTimestamp,
                 endTime = message.endTimestamp,
             ))
@@ -93,7 +93,7 @@ class SyncRepository @Inject constructor(
         _syncState.value = SyncState.Syncing((receivedChunks.toFloat() / expectedChunks.toFloat()).coerceIn(0.0f, 1.0f))
 
         if (expectedChunks in 1..receivedChunks) {
-            sessionDao.insertSessions(syncBuffer)
+            sessionDao.insertAll(syncBuffer)
             sessionDao.revalidateData(Clock.System.now())
             syncBuffer.clear()
             expectedChunks = 0

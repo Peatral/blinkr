@@ -26,7 +26,7 @@ fun SessionTimeline(
     currentTime: Instant,
     modifier: Modifier = Modifier,
     pastColor: Color = MaterialTheme.colorScheme.secondaryContainer,
-    futureColor: Color = MaterialTheme.colorScheme.surfaceVariant,
+    futureColor: Color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.12f),
     sessionColor: Color = MaterialTheme.colorScheme.primary,
 ) {
     Canvas(
