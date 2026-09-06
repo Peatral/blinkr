@@ -5,12 +5,13 @@ use core::mem::size_of;
 use pebble::std::time::get_time;
 use pebble::types::{GlobalCell, GlobalRefCell};
 use pebble::{storage, vibes};
-use pebble_sys::time_t;
+use pebble_sys::{time_t, WakeupId};
 
 pub const PERSIST_STATE_KEY: u32 = 1;
 pub const PERSIST_INTERVAL_KEY: u32 = 2;
 pub const PERSIST_CURRENT_START_KEY: u32 = 4;
 pub const PERSIST_HISTORY_COUNT_KEY: u32 = 5;
+pub const PERSIST_WAKEUP_ID_KEY: u32 = 6;
 
 pub const DEFAULT_INTERVAL_MINS: time_t = 20;
 
@@ -31,6 +32,8 @@ pub static INTERVAL_MINS: GlobalCell<time_t> = GlobalCell::new(DEFAULT_INTERVAL_
 
 pub static HISTORY: GlobalRefCell<Vec<TimePair>> = GlobalRefCell::new(Vec::new());
 pub static CURRENT_START_TIME: GlobalCell<Option<time_t>> = GlobalCell::new(None);
+
+pub static CURRENT_WAKEUP_ID: GlobalCell<Option<WakeupId>> = GlobalCell::new(None);
 
 const DAY_SECONDS: i32 = 60 * 60 * 24;
 
@@ -118,10 +121,19 @@ pub fn init_state() {
             let st = storage::read_int(PERSIST_CURRENT_START_KEY) as time_t;
             CURRENT_START_TIME.set(Some(st));
         }
+        if storage::exists(PERSIST_WAKEUP_ID_KEY) {
+            let st = storage::read_int(PERSIST_WAKEUP_ID_KEY) as WakeupId;
+            CURRENT_WAKEUP_ID.set(Some(st));
+        }
     } else {
         if storage::exists(PERSIST_CURRENT_START_KEY) {
             let _ = storage::delete(PERSIST_CURRENT_START_KEY);
             CURRENT_START_TIME.set(None);
+        }
+        if storage::exists(PERSIST_WAKEUP_ID_KEY) {
+            let _ = storage::delete(PERSIST_WAKEUP_ID_KEY);
+            CURRENT_WAKEUP_ID.set(None);
+            cancel_wakeup()
         }
     }
 }
@@ -174,7 +186,12 @@ pub fn toggle_state() {
         let periods = (elapsed_time / interval);
         let start_timestamp = start_time + periods * interval;
         let end_timestamp = start_time + (periods + 1) * interval;
-        let _ = reschedule_timer(start_timestamp, end_timestamp);
+        let wakeup = reschedule_timer(start_timestamp, end_timestamp);
+        if let Some(wakeup_id) = wakeup {
+            let _ = storage::write_int(PERSIST_WAKEUP_ID_KEY, wakeup_id);
+        } else {
+            let _ = storage::delete(PERSIST_WAKEUP_ID_KEY);
+        }
         start_session(start_time);
     } else {
         if let Some(start) = CURRENT_START_TIME.get() {
@@ -198,6 +215,7 @@ pub fn toggle_state() {
         let _ = storage::delete(PERSIST_CURRENT_START_KEY);
 
         vibes::double_pulse();
-        cancel_wakeup()
+        cancel_wakeup();
+        let _ = storage::delete(PERSIST_WAKEUP_ID_KEY);
     }
 }

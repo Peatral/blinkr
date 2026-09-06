@@ -1,7 +1,8 @@
 use crate::message_queue::{push_message, Message};
+use crate::state::CURRENT_WAKEUP_ID;
 use alloc::ffi::CString;
 use pebble::std::time;
-use pebble_sys::{time_t, StatusCode, Tuple, WakeupId};
+use pebble_sys::{time_t, Tuple, WakeupId};
 
 pub const DISTANT_PAST_SECONDS: time_t = i32::MIN;
 pub const DISTANT_FUTURE_SECONDS: time_t = i32::MAX;
@@ -30,25 +31,29 @@ pub fn extract_clay_int(tuple: &Tuple, default: i32) -> i32 {
     }
 }
 
-pub fn reschedule_timer_interval(interval: time_t) -> Result<WakeupId, StatusCode> {
+pub fn reschedule_timer_interval(interval: time_t) -> Option<WakeupId> {
     let now = time::get_time();
     reschedule_timer(now, now + interval)
 }
 
-pub fn reschedule_timer(start_timestamp: time_t, end_timestamp: time_t) -> Result<WakeupId, StatusCode> {
-    pebble::wakeup::cancel_all();
+pub fn reschedule_timer(start_timestamp: time_t, end_timestamp: time_t) -> Option<WakeupId> {
+    cancel_wakeup();
 
     let wakeup = pebble::wakeup::schedule(end_timestamp, 0, true);
 
-    push_message(
-        Message::RescheduleWakeup { start_timestamp, end_timestamp }.into()
-    );
-
-    wakeup
+    if let Some(wakeup_id) = wakeup.ok() {
+        CURRENT_WAKEUP_ID.set(Some(wakeup_id));
+        push_message(
+            Message::RescheduleWakeup { start_timestamp, end_timestamp }.into()
+        );
+        return Some(wakeup_id)
+    }
+    None
 }
 
 pub fn cancel_wakeup() {
     pebble::wakeup::cancel_all();
+    CURRENT_WAKEUP_ID.set(None);
 }
 
 pub fn start_session(start_timestamp: time_t) {
