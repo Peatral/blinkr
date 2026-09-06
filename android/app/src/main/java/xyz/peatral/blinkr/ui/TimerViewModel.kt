@@ -75,6 +75,7 @@ class TimerViewModel @Inject constructor(
     }
 
     init {
+        syncRepository.requestSync();
         viewModelScope.launch {
             syncRepository.syncState.collect { state ->
                 when (state) {
