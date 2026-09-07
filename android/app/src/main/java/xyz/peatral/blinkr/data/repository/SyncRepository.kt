@@ -127,4 +127,8 @@ class SyncRepository @Inject constructor(
     suspend fun getOldestSessionStartTime(): Instant? {
         return sessionDao.getOldestSessionStartTime()
     }
+
+    fun getSessionUpdatesFlow(): Flow<Int> {
+        return sessionDao.getSessionCountFlow()
+    }
 }

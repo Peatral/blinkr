@@ -2,7 +2,13 @@ package xyz.peatral.blinkr.ui
 
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlin.time.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
@@ -16,6 +22,22 @@ data class DayRecord(val daysAgo: Int, val sessions: List<SessionEntity>)
 class TimelinePagingSource(
     private val syncRepository: SyncRepository
 ) : PagingSource<Int, DayRecord>() {
+
+    private val observerScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+
+    init {
+        observerScope.launch {
+            syncRepository.getSessionUpdatesFlow()
+                .drop(1)
+                .collect {
+                    invalidate()
+                }
+        }
+
+        registerInvalidatedCallback {
+            observerScope.cancel()
+        }
+    }
 
     override suspend fun load(params: LoadParams<Int>): LoadResult<Int, DayRecord> {
         val startDaysAgo = params.key ?: 0

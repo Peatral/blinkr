@@ -95,6 +95,9 @@ interface SessionDao {
 
     @Query("SELECT MIN(startTime) FROM sessions")
     suspend fun getOldestSessionStartTime(): Instant?
+
+    @Query("SELECT COUNT(startTime) FROM sessions")
+    fun getSessionCountFlow(): Flow<Int>
 }
 
 @Database(
