@@ -20,7 +20,7 @@ data class TimerUiState(
 )
 
 @HiltViewModel
-class TimerViewModel @Inject constructor(
+class SessionOverviewViewModel @Inject constructor(
     private val formatTimerUseCase: FormatTimerUseCase,
     private val syncRepository: SyncRepository,
     private val currentTimeUseCase: CurrentTimeUseCase,

@@ -8,7 +8,6 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import dagger.hilt.android.AndroidEntryPoint
-import xyz.peatral.blinkr.ui.TimerScreen
 import xyz.peatral.blinkr.ui.theme.BlinkrTheme
 
 @AndroidEntryPoint
@@ -24,7 +23,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             BlinkrTheme {
-                TimerScreen()
+                BlinkrNavHost()
             }
         }
     }

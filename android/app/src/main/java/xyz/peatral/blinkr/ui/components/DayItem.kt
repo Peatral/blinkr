@@ -17,9 +17,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
+import kotlinx.datetime.format
 import kotlinx.datetime.toLocalDateTime
 import xyz.peatral.blinkr.R
 import xyz.peatral.blinkr.data.datasource.room.SessionEntity
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.milliseconds
@@ -39,8 +42,13 @@ fun DayItem (
         else -> if (daysAgo < 7) {
             stringResource(R.string.n_days_ago, daysAgo)
         } else {
-            // TODO: Display date
-            stringResource(R.string.n_days_ago, daysAgo)
+            val today: LocalDate = LocalDate.now()
+            val date = today.minusDays(daysAgo.toLong())
+            if (date.year == today.year) {
+                date.format(DateTimeFormatter.ofPattern("EEEE, d MMMM"))
+            } else {
+                date.format(DateTimeFormatter.ofPattern("EEEE, d MMMM yyyy"))
+            }
         }
     }
 
@@ -93,7 +101,9 @@ fun DayItem (
         content = {
             Text(
                 text = title,
-                style = MaterialTheme.typography.titleMedium,
+                style = MaterialTheme.typography.titleMedium.copy(
+                    fontFeatureSettings = "tnum"
+                ),
                 color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.padding(bottom = 8.dp),
             )

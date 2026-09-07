@@ -1,16 +1,13 @@
 package xyz.peatral.blinkr.ui
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.FloatingToolbarDefaults.ScreenOffset
 import androidx.compose.material3.HorizontalFloatingToolbar
-import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -26,14 +23,13 @@ import androidx.compose.ui.zIndex
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.compose.collectAsLazyPagingItems
-import androidx.paging.compose.itemKey
 import xyz.peatral.blinkr.R
-import xyz.peatral.blinkr.ui.components.DayItem
+import xyz.peatral.blinkr.ui.components.DayList
 import kotlin.time.Clock
 
 @Composable
-fun TimerScreen(
-    viewModel: TimerViewModel = hiltViewModel()
+fun SessionOverviewScreen(
+    viewModel: SessionOverviewViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val lazyPagingItems = viewModel.pagedTimeline.flow.collectAsLazyPagingItems()
@@ -83,23 +79,10 @@ fun TimerScreen(
                     onRefresh = viewModel::refreshSessions,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    LazyColumn(
-                        modifier = Modifier
-                            .fillMaxSize(),
-                        verticalArrangement = Arrangement.spacedBy(ListItemDefaults.SegmentedGap)
-                    ) {
-                        items(
-                            lazyPagingItems.itemCount,
-                            key = lazyPagingItems.itemKey { it.daysAgo }
-                        ) { daysAgo ->
-                            DayItem(
-                                daysAgo = daysAgo,
-                                daysCount = lazyPagingItems.itemCount,
-                                sessions = lazyPagingItems[daysAgo]?.sessions ?: emptyList(),
-                                currentTime = currentTime
-                            )
-                        }
-                    }
+                    DayList(
+                        viewModel.pagedTimeline,
+                        currentTime
+                    )
                 }
             }
         }
