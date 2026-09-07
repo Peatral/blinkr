@@ -2,6 +2,7 @@ package xyz.peatral.blinkr.service
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.PendingIntent
 import android.app.Service
 import android.content.Intent
 import android.os.IBinder
@@ -15,6 +16,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import xyz.peatral.blinkr.MainActivity
 import xyz.peatral.blinkr.R
 import xyz.peatral.blinkr.data.repository.GlyphRepository
 import xyz.peatral.blinkr.data.repository.TimerRepository
@@ -47,12 +49,19 @@ class TimerForegroundService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         createNotificationChannel()
+        val intent = Intent(this, MainActivity::class.java).apply {
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+        }
+        val pendingIntent: PendingIntent =
+            PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_IMMUTABLE)
+
         val notificationId = 1
         val notificationBuilder = NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle(getString(R.string.reminder_notification_title))
             .setContentText(getString(R.string.reminder_notification_text))
             .setSmallIcon(R.drawable.ic_notification_timer)
             .setPriority(NotificationCompat.PRIORITY_LOW)
+            .setContentIntent(pendingIntent)
             .setOngoing(true)
             .setRequestPromotedOngoing(true)
 
