@@ -18,10 +18,8 @@ import kotlinx.coroutines.launch
 import xyz.peatral.blinkr.R
 import xyz.peatral.blinkr.data.repository.GlyphRepository
 import xyz.peatral.blinkr.data.repository.TimerRepository
-import xyz.peatral.blinkr.domain.CurrentTimeUseCase
 import xyz.peatral.blinkr.domain.FormatTimerUseCase
 import javax.inject.Inject
-import kotlin.time.Duration.Companion.seconds
 
 @AndroidEntryPoint
 class TimerForegroundService : Service() {
@@ -32,8 +30,6 @@ class TimerForegroundService : Service() {
     @Inject lateinit var timerRepository: TimerRepository
     @Inject lateinit var glyphRepository: GlyphRepository
     @Inject lateinit var formatTimerUseCase: FormatTimerUseCase
-
-    @Inject lateinit var currentTimeUseCase: CurrentTimeUseCase
 
     private val glyphTimerScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private var timerJob: Job? = null
@@ -81,35 +77,21 @@ class TimerForegroundService : Service() {
         val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
         timerRepository.timer.collectLatest { timer ->
             if (timer != null) {
-
                 notificationBuilder
                     .setUsesChronometer(true)
                     .setChronometerCountDown(true)
                     .setWhen(timer.end.toEpochMilliseconds())
                     .setShowWhen(true)
-
-                currentTimeUseCase(1.seconds, timer.end).collectLatest { currentTime ->
-                    run {
-                        val duration = timer.end - timer.start
-                        val elapsed = currentTime - timer.start
-                        notificationBuilder.setProgress(
-                            duration.inWholeSeconds.toInt(),
-                            elapsed.inWholeSeconds.toInt(),
-                            false
-                        )
-                        notificationManager.notify(
-                            notificationId,
-                            notificationBuilder.build()
-                        )
-                    }
-                }
             } else {
                 notificationBuilder
                     .setShowWhen(false)
                     .setUsesChronometer(false)
-                    .setProgress(0, 0, true)
-                notificationManager.notify(notificationId, notificationBuilder.build())
             }
+
+            notificationManager.notify(
+                notificationId,
+                notificationBuilder.build()
+            )
         }
     }
 
