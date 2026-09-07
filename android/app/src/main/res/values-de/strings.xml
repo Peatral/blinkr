@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Blinkr</string>
+    <string name="status_waiting">Warte auf Pebble...</string>
+    <string name="status_timer_active">Timer aktiv: %1$s</string>
+    <string name="status_timer_stopped">Timer gestoppt</string>
+    <string name="today">Heute</string>
+    <string name="yesterday">Gestern</string>
+    <string name="n_days_ago">Vor %1$d Tagen</string>
+    <string name="reminder_notification_channel_name">Erinnerung</string>
+    <string name="reminder_notification_channel_description">Wird verwended um den Timer in der Statusleiste und den Glyph Timer auf der Rückseite des Geräts anzuzeigen</string>
+    <string name="reminder_notification_title">Blinkr</string>
+    <string name="reminder_notification_text">Vergiss nicht zu blinzeln und in die Ferne zu schauen wenn die Zeit abgelaufen ist</string>
+    <string name="overview">Übersicht</string>
+</resources>
