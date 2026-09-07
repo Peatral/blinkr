@@ -118,7 +118,7 @@ class TimerForegroundService : Service() {
         val channel = NotificationChannel(
             CHANNEL_ID,
             getString(R.string.reminder_notification_channel_name),
-            NotificationManager.IMPORTANCE_LOW,
+            NotificationManager.IMPORTANCE_DEFAULT,
         )
         channel.description = getString(R.string.reminder_notification_channel_description)
         val manager = getSystemService(NotificationManager::class.java)
