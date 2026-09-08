@@ -60,7 +60,7 @@ fun SessionTimeline(
 
         for (session in sessions) {
             val sessionStart = session.startTime
-            val sessionEnd = session.endTime
+            val sessionEnd = session.endTime ?: effectiveCurrentTime
 
             if (sessionEnd > startTime && sessionStart < endTime) {
                 val clampedStart = sessionStart.coerceAtLeast(startTime)

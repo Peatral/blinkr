@@ -56,16 +56,17 @@ class SyncRepository @Inject constructor(
     private suspend fun handleStartSession(message: PebbleMessage.StartSession) {
         sessionDao.insert(SessionEntity(
             startTime = message.startTimestamp,
-            endTime = PebbleConstants.DISTANT_FUTURE,
+            endTime = null,
         ))
     }
 
     private suspend fun handleStopSession(message: PebbleMessage.StopSession) {
         sessionDao.deleteUnfinishedSession()
         if (
-            message.startTimestamp > PebbleConstants.DISTANT_PAST && message.endTimestamp < PebbleConstants.DISTANT_FUTURE
-            && message.startTimestamp < message.endTimestamp
-            && message.endTimestamp - message.startTimestamp > 1.minutes
+            message.startTimestamp > PebbleConstants.DISTANT_PAST &&
+            message.endTimestamp < PebbleConstants.DISTANT_FUTURE &&
+            message.startTimestamp < message.endTimestamp &&
+            message.endTimestamp - message.startTimestamp > 1.minutes
         ) {
             sessionDao.insert(SessionEntity(
                 startTime = message.startTimestamp,

@@ -81,7 +81,8 @@ class TimelinePagingSource(
                 val dayEnd = dayStart + 1.days
 
                 val dailySessions = chunkSessions.filter {
-                    it.endTime > dayStart && it.startTime < dayEnd
+                    val effectiveEnd = it.endTime ?: Clock.System.now()
+                    effectiveEnd > dayStart && it.startTime < dayEnd
                 }
 
                 DayRecord(daysAgo, dailySessions)

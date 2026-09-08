@@ -67,7 +67,8 @@ fun DayItem (
     val totalDuration = remember(startTime, endTime, currentTime, sessions) {
         sessions.sumOf { session ->
             val minEndTime = minOf(endTime, currentTime)
-            val clampedEnd = session.endTime.coerceIn(startTime, minEndTime)
+            val effectiveEnd = session.endTime ?: currentTime
+            val clampedEnd = effectiveEnd.coerceIn(startTime, minEndTime)
             val clampedStart = session.startTime.coerceIn(startTime, minEndTime)
             (clampedEnd - clampedStart).inWholeMilliseconds
         }.milliseconds

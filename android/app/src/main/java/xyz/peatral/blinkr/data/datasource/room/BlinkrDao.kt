@@ -11,7 +11,6 @@ import androidx.room.RoomDatabase
 import androidx.room.Transaction
 import androidx.room.TypeConverters
 import kotlinx.coroutines.flow.Flow
-import xyz.peatral.blinkr.data.datasource.pebble.PebbleConstants
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Instant
@@ -19,8 +18,11 @@ import kotlin.time.Instant
 @Entity(tableName = "sessions")
 data class SessionEntity(
     @PrimaryKey val startTime: Instant,
-    val endTime: Instant
-)
+    val endTime: Instant? = null
+) {
+    val isActive: Boolean
+        get() = endTime == null
+}
 
 @Dao
 interface SessionDao {
@@ -33,13 +35,9 @@ interface SessionDao {
     @Query("""
         DELETE FROM sessions 
         WHERE startTime = (SELECT startTime FROM sessions ORDER BY startTime DESC LIMIT 1) 
-        AND endTime = :distantFuture
+        AND endTime IS NULL
     """)
-    suspend fun deleteLatestSessionIfUnfinished(distantFuture: Instant)
-
-    suspend fun deleteUnfinishedSession() {
-        deleteLatestSessionIfUnfinished(PebbleConstants.DISTANT_FUTURE)
-    }
+    suspend fun deleteUnfinishedSession()
 
     @Query("SELECT * FROM sessions ORDER BY startTime DESC")
     fun getAllSessionsDesc(): Flow<List<SessionEntity>>
@@ -55,13 +53,14 @@ interface SessionDao {
         val history = getAllSessionsAsc()
         if (history.isEmpty()) return
 
-        val latestSession = history.last()
+        val activeSession = history.lastOrNull { it.isActive }
+        val completedSessions = history.filter { !it.isActive }
 
         val maxAllowedTime = currentTime + 1.days
 
-        val validHistory = history.filter {
+        val validHistory = completedSessions.filter {
             it.startTime.toEpochMilliseconds() > 0 &&
-                    it.endTime >= it.startTime &&
+                    it.endTime!! >= it.startTime &&
                     it.endTime <= maxAllowedTime
         }
 
@@ -69,8 +68,8 @@ interface SessionDao {
         for (current in validHistory) {
             val last = mergedHistory.lastOrNull()
 
-            if (last != null && current.startTime < (last.endTime + 1.minutes)) {
-                if (current.endTime > last.endTime) {
+            if (last != null && current.startTime < (last.endTime!! + 1.minutes)) {
+                if (current.endTime!! > last.endTime) {
                     mergedHistory[mergedHistory.lastIndex] = last.copy(endTime = current.endTime)
                 }
             } else {
@@ -79,18 +78,23 @@ interface SessionDao {
         }
 
         val finalHistory = mergedHistory.filter {
-            (it.endTime - it.startTime) >= 1.minutes
+            (it.endTime!! - it.startTime) >= 1.minutes
         }
 
         deleteAll()
         insertAll(finalHistory)
 
-        if (latestSession.endTime >= PebbleConstants.DISTANT_FUTURE) {
-            insert(latestSession)
+        if (activeSession != null) {
+            insert(activeSession)
         }
     }
 
-    @Query("SELECT * FROM sessions WHERE endTime >= :startOfDay AND startTime < :endOfDay ORDER BY startTime ASC")
+    @Query("""
+        SELECT * FROM sessions 
+        WHERE (endTime IS NULL OR endTime >= :startOfDay) 
+        AND startTime < :endOfDay 
+        ORDER BY startTime ASC
+    """)
     fun getSessionsForTimeframe(startOfDay: Instant, endOfDay: Instant): Flow<List<SessionEntity>>
 
     @Query("SELECT MIN(startTime) FROM sessions")
