@@ -40,8 +40,24 @@ class TimelinePagingSource(
     }
 
     override suspend fun load(params: LoadParams<Int>): LoadResult<Int, DayRecord> {
-        val startDaysAgo = params.key ?: 0
+        val startDaysAgo = when (params) {
+            is LoadParams.Refresh -> {
+                val key = params.key ?: 0
+                maxOf(0, key - (params.loadSize / 2))
+            }
+            is LoadParams.Append -> params.key ?: 0
+            is LoadParams.Prepend -> {
+                maxOf(0, params.key - params.loadSize)
+            }
+        }
+
         val loadSize = params.loadSize
+
+        val actualLoadSize = if (params is LoadParams.Prepend) {
+            params.key - startDaysAgo
+        } else {
+            params.loadSize
+        }
 
         val zone = TimeZone.currentSystemDefault()
         val startOfToday = Clock.System.now().toLocalDateTime(zone).date.atStartOfDayIn(zone)
@@ -54,10 +70,9 @@ class TimelinePagingSource(
 
         val chunkEndDaysAgo = maxOf(0, startDaysAgo - 1)
         val chunkEnd = startOfToday - chunkEndDaysAgo.days + 1.days
-        val chunkStart = startOfToday - (startDaysAgo + loadSize - 1).days
+        val chunkStart = startOfToday - (startDaysAgo + actualLoadSize - 1).days
 
         return try {
-            // TODO: invalidate source when repo update
             val chunkSessions = syncRepository.getSessionsForTimeframe(chunkStart, chunkEnd).first()
 
             val days = (0 until loadSize).map { offset ->
@@ -76,8 +91,8 @@ class TimelinePagingSource(
 
             LoadResult.Page(
                 data = days,
-                prevKey = if (startDaysAgo == 0) null else maxOf(0, startDaysAgo - loadSize),
-                nextKey = if (reachedEnd) null else startDaysAgo + loadSize
+                prevKey = if (startDaysAgo == 0) null else startDaysAgo,
+                nextKey = if (reachedEnd) null else startDaysAgo + actualLoadSize
             )
         } catch (e: Exception) {
             LoadResult.Error(e)
@@ -85,6 +100,8 @@ class TimelinePagingSource(
     }
 
     override fun getRefreshKey(state: PagingState<Int, DayRecord>): Int? {
-        return state.anchorPosition
+        return state.anchorPosition?.let { anchorPosition ->
+            state.closestItemToPosition(anchorPosition)?.daysAgo
+        }
     }
 }
