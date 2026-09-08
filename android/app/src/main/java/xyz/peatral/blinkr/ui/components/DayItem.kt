@@ -17,12 +17,14 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
-import kotlinx.datetime.format
 import kotlinx.datetime.toLocalDateTime
 import xyz.peatral.blinkr.R
 import xyz.peatral.blinkr.data.datasource.room.SessionEntity
-import java.time.LocalDate
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.minus
 import java.time.format.DateTimeFormatter
+import kotlin.time.Clock
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.milliseconds
@@ -34,22 +36,15 @@ fun DayItem (
     daysAgo: Int,
     sessions: List<SessionEntity>,
     currentTime: Instant,
-    daysCount: Int
+    daysCount: Int,
+    onClick: () -> Unit,
+    durationFormatter: (duration: Duration) -> String,
+    dateFormatter: (date: LocalDate) -> String,
 ) {
-    val title = when (daysAgo) {
-        0 -> stringResource(R.string.today)
-        1 -> stringResource(R.string.yesterday)
-        else -> if (daysAgo < 7) {
-            stringResource(R.string.n_days_ago, daysAgo)
-        } else {
-            val today: LocalDate = LocalDate.now()
-            val date = today.minusDays(daysAgo.toLong())
-            if (date.year == today.year) {
-                date.format(DateTimeFormatter.ofPattern("EEEE, d MMMM"))
-            } else {
-                date.format(DateTimeFormatter.ofPattern("EEEE, d MMMM yyyy"))
-            }
-        }
+    val title = remember(daysAgo, dateFormatter) {
+        val zone = TimeZone.currentSystemDefault()
+        val date = (Clock.System.now() - daysAgo.days).toLocalDateTime(zone).date
+        dateFormatter(date)
     }
 
     val (startTime, endTime) = remember(daysAgo, currentTime) {
@@ -74,14 +69,8 @@ fun DayItem (
         }.milliseconds
     }
 
-    val totalDurationText = remember(totalDuration) {
-        totalDuration.toComponents { hours, minutes, _, _ ->
-            if (totalDuration < 1.hours) {
-                "${minutes}m"
-            } else {
-                "${hours}h ${minutes}m"
-            }
-        }
+    val totalDurationText = remember(totalDuration, durationFormatter) {
+        durationFormatter(totalDuration)
     }
 
     val textMeasurer = rememberTextMeasurer()
@@ -129,6 +118,7 @@ fun DayItem (
                 currentTime = currentTime,
                 modifier = Modifier.fillMaxWidth()
             )
-        }
+        },
+        onClick = onClick,
     )
 }

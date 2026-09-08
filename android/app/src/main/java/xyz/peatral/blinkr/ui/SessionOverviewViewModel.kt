@@ -9,11 +9,15 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.datetime.LocalDate
 import xyz.peatral.blinkr.data.repository.SyncRepository
 import xyz.peatral.blinkr.data.repository.SyncState
 import xyz.peatral.blinkr.domain.CurrentTimeUseCase
+import xyz.peatral.blinkr.domain.FormatDurationUseCase
+import xyz.peatral.blinkr.domain.FormatLocalDateUseCase
 import xyz.peatral.blinkr.domain.FormatTimerUseCase
 import javax.inject.Inject
+import kotlin.time.Duration
 
 data class TimerUiState(
     val isRefreshing: Boolean = false,
@@ -24,6 +28,8 @@ class SessionOverviewViewModel @Inject constructor(
     private val formatTimerUseCase: FormatTimerUseCase,
     private val syncRepository: SyncRepository,
     private val currentTimeUseCase: CurrentTimeUseCase,
+    private val formatDurationUseCase: FormatDurationUseCase,
+    private val formatLocalDateUseCase: FormatLocalDateUseCase,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(TimerUiState())
@@ -45,6 +51,9 @@ class SessionOverviewViewModel @Inject constructor(
         syncRepository.requestSync()
         _uiState.value = _uiState.value.copy(isRefreshing = true)
     }
+
+    val formatDuration = { duration: Duration -> formatDurationUseCase(duration) }
+    val formatDate = { date: LocalDate -> formatLocalDateUseCase(date) }
 
     init {
         syncRepository.requestSync();

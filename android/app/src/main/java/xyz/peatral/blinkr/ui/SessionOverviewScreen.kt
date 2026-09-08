@@ -22,17 +22,22 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.paging.compose.collectAsLazyPagingItems
+import kotlinx.datetime.DatePeriod
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.minus
+import kotlinx.datetime.toJavaLocalDate
+import kotlinx.datetime.toLocalDateTime
 import xyz.peatral.blinkr.R
 import xyz.peatral.blinkr.ui.components.DayList
 import kotlin.time.Clock
 
 @Composable
 fun SessionOverviewScreen(
-    viewModel: SessionOverviewViewModel = hiltViewModel()
+    viewModel: SessionOverviewViewModel = hiltViewModel(),
+    onDayClick: (date: LocalDate) -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val lazyPagingItems = viewModel.pagedTimeline.flow.collectAsLazyPagingItems()
 
     val currentTime by viewModel.currentTime.collectAsStateWithLifecycle(Clock.System.now())
 
@@ -81,7 +86,18 @@ fun SessionOverviewScreen(
                 ) {
                     DayList(
                         viewModel.pagedTimeline,
-                        currentTime
+                        currentTime,
+                        onDayClick = { daysAgo ->
+                            val zone = TimeZone.currentSystemDefault()
+                            val targetDate = Clock.System.now().toLocalDateTime(zone).date.minus(
+                                DatePeriod(
+                                    days = daysAgo
+                                )
+                            )
+                            onDayClick(targetDate)
+                        },
+                        durationFormatter = viewModel.formatDuration,
+                        dateFormatter = viewModel.formatDate,
                     )
                 }
             }
