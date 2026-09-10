@@ -91,16 +91,12 @@ class TimerForegroundService : Service() {
                     .setChronometerCountDown(true)
                     .setWhen(timer.end.toEpochMilliseconds())
                     .setShowWhen(true)
-            } else {
-                notificationBuilder
-                    .setShowWhen(false)
-                    .setUsesChronometer(false)
-            }
 
-            notificationManager.notify(
-                notificationId,
-                notificationBuilder.build()
-            )
+                notificationManager.notify(
+                    notificationId,
+                    notificationBuilder.build()
+                )
+            }
         }
     }
 
