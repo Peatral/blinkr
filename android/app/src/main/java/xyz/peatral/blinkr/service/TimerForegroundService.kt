@@ -75,6 +75,15 @@ class TimerForegroundService : Service() {
             .setOngoing(true)
             .setRequestPromotedOngoing(true)
 
+        val currentTimer = timerRepository.timer.value
+        if (currentTimer != null) {
+            notificationBuilder
+                .setUsesChronometer(true)
+                .setChronometerCountDown(true)
+                .setWhen(currentTimer.end.toEpochMilliseconds())
+                .setShowWhen(true)
+        }
+
         startForeground(notificationId, notificationBuilder.build())
 
         wakeLock?.let {
