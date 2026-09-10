@@ -12,7 +12,9 @@ fun BlinkrNavHost() {
 
     NavHost(navController = navController, startDestination = Overview) {
         composable<Overview> {
-            SessionOverviewScreen()
+            SessionOverviewScreen(
+                onDayClick = { }
+            )
         }
     }
 }
