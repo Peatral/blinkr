@@ -15,7 +15,7 @@ import javax.inject.Singleton
 import kotlin.time.Clock
 import kotlin.time.Instant
 
-class Timer(val start: Instant, val end: Instant)
+data class Timer(val start: Instant, val end: Instant)
 
 @Singleton
 class TimerRepository @Inject constructor(
