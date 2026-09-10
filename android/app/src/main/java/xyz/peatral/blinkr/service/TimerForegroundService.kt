@@ -107,6 +107,11 @@ class TimerForegroundService : Service() {
     suspend fun manageGlyphTimer() {
         formatTimerUseCase().collectLatest { formattedTime ->
             run {
+                if (formattedTime.isBlank()) {
+                    glyphRepository.clearDisplay()
+                    return@run
+                }
+
                 val matrixSize = Common.getDeviceMatrixLength()
 
                 val approxTextHeight = 5
