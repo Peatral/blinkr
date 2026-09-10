@@ -6,9 +6,11 @@ import android.app.PendingIntent
 import android.app.Service
 import android.content.Intent
 import android.os.IBinder
+import android.os.PowerManager
 import androidx.core.app.NotificationCompat
 import com.nothing.ketchum.Common
 import dagger.hilt.android.AndroidEntryPoint
+import kotlin.time.Duration.Companion.hours
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -35,14 +37,22 @@ class TimerForegroundService : Service() {
 
     private val glyphTimerScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private var timerJob: Job? = null
+    private var wakeLock: PowerManager.WakeLock? = null
 
     override fun onCreate() {
         super.onCreate()
         glyphRepository.connect()
+        val powerManager = getSystemService(POWER_SERVICE) as PowerManager
+        wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "Blinkr:TimerWakeLock")
     }
 
     override fun onDestroy() {
         super.onDestroy()
+        wakeLock?.let {
+            if (it.isHeld) {
+                it.release()
+            }
+        }
         glyphTimerScope.cancel()
         glyphRepository.disconnect()
     }
@@ -66,6 +76,12 @@ class TimerForegroundService : Service() {
             .setRequestPromotedOngoing(true)
 
         startForeground(notificationId, notificationBuilder.build())
+
+        wakeLock?.let {
+            if (!it.isHeld) {
+                it.acquire(10.hours.inWholeMilliseconds)
+            }
+        }
 
         if (timerJob == null || timerJob?.isActive != true) {
             timerJob = glyphTimerScope.launch {
