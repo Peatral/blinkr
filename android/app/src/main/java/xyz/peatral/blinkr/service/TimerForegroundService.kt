@@ -55,6 +55,8 @@ class TimerForegroundService : Service() {
         }
         glyphTimerScope.cancel()
         glyphRepository.disconnect()
+        super.onDestroy()
+        super.onDestroy()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {

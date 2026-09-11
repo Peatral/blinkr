@@ -11,4 +11,8 @@
     <string name="reminder_notification_title">Blinkr</string>
     <string name="reminder_notification_text">Remember to blink and look into the distance when the time is up</string>
     <string name="overview">Overview</string>
+    <string name="navigate_back">Navigate back</string>
+    <string name="session_break">Break</string>
+    <string name="session">Session</string>
+    <string name="no_recorded_sessions">No recorded sessions</string>
 </resources>

@@ -9,8 +9,13 @@ import androidx.compose.ui.Modifier
 import androidx.paging.Pager
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
+import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.minus
+import kotlinx.datetime.toLocalDateTime
 import xyz.peatral.blinkr.ui.DayRecord
+import kotlin.time.Clock
 import kotlin.time.Duration
 import kotlin.time.Instant
 
@@ -18,7 +23,7 @@ import kotlin.time.Instant
 fun DayList(
     pager: Pager<Int, DayRecord>,
     currentTime: Instant,
-    onDayClick: (daysAgo: Int) -> Unit,
+    onDayClick: (date: LocalDate) -> Unit,
     durationFormatter: (duration: Duration) -> String,
     dateFormatter: (date: LocalDate) -> String,
 ) {
@@ -33,16 +38,23 @@ fun DayList(
         items(
             lazyPagingItems.itemCount,
             key = lazyPagingItems.itemKey { it.daysAgo }
-        ) { daysAgo ->
+        ) { daysAgo -> run {
+            val zone = TimeZone.currentSystemDefault()
+            val targetDate = Clock.System.now().toLocalDateTime(zone).date.minus(
+                DatePeriod(
+                    days = daysAgo
+                )
+            )
             DayItem(
-                daysAgo = daysAgo,
-                daysCount = lazyPagingItems.itemCount,
+                date = targetDate,
+                index = daysAgo,
+                count = lazyPagingItems.itemCount,
                 sessions = lazyPagingItems[daysAgo]?.sessions ?: emptyList(),
                 currentTime = currentTime,
-                onClick = { onDayClick(daysAgo) },
+                onClick = { onDayClick(targetDate) },
                 durationFormatter = durationFormatter,
                 dateFormatter = dateFormatter,
             )
-        }
+        } }
     }
 }

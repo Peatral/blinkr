@@ -6,8 +6,11 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.runtime.CompositionLocalProvider
 import dagger.hilt.android.AndroidEntryPoint
+import xyz.peatral.blinkr.ui.LocalSharedTransitionScope
 import xyz.peatral.blinkr.ui.theme.BlinkrTheme
 
 @AndroidEntryPoint
@@ -23,7 +26,11 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             BlinkrTheme {
-                BlinkrNavHost()
+                SharedTransitionLayout {
+                    CompositionLocalProvider(LocalSharedTransitionScope provides this) {
+                        BlinkrNavHost()
+                    }
+                }
             }
         }
     }

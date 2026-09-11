@@ -47,8 +47,8 @@ class PebbleListenerService : BasePebbleListenerService() {
     }
 
     override fun onDestroy() {
-        super.onDestroy()
         scope.cancel()
+        super.onDestroy()
     }
 
     override suspend fun onMessageReceived(

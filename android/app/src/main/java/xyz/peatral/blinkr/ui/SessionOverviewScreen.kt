@@ -22,12 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.minus
-import kotlinx.datetime.toJavaLocalDate
-import kotlinx.datetime.toLocalDateTime
 import xyz.peatral.blinkr.R
 import xyz.peatral.blinkr.ui.components.DayList
 import kotlin.time.Clock
@@ -87,15 +82,7 @@ fun SessionOverviewScreen(
                     DayList(
                         viewModel.pagedTimeline,
                         currentTime,
-                        onDayClick = { daysAgo ->
-                            val zone = TimeZone.currentSystemDefault()
-                            val targetDate = Clock.System.now().toLocalDateTime(zone).date.minus(
-                                DatePeriod(
-                                    days = daysAgo
-                                )
-                            )
-                            onDayClick(targetDate)
-                        },
+                        onDayClick = { date -> onDayClick(date) },
                         durationFormatter = viewModel.formatDuration,
                         dateFormatter = viewModel.formatDate,
                     )

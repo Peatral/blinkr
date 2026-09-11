@@ -12,4 +12,8 @@
     <string name="reminder_notification_title">Blinkr</string>
     <string name="reminder_notification_text">Vergiss nicht zu blinzeln und in die Ferne zu schauen wenn die Zeit abgelaufen ist</string>
     <string name="overview">Übersicht</string>
+    <string name="navigate_back">Navigiere zurück</string>
+    <string name="session_break">Pause</string>
+    <string name="session">Session</string>
+    <string name="no_recorded_sessions">Keine aufgezeichneten Sessions</string>
 </resources>
