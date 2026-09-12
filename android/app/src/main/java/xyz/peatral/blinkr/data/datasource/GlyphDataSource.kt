@@ -33,13 +33,13 @@ class GlyphDataSource @Inject constructor(
         })
     }
 
-    fun displayText(text: String, x: Int, y: Int) {
+    fun displayText(text: String, x: Int, y: Int, brightness: Int = 255) {
         if (!isConnected || text.isBlank()) return
 
         val textObject = GlyphMatrixObject.Builder()
             .setText(text)
             .setPosition(x, y)
-            .setBrightness(255)
+            .setBrightness(brightness.coerceIn(0, 255))
             .build()
 
         val frame = GlyphMatrixFrame.Builder()

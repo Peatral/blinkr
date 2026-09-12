@@ -8,9 +8,7 @@ import android.content.Intent
 import android.os.IBinder
 import android.os.PowerManager
 import androidx.core.app.NotificationCompat
-import com.nothing.ketchum.Common
 import dagger.hilt.android.AndroidEntryPoint
-import kotlin.time.Duration.Companion.hours
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -20,10 +18,11 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import xyz.peatral.blinkr.MainActivity
 import xyz.peatral.blinkr.R
-import xyz.peatral.blinkr.data.repository.GlyphRepository
 import xyz.peatral.blinkr.data.repository.TimerRepository
 import xyz.peatral.blinkr.domain.FormatTimerUseCase
+import xyz.peatral.blinkr.domain.UpdateGlyphDisplayUseCase
 import javax.inject.Inject
+import kotlin.time.Duration.Companion.hours
 
 @AndroidEntryPoint
 class TimerForegroundService : Service() {
@@ -32,8 +31,8 @@ class TimerForegroundService : Service() {
     }
 
     @Inject lateinit var timerRepository: TimerRepository
-    @Inject lateinit var glyphRepository: GlyphRepository
     @Inject lateinit var formatTimerUseCase: FormatTimerUseCase
+    @Inject lateinit var updateGlyphDisplayUseCase: UpdateGlyphDisplayUseCase
 
     private val glyphTimerScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private var timerJob: Job? = null
@@ -41,7 +40,6 @@ class TimerForegroundService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-        glyphRepository.connect()
         val powerManager = getSystemService(POWER_SERVICE) as PowerManager
         wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "Blinkr:TimerWakeLock")
     }
@@ -54,9 +52,6 @@ class TimerForegroundService : Service() {
             }
         }
         glyphTimerScope.cancel()
-        glyphRepository.disconnect()
-        super.onDestroy()
-        super.onDestroy()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -101,7 +96,7 @@ class TimerForegroundService : Service() {
                 }
 
                 launch {
-                    manageGlyphTimer()
+                    updateGlyphDisplayUseCase()
                 }
             }
         }
@@ -123,28 +118,6 @@ class TimerForegroundService : Service() {
                     notificationId,
                     notificationBuilder.build()
                 )
-            }
-        }
-    }
-
-    suspend fun manageGlyphTimer() {
-        formatTimerUseCase().collectLatest { formattedTime ->
-            run {
-                if (formattedTime.isBlank()) {
-                    glyphRepository.clearDisplay()
-                    return@run
-                }
-
-                val matrixSize = Common.getDeviceMatrixLength()
-
-                val approxTextHeight = 5
-                val approxTextWidth =
-                    4 * 4 + 4 + 1 // 4 numbers a 4 px, 4 paddings, the colon
-
-                val centerY = (matrixSize - approxTextHeight) / 2
-                val centerX = (matrixSize - approxTextWidth) / 2
-
-                glyphRepository.displayText(formattedTime, centerX, centerY)
             }
         }
     }

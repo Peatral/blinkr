@@ -20,18 +20,17 @@ import javax.inject.Singleton
 
 val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
 
-data class Settings(
+data class PebbleSettings(
     val intervalMins: Int,
 )
 
 @Singleton
-class SettingsRepository @Inject constructor(
+class PebbleSettingsRepository @Inject constructor(
     @ApplicationContext private val context: Context,
     private val pebbleDataSource: PebbleDataSource,
 ) {
     companion object {
         val INTERVAL_MINS_KEY = intPreferencesKey("interval_mins")
-
         const val DEFAULT_INTERVAL_MINS = 20
     }
 
@@ -47,8 +46,8 @@ class SettingsRepository @Inject constructor(
         }
     }
 
-    val settings: Flow<Settings> = context.dataStore.data.map { preferences ->
-        Settings(
+    val settings: Flow<PebbleSettings> = context.dataStore.data.map { preferences ->
+        PebbleSettings(
             intervalMins = preferences[INTERVAL_MINS_KEY] ?: DEFAULT_INTERVAL_MINS
         )
     }

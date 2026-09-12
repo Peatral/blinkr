@@ -1,17 +1,17 @@
 package xyz.peatral.blinkr.data.repository
 
-import xyz.peatral.blinkr.data.datasource.GlyphDataSource
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import xyz.peatral.blinkr.data.datasource.GlyphDataSource
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class GlyphRepository @Inject constructor(
-    private val glyphDataSource: GlyphDataSource
+    private val glyphDataSource: GlyphDataSource,
 ) {
     var references = 0
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
@@ -34,8 +34,13 @@ class GlyphRepository @Inject constructor(
         }
     }
 
-    fun displayText(text: String, x: Int, y: Int) {
-        glyphDataSource.displayText(text, x, y)
+    fun displayText(text: String, x: Int, y: Int, brightness: Int = 255) {
+        glyphDataSource.displayText(
+            text = text,
+            x = x,
+            y = y,
+            brightness = brightness,
+        )
     }
 
     fun clearDisplay() {

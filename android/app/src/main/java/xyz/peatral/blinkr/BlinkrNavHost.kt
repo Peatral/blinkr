@@ -18,6 +18,8 @@ import xyz.peatral.blinkr.ui.SessionOverviewScreen
 import xyz.peatral.blinkr.ui.SettingsScreen
 import xyz.peatral.blinkr.ui.PebbleSettingsScreen
 
+import xyz.peatral.blinkr.ui.GlyphSettingsScreen
+
 @Composable
 fun BlinkrNavHost() {
     val navController = rememberNavController()
@@ -61,6 +63,7 @@ fun BlinkrNavHost() {
                 SettingsScreen(
                     onNavigateBack = { navController.popBackStack() },
                     onNavigateToPebbleSettings = { navController.navigate(PebbleSettings) },
+                    onNavigateToGlyphSettings = { navController.navigate(GlyphSettings) },
                 )
             }
         }
@@ -68,6 +71,14 @@ fun BlinkrNavHost() {
         composable<PebbleSettings> {
             CompositionLocalProvider(LocalAnimatedVisibilityScope provides this) {
                 PebbleSettingsScreen(
+                    onNavigateBack = { navController.popBackStack() },
+                )
+            }
+        }
+
+        composable<GlyphSettings> {
+            CompositionLocalProvider(LocalAnimatedVisibilityScope provides this) {
+                GlyphSettingsScreen(
                     onNavigateBack = { navController.popBackStack() },
                 )
             }

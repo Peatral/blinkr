@@ -22,4 +22,9 @@
     <string name="pebble_settings">Pebble-Einstellungen</string>
     <string name="select_interval">Intervall auswählen</string>
     <string name="cancel">Abbrechen</string>
+    <string name="glyph">Glyph</string>
+    <string name="glyph_settings">Glyph-Einstellungen</string>
+    <string name="glyph_settings_summary">Einstellungen für das Nothing Glyph Interface</string>
+    <string name="glyph_enabled_summary">Timer-Anzeige auf der Glyph Matrix aktivieren</string>
+    <string name="glyph_brightness">Helligkeit</string>
 </resources>

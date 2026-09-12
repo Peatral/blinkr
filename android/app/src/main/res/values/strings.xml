@@ -23,4 +23,9 @@
     <string name="pebble_settings">Pebble Settings</string>
     <string name="select_interval">Select Interval</string>
     <string name="cancel">Cancel</string>
+    <string name="glyph">Glyph</string>
+    <string name="glyph_settings">Glyph Settings</string>
+    <string name="glyph_settings_summary">Settings for Nothing Glyph Interface</string>
+    <string name="glyph_enabled_summary">Enable timer display on Glyph Matrix</string>
+    <string name="glyph_brightness">Brightness</string>
 </resources>

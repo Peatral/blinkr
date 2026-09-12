@@ -13,3 +13,6 @@ object Settings
 
 @Serializable
 object PebbleSettings
+
+@Serializable
+object GlyphSettings
