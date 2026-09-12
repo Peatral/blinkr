@@ -15,6 +15,8 @@ import xyz.peatral.blinkr.ui.DayBreakdownScreen
 import xyz.peatral.blinkr.ui.DayBreakdownViewModel
 import xyz.peatral.blinkr.ui.LocalAnimatedVisibilityScope
 import xyz.peatral.blinkr.ui.SessionOverviewScreen
+import xyz.peatral.blinkr.ui.SettingsScreen
+import xyz.peatral.blinkr.ui.PebbleSettingsScreen
 
 @Composable
 fun BlinkrNavHost() {
@@ -30,7 +32,8 @@ fun BlinkrNavHost() {
                 SessionOverviewScreen(
                     onDayClick = { date ->
                         navController.navigate(DayBreakdown(dateString = date.toString()))
-                    }
+                    },
+                    onNavigateToSettings = { navController.navigate(Settings) },
                 )
             }
         }
@@ -48,7 +51,24 @@ fun BlinkrNavHost() {
             CompositionLocalProvider(LocalAnimatedVisibilityScope provides this) {
                 DayBreakdownScreen(
                     viewModel = viewModel,
-                    onNavigateBack = { navController.popBackStack() }
+                    onNavigateBack = { navController.popBackStack() },
+                )
+            }
+        }
+
+        composable<Settings> {
+            CompositionLocalProvider(LocalAnimatedVisibilityScope provides this) {
+                SettingsScreen(
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateToPebbleSettings = { navController.navigate(PebbleSettings) },
+                )
+            }
+        }
+
+        composable<PebbleSettings> {
+            CompositionLocalProvider(LocalAnimatedVisibilityScope provides this) {
+                PebbleSettingsScreen(
+                    onNavigateBack = { navController.popBackStack() },
                 )
             }
         }

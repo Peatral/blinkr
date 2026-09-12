@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Blinkr</string>
     <string name="status_waiting">Warte auf Pebble...</string>
     <string name="status_timer_active">Timer aktiv: %1$s</string>
     <string name="status_timer_stopped">Timer gestoppt</string>
@@ -16,4 +15,11 @@
     <string name="session_break">Pause</string>
     <string name="session">Session</string>
     <string name="no_recorded_sessions">Keine aufgezeichneten Sessions</string>
+    <string name="settings">Einstellungen</string>
+    <string name="pebble_settings_summary">Einstellungen für die Pebble Watchapp</string>
+    <string name="interval">Intervall</string>
+    <string name="interval_summary">%d Minuten</string>
+    <string name="pebble_settings">Pebble-Einstellungen</string>
+    <string name="select_interval">Intervall auswählen</string>
+    <string name="cancel">Abbrechen</string>
 </resources>

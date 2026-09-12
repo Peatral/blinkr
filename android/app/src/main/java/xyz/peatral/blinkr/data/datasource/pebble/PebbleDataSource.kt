@@ -125,6 +125,20 @@ class PebbleDataSource @Inject constructor(
             encoder = { _ -> mapOf() },
             decoder = { _ -> PebbleMessage.RequestSync }
         )
+
+        registerMessage(
+            messageClass = PebbleMessage.UpdateSettings::class,
+            messageId = MessageTypes.TYPE_UPDATE_SETTINGS,
+            encoder = { msg ->
+                mapOf(
+                    MessageKeys.INTERVAL to PebbleDictionaryItem.Int32(msg.intervalMins)
+                )
+            },
+            decoder = { dict ->
+                val intervalMins = dict.getInt(MessageKeys.INTERVAL) ?: return@registerMessage null
+                PebbleMessage.UpdateSettings(intervalMins)
+            }
+        )
     }
 
     suspend fun processIncomingMessage(watchappUUID: UUID, data: PebbleDictionary): Boolean {

@@ -57,6 +57,7 @@ dependencies {
     implementation(libs.androidx.paging)
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
+    implementation(libs.androidx.datastore.preferences)
     implementation(libs.pebblekit)
     implementation(files("libs/glyph-matrix-sdk-2.0.aar"))
     implementation(libs.kotlinx.datetime)

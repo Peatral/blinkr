@@ -54,9 +54,7 @@
   },
   "name": "blinkr",
   "license": "MIT",
-  "dependencies": {
-    "@rebble/clay": "^1.0.10"
-  },
+  "dependencies": {},
   "devDependencies": {
     "pkts": "^0.3.0-beta.1"
   },

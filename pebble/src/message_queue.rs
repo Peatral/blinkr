@@ -1,6 +1,6 @@
 extern crate alloc;
-use crate::message_keys::{MESSAGE_KEY_END_TIMESTAMP, MESSAGE_KEY_MSG_TYPE, MESSAGE_KEY_START_TIMESTAMP, MESSAGE_KEY_SYNC_DATA_CHUNK, MESSAGE_KEY_SYNC_TOTAL_CHUNKS};
-use crate::message_types::{MSG_TYPE_REQUEST_SYNC, MSG_TYPE_RESCHEDULE_TIMER, MSG_TYPE_START_SESSION, MSG_TYPE_STOP_SESSION, MSG_TYPE_SYNC_CHUNK, MSG_TYPE_SYNC_START};
+use crate::message_keys::{MESSAGE_KEY_END_TIMESTAMP, MESSAGE_KEY_INTERVAL, MESSAGE_KEY_MSG_TYPE, MESSAGE_KEY_START_TIMESTAMP, MESSAGE_KEY_SYNC_DATA_CHUNK, MESSAGE_KEY_SYNC_TOTAL_CHUNKS};
+use crate::message_types::{MSG_TYPE_REQUEST_SYNC, MSG_TYPE_RESCHEDULE_TIMER, MSG_TYPE_START_SESSION, MSG_TYPE_STOP_SESSION, MSG_TYPE_SYNC_CHUNK, MSG_TYPE_SYNC_START, MSG_TYPE_UPDATE_SETTINGS};
 use crate::state::TimePair;
 use crate::sync::start_sync;
 use crate::{state, ui};
@@ -18,6 +18,7 @@ pub enum Message {
     RescheduleWakeup { start_timestamp: i32, end_timestamp: i32 },
     SyncStart { total_chunks: i32 },
     SyncChunk { chunk_index: usize, is_last: bool },
+    UpdateSettings { interval_mins: i32 },
 }
 
 pub struct MessageQueue {
@@ -75,6 +76,10 @@ impl MessageQueue {
                             let _ = dict.write_data(MESSAGE_KEY_SYNC_DATA_CHUNK, bytes);
                         }
                     }
+                    Message::UpdateSettings { interval_mins } => {
+                        let _ = dict.write_int(MESSAGE_KEY_MSG_TYPE, MSG_TYPE_UPDATE_SETTINGS);
+                        let _ = dict.write_int(MESSAGE_KEY_INTERVAL, *interval_mins);
+                    }
                 }
 
                 if Outbox::send().is_ok() {
@@ -122,13 +127,24 @@ pub fn inbox_received_handler(dict: Dictionary) {
             if let Some(msg_type) = msg_type_opt {
                 match msg_type {
                     MSG_TYPE_REQUEST_SYNC => start_sync(),
-                    _ => {},
+                    MSG_TYPE_UPDATE_SETTINGS => {
+                        if let Some(tuple) = dict.find(MESSAGE_KEY_INTERVAL) {
+                            let new_interval = unsafe {
+                                let value_ptr = core::ptr::addr_of!(tuple.value) as *const i32;
+                                core::ptr::read_unaligned(value_ptr)
+                            } as pebble_sys::time_t;
+                            state::INTERVAL_MINS.set(new_interval);
+                            let _ = pebble::storage::write_int(
+                                state::PERSIST_INTERVAL_KEY,
+                                new_interval as pebble_sys::time_t,
+                            );
+                        }
+                        ui::settings_window::update_from_message();
+                    }
+                    _ => {}
                 }
             }
         }
-    } else {
-        // TODO: Do the settings messages properly
-        ui::settings_window::inbox_received_handler(dict)
     }
 }
 

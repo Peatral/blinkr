@@ -7,3 +7,9 @@ object Overview
 
 @Serializable
 data class DayBreakdown(val dateString: String)
+
+@Serializable
+object Settings
+
+@Serializable
+object PebbleSettings

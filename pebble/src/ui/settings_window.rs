@@ -1,14 +1,13 @@
+use crate::message_queue::{push_message, Message};
 use crate::ui::confirmation_screen::ConfirmationScreen;
 use crate::utils::reschedule_timer_interval;
 use crate::window_manager::{release, AppWindow};
-use crate::{message_keys, state, sync, utils, window_manager};
-use pebble::app_message::Dictionary;
+use crate::{state, sync, window_manager};
 use pebble::graphics::context::Context;
 use pebble::layer::menu_layer::MenuCellLayer;
 use pebble::layer::{ILayer, ILayerMut, MenuIndexRef, MenuLayer, MenuLayerDelegate, MenuLayerRef};
 use pebble::types::GlobalRefCell;
 use pebble::window::{Window, WindowDelegate, WindowRef};
-use pebble_sys::time_t;
 
 static MENU_REF: GlobalRefCell<Option<MenuLayer<ReminderMenu>>> = GlobalRefCell::new(None);
 
@@ -61,6 +60,9 @@ impl MenuLayerDelegate for ReminderMenu {
             if state::IS_ENABLED.get() {
                 let _ = reschedule_timer_interval(interval * 60);
             }
+            push_message(Message::UpdateSettings {
+                interval_mins: interval as i32,
+            });
             menu_layer.reload_data();
         } else if row == 2 {
             window_manager::push(
@@ -99,20 +101,11 @@ pub fn create() -> AppWindow {
     AppWindow::Settings(Window::new(SettingsScreen {}))
 }
 
-pub fn inbox_received_handler(dict: Dictionary) {
-    if let Some(tuple) = dict.find(message_keys::MESSAGE_KEY_INTERVAL) {
-        let new_interval =
-            utils::extract_clay_int(&tuple, state::DEFAULT_INTERVAL_MINS as i32) as time_t;
-
-        state::INTERVAL_MINS.set(new_interval);
-        let _ = pebble::storage::write_int(state::PERSIST_INTERVAL_KEY, new_interval as time_t);
-
-        if state::IS_ENABLED.get() {
-            let _ = reschedule_timer_interval(new_interval * 60);
-        }
-
-        if let Some(menu) = MENU_REF.borrow().as_ref() {
-            menu.reload_data();
-        }
+pub fn update_from_message() {
+    if state::IS_ENABLED.get() {
+        let _ = reschedule_timer_interval(state::INTERVAL_MINS.get() * 60);
+    }
+    if let Some(menu) = MENU_REF.borrow().as_ref() {
+        menu.reload_data();
     }
 }

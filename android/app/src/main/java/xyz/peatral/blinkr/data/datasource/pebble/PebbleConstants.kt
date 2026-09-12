@@ -23,4 +23,5 @@ object MessageTypes {
     const val TYPE_SYNC_START = 4
     const val TYPE_SYNC_CHUNK = 5
     const val TYPE_REQUEST_SYNC = 6
+    const val TYPE_UPDATE_SETTINGS = 7
 }
