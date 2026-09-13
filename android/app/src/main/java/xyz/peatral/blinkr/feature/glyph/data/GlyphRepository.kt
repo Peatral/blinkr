@@ -2,7 +2,13 @@ package xyz.peatral.blinkr.feature.glyph.data
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import xyz.peatral.blinkr.core.di.ApplicationScope
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -15,22 +21,32 @@ class GlyphRepository @Inject constructor(
 ) {
     var references = 0
 
-    fun connect() {
-        glyphDataSource.connect()
-        references++
+    private val hardwareMutex = Mutex()
+
+    suspend fun connect() {
+        withHardwareLock {
+            if (references <= 0) {
+                glyphDataSource.connect()
+            }
+            references++
+        }
     }
 
     fun disconnect() {
         references = 0.coerceAtLeast(references - 1)
         if (references <= 0) {
-            clearDisplay()
             appScope.launch {
                 delay(100.milliseconds)
                 if (references <= 0) {
+                    clearDisplay()
                     glyphDataSource.disconnect()
                 }
             }
         }
+    }
+
+    fun turnOnAll(brightness: Int = 255) {
+        glyphDataSource.turnOnAll(brightness)
     }
 
     fun displayText(text: String, x: Int, y: Int, brightness: Int = 255) {
@@ -44,5 +60,19 @@ class GlyphRepository @Inject constructor(
 
     fun clearDisplay() {
         glyphDataSource.clearDisplay()
+    }
+
+    suspend fun <T> withHardwareLock(block: suspend () -> T): T {
+        return hardwareMutex.withLock { block() }
+    }
+
+    fun tryHardwareLock(block: () -> Unit) {
+        if (hardwareMutex.tryLock()) {
+            try {
+                block()
+            } finally {
+                hardwareMutex.unlock()
+            }
+        }
     }
 }

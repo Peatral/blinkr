@@ -15,28 +15,39 @@ import kotlin.time.Instant
 
 data class Timer(val start: Instant, val end: Instant)
 
+sealed interface TimerState {
+    object Idle : TimerState
+    data class Running(val timer: Timer) : TimerState
+    data class Expired(val timer: Timer) : TimerState
+}
+
 @Singleton
 class TimerRepository @Inject constructor(
     @ApplicationScope private val appScope: CoroutineScope
 ) {
     private var expirationJob: Job? = null
-    private val _currentTimer = MutableStateFlow<Timer?>(null)
-    val timer = _currentTimer.asStateFlow()
+    private val _currentTimerState = MutableStateFlow<TimerState>(TimerState.Idle)
+    val timerState = _currentTimerState.asStateFlow()
 
-    fun updateTimer(timer: Timer?) {
-        _currentTimer.value = timer
+    fun updateState(newState: TimerState) {
+        _currentTimerState.value = newState
         expirationJob?.cancel()
 
-        if (timer != null) {
+        if (newState is TimerState.Running) {
+            val timer = newState.timer
             val timeRemaining = timer.end - Clock.System.now()
             if (timeRemaining > Duration.ZERO) {
                 expirationJob = appScope.launch {
                     delay(timeRemaining)
-                    _currentTimer.value = null
+                    _currentTimerState.value = TimerState.Expired(timer)
                 }
             } else {
-                _currentTimer.value = null
+                _currentTimerState.value = TimerState.Expired(timer)
             }
         }
+    }
+
+    fun compareAndSetState(expect: TimerState, update: TimerState) {
+        _currentTimerState.compareAndSet(expect, update)
     }
 }

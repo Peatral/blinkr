@@ -38,8 +38,18 @@ fun GlyphSettingsScreen(
     val settings by viewModel.settings.collectAsState()
 
     val sliderState = rememberSliderState(
-        value = settings.brightness.toFloat(),
+        value = settings.timerBrightness.toFloat(),
         steps = 0, trackRange = 0f..255f
+    )
+
+    val flashBrightnessSliderState = rememberSliderState(
+        value = settings.flashBrightness.toFloat(),
+        steps = 0, trackRange = 0f..255f
+    )
+
+    val flashDurationSliderState = rememberSliderState(
+        value = settings.flashDurationSeconds.toFloat(),
+        steps = 28, trackRange = 1f..30f
     )
 
     Scaffold(
@@ -62,43 +72,124 @@ fun GlyphSettingsScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
                 .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(ListItemDefaults.SegmentedGap),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            SegmentedListItem(
-                shapes = ListItemDefaults.segmentedShapes(index = 0, count = 2),
-                colors = ListItemDefaults.colors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainer
-                ),
-                content = { Text(stringResource(R.string.glyph)) },
-                supportingContent = { Text(stringResource(R.string.glyph_enabled_summary)) },
-                trailingContent = {
-                    Switch(
-                        checked = settings.isEnabled,
-                        onCheckedChange = { viewModel.setIsEnabled(it) },
-                    )
-                },
-                onClick = { viewModel.setIsEnabled(!settings.isEnabled) }
+            Text(
+                text = stringResource(R.string.glyph_setting_general),
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.padding(top = 16.dp),
             )
-
-            SegmentedListItem(
-                shapes = ListItemDefaults.segmentedShapes(index = 1, count = 2),
-                colors = ListItemDefaults.colors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainer
-                ),
-                content = { Text(stringResource(R.string.glyph_brightness)) },
-                supportingContent = {
-                    Column(
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        Slider(
-                            state = sliderState,
-                            modifier = Modifier.padding(top = 8.dp),
-                            enabled = settings.isEnabled,
-                            onValueChangeFinished = { viewModel.setBrightness(sliderState.value.roundToInt()) },
+            Column(
+                verticalArrangement = Arrangement.spacedBy(ListItemDefaults.SegmentedGap),
+            ) {
+                SegmentedListItem(
+                    shapes = ListItemDefaults.segmentedShapes(index = 0, count = 1),
+                    colors = ListItemDefaults.colors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainer
+                    ),
+                    content = { Text(stringResource(R.string.glyph)) },
+                    supportingContent = { Text(stringResource(R.string.glyph_enabled_summary)) },
+                    trailingContent = {
+                        Switch(
+                            checked = settings.isEnabled,
+                            onCheckedChange = { viewModel.setIsEnabled(it) },
                         )
-                    }
-                }
+                    },
+                    onClick = { viewModel.setIsEnabled(!settings.isEnabled) }
+                )
+            }
+
+            Text(
+                text = stringResource(R.string.glyph_setting_timer),
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.padding(top = 16.dp),
             )
+            Column(
+                verticalArrangement = Arrangement.spacedBy(ListItemDefaults.SegmentedGap),
+            ) {
+                SegmentedListItem(
+                    shapes = ListItemDefaults.segmentedShapes(index = 0, count = 1),
+                    colors = ListItemDefaults.colors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainer
+                    ),
+                    content = { Text(stringResource(R.string.glyph_brightness)) },
+                    supportingContent = {
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            Slider(
+                                state = sliderState,
+                                modifier = Modifier.padding(top = 8.dp),
+                                enabled = settings.isEnabled,
+                                onValueChangeFinished = { viewModel.setTimerBrightness(sliderState.value.roundToInt()) },
+                            )
+                        }
+                    }
+                )
+            }
+
+            Text(
+                text = stringResource(R.string.glyph_setting_flash),
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.padding(top = 16.dp),
+            )
+            Column(
+                verticalArrangement = Arrangement.spacedBy(ListItemDefaults.SegmentedGap),
+            ) {
+                SegmentedListItem(
+                    shapes = ListItemDefaults.segmentedShapes(index = 0, count = 3),
+                    colors = ListItemDefaults.colors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainer
+                    ),
+                    content = { Text(stringResource(R.string.glyph_brightness)) },
+                    supportingContent = {
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            Slider(
+                                state = flashBrightnessSliderState,
+                                modifier = Modifier.padding(top = 8.dp),
+                                enabled = settings.isEnabled,
+                                onValueChangeFinished = { viewModel.setFlashBrightness(sliderState.value.roundToInt()) },
+                            )
+                        }
+                    }
+                )
+
+                SegmentedListItem(
+                    shapes = ListItemDefaults.segmentedShapes(index = 1, count = 3),
+                    colors = ListItemDefaults.colors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainer
+                    ),
+                    content = { Text(stringResource(R.string.glyph_flash_duration)) },
+                    supportingContent = {
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            Text(
+                                text = stringResource(R.string.glyph_flash_duration_seconds, settings.flashDurationSeconds),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Slider(
+                                state = flashDurationSliderState,
+                                modifier = Modifier.padding(top = 8.dp),
+                                enabled = settings.isEnabled,
+                                onValueChangeFinished = { viewModel.setFlashDuration(flashDurationSliderState.value.roundToInt()) },
+                            )
+                        }
+                    }
+                )
+
+                SegmentedListItem(
+                    shapes = ListItemDefaults.segmentedShapes(index = 2, count = 3),
+                    colors = ListItemDefaults.colors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainer
+                    ),
+                    content = { Text(stringResource(R.string.glyph_test_flash)) },
+                    onClick = { viewModel.testFlash() }
+                )
+            }
         }
     }
 }

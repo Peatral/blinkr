@@ -2,6 +2,7 @@ package xyz.peatral.blinkr.feature.pebble.domain
 
 import xyz.peatral.blinkr.core.data.repository.Timer
 import xyz.peatral.blinkr.core.data.repository.TimerRepository
+import xyz.peatral.blinkr.core.data.repository.TimerState
 import xyz.peatral.blinkr.feature.pebble.data.PebbleMessage
 import xyz.peatral.blinkr.feature.pebble.data.PebbleRepository
 import javax.inject.Inject
@@ -14,10 +15,12 @@ class SyncPebbleTimerUseCase @Inject constructor(
         pebbleRepository.incomingMessages.collect { message ->
             when (message) {
                 is PebbleMessage.RescheduleTimer -> {
-                    timerRepository.updateTimer(Timer(message.startTimestamp, message.endTimestamp))
+                    timerRepository.updateState(TimerState.Running(
+                        timer = Timer(message.startTimestamp, message.endTimestamp)
+                    ))
                 }
                 is PebbleMessage.StopSession -> {
-                    timerRepository.updateTimer(null)
+                    timerRepository.updateState(TimerState.Idle)
                 }
                 else -> {}
             }

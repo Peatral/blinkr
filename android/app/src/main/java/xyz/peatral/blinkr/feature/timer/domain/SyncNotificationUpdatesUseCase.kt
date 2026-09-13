@@ -2,6 +2,7 @@ package xyz.peatral.blinkr.feature.timer.domain
 
 import kotlinx.coroutines.flow.collectLatest
 import xyz.peatral.blinkr.core.data.repository.TimerRepository
+import xyz.peatral.blinkr.core.data.repository.TimerState
 import xyz.peatral.blinkr.feature.timer.data.TimerNotificationRepository
 import javax.inject.Inject
 
@@ -11,10 +12,14 @@ class SyncNotificationUpdatesUseCase @Inject constructor(
 ) {
     suspend operator fun invoke(notificationId: Int) {
         try {
-            timerRepository.timer.collectLatest { timer ->
-                if (timer != null) {
-                    val notification = notificationRepository.builderWithTimer(timer.end).build()
-                    notificationRepository.update(notificationId, notification)
+            timerRepository.timerState.collectLatest { timerState ->
+                when (timerState) {
+                    is TimerState.Running -> {
+                        val timer = timerState.timer
+                        val notification = notificationRepository.builderWithTimer(timer.end).build()
+                        notificationRepository.update(notificationId, notification)
+                    }
+                    else -> {}
                 }
             }
         } finally {

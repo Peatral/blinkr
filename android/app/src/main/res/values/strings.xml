@@ -28,4 +28,10 @@
     <string name="glyph_settings_summary">Settings for Nothing Glyph Interface</string>
     <string name="glyph_enabled_summary">Enable timer display on Glyph Matrix</string>
     <string name="glyph_brightness">Brightness</string>
+    <string name="glyph_flash_duration">Flash Duration</string>
+    <string name="glyph_flash_duration_seconds">%d seconds</string>
+    <string name="glyph_test_flash">Test flash</string>
+    <string name="glyph_setting_general">General</string>
+    <string name="glyph_setting_timer">Timer</string>
+    <string name="glyph_setting_flash">Flash</string>
 </resources>

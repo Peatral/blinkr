@@ -27,4 +27,10 @@
     <string name="glyph_settings_summary">Einstellungen für das Nothing Glyph Interface</string>
     <string name="glyph_enabled_summary">Timer-Anzeige auf der Glyph Matrix aktivieren</string>
     <string name="glyph_brightness">Helligkeit</string>
+    <string name="glyph_flash_duration">Blinkdauer</string>
+    <string name="glyph_flash_duration_seconds">%d Sekunden</string>
+    <string name="glyph_test_flash">Blinken testen</string>
+    <string name="glyph_setting_general">Allgemein</string>
+    <string name="glyph_setting_timer">Timer</string>
+    <string name="glyph_setting_flash">Blinken</string>
 </resources>
