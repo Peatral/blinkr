@@ -5,15 +5,24 @@ import kotlinx.coroutines.flow.combine
 import xyz.peatral.blinkr.core.domain.FormatTimerUseCase
 import xyz.peatral.blinkr.feature.glyph.data.GlyphRepository
 import xyz.peatral.blinkr.feature.glyph.data.GlyphSettingsRepository
+import xyz.peatral.blinkr.feature.glyph.data.WakeLockRepository
 import javax.inject.Inject
+import kotlin.time.Duration.Companion.hours
 
 class UpdateGlyphDisplayUseCase @Inject constructor(
     private val formatTimerUseCase: FormatTimerUseCase,
     private val glyphSettingsRepository: GlyphSettingsRepository,
     private val glyphRepository: GlyphRepository,
+    private val wakeLockRepository: WakeLockRepository,
 ) {
+    companion object {
+        const val WAKELOCK_TAG = "Blinkr:GlyphTimerWakeLock"
+        val WAKELOCK_DURATION = 10.hours
+    }
+
     suspend operator fun invoke() {
         try {
+            wakeLockRepository.acquire(WAKELOCK_TAG, WAKELOCK_DURATION)
             glyphRepository.connect()
 
             combine(
@@ -44,6 +53,7 @@ class UpdateGlyphDisplayUseCase @Inject constructor(
         } finally {
             glyphRepository.clearDisplay()
             glyphRepository.disconnect()
+            wakeLockRepository.release()
         }
     }
 }

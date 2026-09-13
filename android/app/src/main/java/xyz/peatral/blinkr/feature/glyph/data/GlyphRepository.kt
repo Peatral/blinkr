@@ -7,6 +7,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.time.Duration.Companion.milliseconds
 
 @Singleton
 class GlyphRepository @Inject constructor(
@@ -25,7 +26,7 @@ class GlyphRepository @Inject constructor(
         if (references <= 0) {
             clearDisplay()
             scope.launch {
-                delay(100)
+                delay(100.milliseconds)
                 if (references <= 0) {
                     glyphDataSource.disconnect()
                 }
