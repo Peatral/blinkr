@@ -8,16 +8,13 @@ import android.content.Context
 import android.content.Intent
 import androidx.core.app.NotificationCompat
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.flow.collectLatest
 import xyz.peatral.blinkr.MainActivity
 import xyz.peatral.blinkr.R
-import xyz.peatral.blinkr.core.data.repository.TimerRepository
 import javax.inject.Inject
 import kotlin.time.Instant
 
 class TimerNotificationRepository @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val timerRepository: TimerRepository
 ) {
     companion object {
         const val CHANNEL_ID = "TIMER_CHANNEL"
@@ -38,35 +35,24 @@ class TimerNotificationRepository @Inject constructor(
         createNotificationChannel()
     }
 
-    fun createInitialNotification(): Notification {
-        val currentTimer = timerRepository.timer.value
-        return if (currentTimer != null) {
-            buildWithTimer(currentTimer.end)
-        } else {
-            baseBuilder.build()
-        }
-    }
-
-    suspend fun startUpdatingNotification(notificationId: Int) {
-        timerRepository.timer.collectLatest { timer ->
-            if (timer != null) {
-                val notification = buildWithTimer(timer.end)
-                notificationManager.notify(notificationId, notification)
-            }
-        }
+    fun update(notificationId: Int, notification: Notification) {
+        notificationManager.notify(notificationId, notification)
     }
 
     fun clear(notificationId: Int) {
         notificationManager.cancel(notificationId)
     }
 
-    private fun buildWithTimer(timerWhen: Instant): Notification {
+    fun builder(): NotificationCompat.Builder {
+        return baseBuilder
+    }
+
+    fun builderWithTimer(timerWhen: Instant): NotificationCompat.Builder {
         return baseBuilder
             .setUsesChronometer(true)
             .setChronometerCountDown(true)
             .setWhen(timerWhen.toEpochMilliseconds())
             .setShowWhen(true)
-            .build()
     }
 
     private fun createPendingIntent(): PendingIntent {
