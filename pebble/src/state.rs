@@ -147,43 +147,49 @@ pub fn deinit_state() {
 }
 
 pub fn toggle_state() {
-    let mut is_enabled = IS_ENABLED.get();
-    is_enabled = !is_enabled;
-    IS_ENABLED.set(is_enabled);
+    set_state(!IS_ENABLED.get(), None, None, true);
+}
 
-    let _ = storage::write_bool(PERSIST_STATE_KEY, is_enabled);
+pub fn set_state(enabled: bool, start_ts: Option<time_t>, end_ts: Option<time_t>, sync_network: bool) {
+    if IS_ENABLED.get() == enabled {
+        return;
+    }
+
+    IS_ENABLED.set(enabled);
+    let _ = storage::write_bool(PERSIST_STATE_KEY, enabled);
     let now = get_time();
 
-    if is_enabled {
-        let mut start_time = now;
+    if enabled {
+        let mut start_time = start_ts.unwrap_or(now);
 
         let mut history = HISTORY.borrow_mut();
 
-        // Resume previous session if it was less than 60 seconds ago
-        let resume_start = history.last().and_then(|last| {
-            let diff = now - last.end;
-            if diff >= 0 && diff < 60 {
-                Some(last.start)
-            } else {
-                None
-            }
-        });
+        if start_ts.is_none() {
+            // Resume previous session if it was less than 60 seconds ago
+            let resume_start = history.last().and_then(|last| {
+                let diff = now - last.end;
+                if diff >= 0 && diff < 60 {
+                    Some(last.start)
+                } else {
+                    None
+                }
+            });
 
-        if let Some(st) = resume_start {
-            start_time = st;
-            history.pop();
-            save_history(&history);
+            if let Some(st) = resume_start {
+                start_time = st;
+                history.pop();
+                save_history(&history);
+            }
         }
 
         CURRENT_START_TIME.set(Some(start_time));
         let _ = storage::write_int(PERSIST_CURRENT_START_KEY, start_time as i32);
 
         vibes::long_pulse();
-        // Before we did a total reset, now we actually resume the running timer
-        // as that is how I thought I wrote the code
+
         let interval = INTERVAL_MINS.get() * 60;
         let elapsed_time = now - start_time;
-        let periods = (elapsed_time / interval);
+        let periods = elapsed_time / interval;
         let start_timestamp = start_time + periods * interval;
         let end_timestamp = start_time + (periods + 1) * interval;
         let wakeup = reschedule_timer(start_timestamp, end_timestamp);
@@ -192,13 +198,18 @@ pub fn toggle_state() {
         } else {
             let _ = storage::delete(PERSIST_WAKEUP_ID_KEY);
         }
-        start_session(start_time);
+
+        if sync_network {
+            start_session(start_time);
+        }
     } else {
+        let end_time = end_ts.unwrap_or(now);
+
         if let Some(start) = CURRENT_START_TIME.get() {
             // Only save the session if it lasted 60 seconds or more
-            if now >= start && (now - start) >= 60 {
+            if end_time >= start && (end_time - start) >= 60 {
                 let mut history = HISTORY.borrow_mut();
-                history.push(TimePair { start, end: now });
+                history.push(TimePair { start, end: end_time });
 
                 while history.len() > MAX_HISTORY_PAIRS {
                     history.remove(0);
@@ -206,9 +217,11 @@ pub fn toggle_state() {
 
                 save_history(&history);
             }
-            stop_session(start, now);
-        } else {
-            stop_session(DISTANT_PAST_SECONDS, now);
+            if sync_network {
+                stop_session(start, end_time);
+            }
+        } else if sync_network {
+            stop_session(DISTANT_PAST_SECONDS, end_time);
         }
 
         CURRENT_START_TIME.set(None);

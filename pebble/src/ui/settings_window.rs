@@ -81,6 +81,14 @@ impl MenuLayerDelegate for ReminderMenu {
 
 pub struct SettingsScreen;
 
+impl SettingsScreen {
+    pub fn refresh(&self) {
+        if let Some(menu) = MENU_REF.borrow().as_ref() {
+            menu.reload_data();
+        }
+    }
+}
+
 impl WindowDelegate for SettingsScreen {
     fn load(&self, window: WindowRef) {
         let bounds = window.get_root_layer().get_bounds();
@@ -99,13 +107,4 @@ impl WindowDelegate for SettingsScreen {
 
 pub fn create() -> AppWindow {
     AppWindow::Settings(Window::new(SettingsScreen {}))
-}
-
-pub fn update_from_message() {
-    if state::IS_ENABLED.get() {
-        let _ = reschedule_timer_interval(state::INTERVAL_MINS.get() * 60);
-    }
-    if let Some(menu) = MENU_REF.borrow().as_ref() {
-        menu.reload_data();
-    }
 }

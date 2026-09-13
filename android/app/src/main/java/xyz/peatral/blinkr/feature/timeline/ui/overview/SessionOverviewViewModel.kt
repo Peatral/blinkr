@@ -16,6 +16,7 @@ import xyz.peatral.blinkr.core.domain.CurrentTimeUseCase
 import xyz.peatral.blinkr.core.domain.FormatDurationUseCase
 import xyz.peatral.blinkr.core.domain.FormatLocalDateUseCase
 import xyz.peatral.blinkr.core.domain.FormatTimerUseCase
+import xyz.peatral.blinkr.feature.timeline.domain.ToggleTimerUseCase
 import javax.inject.Inject
 import kotlin.time.Duration
 
@@ -30,6 +31,7 @@ class SessionOverviewViewModel @Inject constructor(
     private val currentTimeUseCase: CurrentTimeUseCase,
     private val formatDurationUseCase: FormatDurationUseCase,
     private val formatLocalDateUseCase: FormatLocalDateUseCase,
+    private val toggleTimerUseCase: ToggleTimerUseCase,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(TimerUiState())
@@ -50,6 +52,12 @@ class SessionOverviewViewModel @Inject constructor(
     fun refreshSessions() {
         syncRepository.requestSync()
         _uiState.value = _uiState.value.copy(isRefreshing = true)
+    }
+
+    fun toggleSession() {
+        viewModelScope.launch {
+            toggleTimerUseCase()
+        }
     }
 
     val formatDuration = { duration: Duration -> formatDurationUseCase(duration) }

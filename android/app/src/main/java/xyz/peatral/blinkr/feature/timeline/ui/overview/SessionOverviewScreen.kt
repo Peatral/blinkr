@@ -2,12 +2,17 @@ package xyz.peatral.blinkr.feature.timeline.ui.overview
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material3.FloatingToolbarDefaults.ScreenOffset
 import androidx.compose.material3.HorizontalFloatingToolbar
 import androidx.compose.material3.Icon
@@ -63,7 +68,7 @@ fun SessionOverviewScreen(
                 true,
                 modifier = Modifier.align(Alignment.BottomCenter).offset(y = -ScreenOffset)
                     .zIndex(1f),
-                content = {
+                leadingContent = {
                     Box(
                         modifier = Modifier.padding(8.dp)
                     ) {
@@ -77,6 +82,14 @@ fun SessionOverviewScreen(
                                 ),
                             )
                         }
+                    }
+                },
+                content = {
+                    IconButton(onClick = viewModel::toggleSession) {
+                        Icon(
+                            imageVector = if (timer.isBlank()) Icons.Filled.PlayArrow else Icons.Filled.Stop,
+                            contentDescription = stringResource(if (timer.isBlank()) R.string.start_session else R.string.stop_session)
+                        )
                     }
                 }
             )

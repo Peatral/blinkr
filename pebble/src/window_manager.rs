@@ -102,3 +102,15 @@ pub fn notify_tick(tick_time: &tm, units_changed: TimeUnits) {
         active_window.on_tick(tick_time, units_changed);
     }
 }
+
+pub fn refresh_active_window() {
+    if let Some(active_window) = APP_STACK.borrow().last() {
+        match active_window {
+            AppWindow::History(w) => w.delegate().refresh(),
+            AppWindow::DayBreakdown(w) => w.delegate().refresh(),
+            AppWindow::Settings(w) => w.delegate().refresh(),
+            _ => {}
+        }
+    }
+}
+

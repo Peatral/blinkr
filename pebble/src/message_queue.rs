@@ -127,19 +127,48 @@ pub fn inbox_received_handler(dict: Dictionary) {
             if let Some(msg_type) = msg_type_opt {
                 match msg_type {
                     MSG_TYPE_REQUEST_SYNC => start_sync(),
+                    MSG_TYPE_START_SESSION => {
+                        let mut start_ts = None;
+                        if let Some(tuple) = dict.find(MESSAGE_KEY_START_TIMESTAMP) {
+                            start_ts = Some(unsafe {
+                                let value_ptr = core::ptr::addr_of!(tuple.value) as *const i32;
+                                core::ptr::read_unaligned(value_ptr)
+                            } as pebble_sys::time_t);
+                        }
+                        state::set_state(true, start_ts, None, false);
+                        crate::window_manager::refresh_active_window();
+                    },
+                    MSG_TYPE_STOP_SESSION => {
+                        let mut end_ts = None;
+                        if let Some(tuple) = dict.find(MESSAGE_KEY_END_TIMESTAMP) {
+                            end_ts = Some(unsafe {
+                                let value_ptr = core::ptr::addr_of!(tuple.value) as *const i32;
+                                core::ptr::read_unaligned(value_ptr)
+                            } as pebble_sys::time_t);
+                        }
+                        state::set_state(false, None, end_ts, false);
+                        crate::window_manager::refresh_active_window();
+                    },
                     MSG_TYPE_UPDATE_SETTINGS => {
+                        let mut interval_changed = false;
                         if let Some(tuple) = dict.find(MESSAGE_KEY_INTERVAL) {
                             let new_interval = unsafe {
                                 let value_ptr = core::ptr::addr_of!(tuple.value) as *const i32;
                                 core::ptr::read_unaligned(value_ptr)
                             } as pebble_sys::time_t;
-                            state::INTERVAL_MINS.set(new_interval);
-                            let _ = pebble::storage::write_int(
-                                state::PERSIST_INTERVAL_KEY,
-                                new_interval as pebble_sys::time_t,
-                            );
+                            if new_interval != state::INTERVAL_MINS.get() {
+                                state::INTERVAL_MINS.set(new_interval);
+                                let _ = pebble::storage::write_int(
+                                    state::PERSIST_INTERVAL_KEY,
+                                    new_interval as pebble_sys::time_t,
+                                );
+                                interval_changed = true;
+                            }
                         }
-                        ui::settings_window::update_from_message();
+                        if interval_changed && state::IS_ENABLED.get() {
+                            let _ = crate::utils::reschedule_timer_interval(state::INTERVAL_MINS.get() * 60);
+                        }
+                        crate::window_manager::refresh_active_window();
                     }
                     _ => {}
                 }

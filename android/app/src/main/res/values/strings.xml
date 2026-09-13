@@ -3,6 +3,8 @@
     <string name="status_waiting">Waiting for Pebble…</string>
     <string name="status_timer_active">Timer Active: %1$s</string>
     <string name="status_timer_stopped">Timer Stopped</string>
+    <string name="start_session">Start Session</string>
+    <string name="stop_session">Stop Session</string>
     <string name="today">Today</string>
     <string name="yesterday">Yesterday</string>
     <string name="n_days_ago">%1$d days ago</string>
