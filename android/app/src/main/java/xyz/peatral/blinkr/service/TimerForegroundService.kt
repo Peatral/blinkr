@@ -18,9 +18,9 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import xyz.peatral.blinkr.MainActivity
 import xyz.peatral.blinkr.R
-import xyz.peatral.blinkr.data.repository.TimerRepository
-import xyz.peatral.blinkr.domain.FormatTimerUseCase
-import xyz.peatral.blinkr.domain.UpdateGlyphDisplayUseCase
+import xyz.peatral.blinkr.core.data.repository.TimerRepository
+import xyz.peatral.blinkr.core.domain.FormatTimerUseCase
+import xyz.peatral.blinkr.feature.glyph.domain.UpdateGlyphDisplayUseCase
 import javax.inject.Inject
 import kotlin.time.Duration.Companion.hours
 

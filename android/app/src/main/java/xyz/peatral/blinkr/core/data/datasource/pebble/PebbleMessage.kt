@@ -1,0 +1,15 @@
+package xyz.peatral.blinkr.core.data.datasource.pebble
+
+import kotlin.time.Instant
+
+sealed class PebbleMessage {
+    data class RescheduleTimer(val startTimestamp: Instant, val endTimestamp: Instant) : PebbleMessage()
+    data class StartSession(val startTimestamp: Instant) : PebbleMessage()
+    data class StopSession(val startTimestamp: Instant, val endTimestamp: Instant) : PebbleMessage()
+
+    data class SyncStart(val totalChunks: Int) : PebbleMessage()
+    data class SyncChunk(val data: ByteArray) : PebbleMessage()
+    data object RequestSync : PebbleMessage()
+
+    data class UpdateSettings(val intervalMins: Int) : PebbleMessage()
+}

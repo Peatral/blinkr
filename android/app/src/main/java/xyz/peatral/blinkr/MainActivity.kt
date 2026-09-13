@@ -10,8 +10,8 @@ import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.runtime.CompositionLocalProvider
 import dagger.hilt.android.AndroidEntryPoint
-import xyz.peatral.blinkr.ui.LocalSharedTransitionScope
-import xyz.peatral.blinkr.ui.theme.BlinkrTheme
+import xyz.peatral.blinkr.core.ui.LocalSharedTransitionScope
+import xyz.peatral.blinkr.core.ui.theme.BlinkrTheme
 
 @AndroidEntryPoint
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)

@@ -11,14 +11,13 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import kotlinx.datetime.LocalDate
-import xyz.peatral.blinkr.ui.DayBreakdownScreen
-import xyz.peatral.blinkr.ui.DayBreakdownViewModel
-import xyz.peatral.blinkr.ui.LocalAnimatedVisibilityScope
-import xyz.peatral.blinkr.ui.SessionOverviewScreen
-import xyz.peatral.blinkr.ui.SettingsScreen
-import xyz.peatral.blinkr.ui.PebbleSettingsScreen
-
-import xyz.peatral.blinkr.ui.GlyphSettingsScreen
+import xyz.peatral.blinkr.core.ui.LocalAnimatedVisibilityScope
+import xyz.peatral.blinkr.feature.glyph.ui.GlyphSettingsScreen
+import xyz.peatral.blinkr.feature.pebble.ui.PebbleSettingsScreen
+import xyz.peatral.blinkr.feature.settings.ui.SettingsScreen
+import xyz.peatral.blinkr.feature.timeline.ui.breakdown.DayBreakdownScreen
+import xyz.peatral.blinkr.feature.timeline.ui.breakdown.DayBreakdownViewModel
+import xyz.peatral.blinkr.feature.timeline.ui.overview.SessionOverviewScreen
 
 @Composable
 fun BlinkrNavHost() {

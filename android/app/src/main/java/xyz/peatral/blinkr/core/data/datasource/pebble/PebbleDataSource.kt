@@ -1,0 +1,189 @@
+package xyz.peatral.blinkr.core.data.datasource.pebble
+
+import android.content.Context
+import dagger.hilt.android.qualifiers.ApplicationContext
+import io.rebble.pebblekit2.client.DefaultPebbleSender
+import io.rebble.pebblekit2.common.model.PebbleDictionary
+import io.rebble.pebblekit2.common.model.PebbleDictionaryItem
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+import java.util.UUID
+import javax.inject.Inject
+import javax.inject.Singleton
+import kotlin.concurrent.atomics.AtomicBoolean
+import kotlin.concurrent.atomics.ExperimentalAtomicApi
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.Instant
+
+@OptIn(ExperimentalAtomicApi::class, ExperimentalCoroutinesApi::class)
+@Singleton
+class PebbleDataSource @Inject constructor(
+    @ApplicationContext private val context: Context
+) {
+    companion object {
+        val APP_UUID: UUID = UUID.fromString("dabb3617-783b-443f-8add-8d74ccc57d07")
+    }
+
+    private val pebbleNetworkScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+
+    private val _appOpen = MutableStateFlow(false)
+    val appOpen = _appOpen.asStateFlow()
+
+    private val autoOpened = AtomicBoolean(false)
+
+
+    private val _incomingMessages = MutableSharedFlow<PebbleMessage>(
+        extraBufferCapacity = 10
+    )
+    val incomingMessages = _incomingMessages.asSharedFlow()
+
+    private val outgoingMessages = Channel<PebbleMessage>(Channel.BUFFERED)
+
+    private val sender = DefaultPebbleSender(context)
+
+    private val channel = PebbleNetworkChannel().apply {
+
+        registerMessage(
+            messageClass = PebbleMessage.RescheduleTimer::class,
+            messageId = MessageTypes.TYPE_RESCHEDULE_TIMER,
+            encoder = { msg ->
+                mapOf(
+                    MessageKeys.START_TIMESTAMP to PebbleDictionaryItem.Int32(msg.endTimestamp.epochSeconds.toInt()),
+                    MessageKeys.END_TIMESTAMP to PebbleDictionaryItem.Int32(msg.endTimestamp.epochSeconds.toInt())
+                )
+            },
+            decoder = { dict ->
+                val startTimestamp = dict.getLong(MessageKeys.START_TIMESTAMP) ?: return@registerMessage null
+                val endTimestamp = dict.getLong(MessageKeys.END_TIMESTAMP) ?: return@registerMessage null
+                PebbleMessage.RescheduleTimer(Instant.fromEpochSeconds(startTimestamp), Instant.fromEpochSeconds(endTimestamp))
+            }
+        )
+
+        registerMessage(
+            messageClass = PebbleMessage.StartSession::class,
+            messageId = MessageTypes.TYPE_START_SESSION,
+            encoder = { msg ->
+                mapOf(
+                    MessageKeys.START_TIMESTAMP to PebbleDictionaryItem.Int32(msg.startTimestamp.epochSeconds.toInt())
+                )
+            },
+            decoder = { dict ->
+                val timestamp = dict.getLong(MessageKeys.START_TIMESTAMP) ?: return@registerMessage null
+                PebbleMessage.StartSession(Instant.fromEpochSeconds(timestamp))
+            }
+        )
+
+        registerMessage(
+            messageClass = PebbleMessage.StopSession::class,
+            messageId = MessageTypes.TYPE_STOP_SESSION,
+            encoder = { msg ->
+                mapOf(
+                    MessageKeys.START_TIMESTAMP to PebbleDictionaryItem.Int32(msg.endTimestamp.epochSeconds.toInt()),
+                    MessageKeys.END_TIMESTAMP to PebbleDictionaryItem.Int32(msg.endTimestamp.epochSeconds.toInt())
+                )
+            },
+            decoder = { dict ->
+                val startTimestamp = dict.getLong(MessageKeys.START_TIMESTAMP) ?: return@registerMessage null
+                val endTimestamp = dict.getLong(MessageKeys.END_TIMESTAMP) ?: return@registerMessage null
+                PebbleMessage.StopSession(Instant.fromEpochSeconds(startTimestamp), Instant.fromEpochSeconds(endTimestamp))
+            }
+        )
+
+        registerMessage(
+            messageClass = PebbleMessage.SyncStart::class,
+            messageId = MessageTypes.TYPE_SYNC_START,
+            encoder = null,
+            decoder = { dict ->
+                val total = dict.getInt(MessageKeys.SYNC_TOTAL_CHUNKS) ?: return@registerMessage null
+                PebbleMessage.SyncStart(total)
+            }
+        )
+
+        registerMessage(
+            messageClass = PebbleMessage.SyncChunk::class,
+            messageId = MessageTypes.TYPE_SYNC_CHUNK,
+            encoder = null,
+            decoder = { dict ->
+                val bytes = dict.getBytes(MessageKeys.SYNC_DATA_CHUNK) ?: return@registerMessage null
+                PebbleMessage.SyncChunk(bytes)
+            }
+        )
+
+        registerMessage(
+            messageClass = PebbleMessage.RequestSync::class,
+            messageId = MessageTypes.TYPE_REQUEST_SYNC,
+            encoder = { _ -> mapOf() },
+            decoder = { _ -> PebbleMessage.RequestSync }
+        )
+
+        registerMessage(
+            messageClass = PebbleMessage.UpdateSettings::class,
+            messageId = MessageTypes.TYPE_UPDATE_SETTINGS,
+            encoder = { msg ->
+                mapOf(
+                    MessageKeys.INTERVAL to PebbleDictionaryItem.Int32(msg.intervalMins)
+                )
+            },
+            decoder = { dict ->
+                val intervalMins = dict.getInt(MessageKeys.INTERVAL) ?: return@registerMessage null
+                PebbleMessage.UpdateSettings(intervalMins)
+            }
+        )
+    }
+
+    suspend fun processIncomingMessage(watchappUUID: UUID, data: PebbleDictionary): Boolean {
+        if (watchappUUID != APP_UUID) return false
+        val message = channel.decode(data)
+        if (message != null) {
+            _incomingMessages.emit(message)
+        }
+        return true
+    }
+
+    suspend fun sendMessageToWatch(message: PebbleMessage) {
+        if (!appOpen.value) {
+            sender.startAppOnTheWatch(APP_UUID)
+            autoOpened.store(true)
+        }
+        outgoingMessages.send(message)
+    }
+
+    fun setAppOpen(watchappUUID: UUID, open: Boolean) {
+        if (watchappUUID == APP_UUID) {
+            _appOpen.value = open
+        }
+    }
+
+    init {
+        pebbleNetworkScope.launch {
+            for (message in outgoingMessages) {
+                appOpen.first { it }
+                val payload = channel.encode(message)
+                sender.sendDataToPebble(APP_UUID, payload)
+
+                if (outgoingMessages.isEmpty && autoOpened.load()) {
+                    delay(1.seconds)
+
+                    if (
+                        outgoingMessages.isEmpty && autoOpened.compareAndSet(
+                            expectedValue = true,
+                            newValue = false
+                        )
+                    ) {
+                        sender.stopAppOnTheWatch(APP_UUID)
+                    }
+                }
+            }
+        }
+    }
+}

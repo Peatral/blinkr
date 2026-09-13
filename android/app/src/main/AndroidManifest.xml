@@ -44,7 +44,7 @@
         </service>
 
         <service
-            android:name=".service.PebbleListenerService"
+            android:name=".feature.pebble.service.PebbleListenerService"
             android:exported="true"
             tools:ignore="ExportedService">
             <intent-filter>
