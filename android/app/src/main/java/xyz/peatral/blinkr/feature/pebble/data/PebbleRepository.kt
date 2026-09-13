@@ -58,7 +58,7 @@ class PebbleRepository @Inject constructor(
             messageId = MessageTypes.TYPE_RESCHEDULE_TIMER,
             encoder = { msg ->
                 mapOf(
-                    MessageKeys.START_TIMESTAMP to PebbleDictionaryItem.Int32(msg.endTimestamp.epochSeconds.toInt()),
+                    MessageKeys.START_TIMESTAMP to PebbleDictionaryItem.Int32(msg.startTimestamp.epochSeconds.toInt()),
                     MessageKeys.END_TIMESTAMP to PebbleDictionaryItem.Int32(msg.endTimestamp.epochSeconds.toInt())
                 )
             },
@@ -88,7 +88,7 @@ class PebbleRepository @Inject constructor(
             messageId = MessageTypes.TYPE_STOP_SESSION,
             encoder = { msg ->
                 mapOf(
-                    MessageKeys.START_TIMESTAMP to PebbleDictionaryItem.Int32(msg.endTimestamp.epochSeconds.toInt()),
+                    MessageKeys.START_TIMESTAMP to PebbleDictionaryItem.Int32(msg.startTimestamp.epochSeconds.toInt()),
                     MessageKeys.END_TIMESTAMP to PebbleDictionaryItem.Int32(msg.endTimestamp.epochSeconds.toInt())
                 )
             },
