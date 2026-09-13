@@ -40,14 +40,14 @@ class UpdateGlyphDisplayUseCase @Inject constructor(
                 when (state) {
                     is TimerState.Idle -> {
                         flashJob?.cancel()
-                        glyphRepository.tryHardwareLock { glyphRepository.clearDisplay() }
+                        tryClearDisplay()
                     }
 
                     is TimerState.Expired -> {
                         val settings = glyphSettingsRepository.settings.first()
 
                         if (!settings.isEnabled || settings.flashDurationSeconds <= 0) {
-                            timerRepository.compareAndSetState(state, TimerState.Idle)
+                            tryClearDisplay()
                             return@collectLatest
                         }
 
@@ -56,7 +56,7 @@ class UpdateGlyphDisplayUseCase @Inject constructor(
                                 durationSeconds = settings.flashDurationSeconds,
                                 brightness = settings.flashBrightness
                             )
-                            timerRepository.compareAndSetState(state, TimerState.Idle)
+                            tryClearDisplay()
                         }
                     }
 
@@ -70,6 +70,10 @@ class UpdateGlyphDisplayUseCase @Inject constructor(
             glyphRepository.disconnect()
             wakeLockRepository.release()
         }
+    }
+
+    private fun tryClearDisplay() {
+        glyphRepository.tryHardwareLock { glyphRepository.clearDisplay() }
     }
 
     private suspend fun streamCountdownToGlyph() {
