@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import xyz.peatral.blinkr.core.data.settingsDataStore
+import xyz.peatral.blinkr.core.di.ApplicationScope
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -21,6 +22,7 @@ data class PebbleSettings(
 @Singleton
 class PebbleSettingsRepository @Inject constructor(
     @ApplicationContext private val context: Context,
+    @ApplicationScope private val appScope: CoroutineScope,
     private val pebbleRepository: PebbleRepository,
 ) {
     companion object {
@@ -28,10 +30,8 @@ class PebbleSettingsRepository @Inject constructor(
         const val DEFAULT_INTERVAL_MINS = 20
     }
 
-    private val repoScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
-
     init {
-        repoScope.launch {
+        appScope.launch {
             pebbleRepository.incomingMessages.collect { message ->
                 if (message is PebbleMessage.UpdateSettings) {
                     setIntervalMins(message.intervalMins)

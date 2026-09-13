@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import xyz.peatral.blinkr.core.di.ApplicationScope
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -28,13 +29,12 @@ import kotlin.time.Instant
 @OptIn(ExperimentalAtomicApi::class, ExperimentalCoroutinesApi::class)
 @Singleton
 class PebbleRepository @Inject constructor(
-    @ApplicationContext private val context: Context
+    @ApplicationContext private val context: Context,
+    @ApplicationScope private val appScope: CoroutineScope
 ) {
     companion object {
         val APP_UUID: UUID = UUID.fromString("dabb3617-783b-443f-8add-8d74ccc57d07")
     }
-
-    private val pebbleNetworkScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     private val _appOpen = MutableStateFlow(false)
     val appOpen = _appOpen.asStateFlow()
@@ -165,7 +165,7 @@ class PebbleRepository @Inject constructor(
     }
 
     init {
-        pebbleNetworkScope.launch {
+        appScope.launch {
             for (message in outgoingMessages) {
                 appOpen.first { it }
                 val payload = channel.encode(message)

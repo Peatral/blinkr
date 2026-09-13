@@ -2,12 +2,12 @@ package xyz.peatral.blinkr.feature.pebble.domain
 
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
-import xyz.peatral.blinkr.feature.pebble.data.PebbleConstants
-import xyz.peatral.blinkr.feature.pebble.data.PebbleRepository
-import xyz.peatral.blinkr.feature.pebble.data.PebbleMessage
 import xyz.peatral.blinkr.core.data.datasource.room.SessionEntity
 import xyz.peatral.blinkr.core.data.repository.SyncRepository
 import xyz.peatral.blinkr.core.data.repository.SyncState
+import xyz.peatral.blinkr.feature.pebble.data.PebbleConstants
+import xyz.peatral.blinkr.feature.pebble.data.PebbleMessage
+import xyz.peatral.blinkr.feature.pebble.data.PebbleRepository
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import javax.inject.Inject
@@ -17,7 +17,6 @@ import kotlin.time.Instant
 class SyncPebbleDataUseCase @Inject constructor(
     private val syncRepository: SyncRepository,
     private val pebbleRepository: PebbleRepository,
-    private val requestSync: RequestPebbleSyncUseCase,
 ) {
     suspend operator fun invoke() = coroutineScope {
         var expectedChunks = 0
@@ -68,7 +67,8 @@ class SyncPebbleDataUseCase @Inject constructor(
 
         launch {
             syncRepository.syncRequests.collect {
-                requestSync()
+                syncRepository.updateSyncState(SyncState.Syncing(0.0f))
+                pebbleRepository.sendMessageToWatch(PebbleMessage.RequestSync)
             }
         }
     }

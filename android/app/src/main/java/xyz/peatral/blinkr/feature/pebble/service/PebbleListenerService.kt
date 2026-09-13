@@ -10,7 +10,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
-import xyz.peatral.blinkr.core.domain.OrchestrateTimerServiceUseCase
 import xyz.peatral.blinkr.feature.pebble.domain.HandlePebbleMessageUseCase
 import xyz.peatral.blinkr.feature.pebble.domain.SyncPebbleDataUseCase
 import xyz.peatral.blinkr.feature.pebble.domain.SyncPebbleTimerUseCase
@@ -24,7 +23,6 @@ class PebbleListenerService : BasePebbleListenerService() {
     @Inject lateinit var updatePebbleAppVisibility: UpdatePebbleAppVisibilityUseCase
     @Inject lateinit var syncPebbleData: SyncPebbleDataUseCase
     @Inject lateinit var syncPebbleTimer: SyncPebbleTimerUseCase
-    @Inject lateinit var orchestrateTimerService: OrchestrateTimerServiceUseCase
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
@@ -32,7 +30,6 @@ class PebbleListenerService : BasePebbleListenerService() {
         super.onCreate()
 
         scope.launch {
-            launch { orchestrateTimerService() }
             launch { syncPebbleData() }
             launch { syncPebbleTimer() }
         }

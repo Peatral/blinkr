@@ -1,4 +1,4 @@
-package xyz.peatral.blinkr.core.domain
+package xyz.peatral.blinkr.feature.timer.domain
 
 import android.content.Context
 import android.content.Intent

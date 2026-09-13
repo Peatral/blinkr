@@ -11,7 +11,6 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import xyz.peatral.blinkr.feature.glyph.domain.UpdateGlyphDisplayUseCase
-import xyz.peatral.blinkr.feature.timer.domain.AutoClearExpiredTimerUseCase
 import xyz.peatral.blinkr.feature.timer.domain.CreateInitialTimerNotificationUseCase
 import xyz.peatral.blinkr.feature.timer.domain.SyncNotificationUpdatesUseCase
 import javax.inject.Inject
@@ -25,7 +24,6 @@ class TimerForegroundService : Service() {
     @Inject lateinit var createInitialNotification: CreateInitialTimerNotificationUseCase
     @Inject lateinit var syncNotificationUpdates: SyncNotificationUpdatesUseCase
     @Inject lateinit var updateGlyphDisplay: UpdateGlyphDisplayUseCase
-    @Inject lateinit var autoClearTimer: AutoClearExpiredTimerUseCase
 
 
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
@@ -38,7 +36,6 @@ class TimerForegroundService : Service() {
             timerJob = serviceScope.launch {
                 launch { syncNotificationUpdates(NOTIFICATION_ID) }
                 launch { updateGlyphDisplay() }
-                launch { autoClearTimer() }
             }
         }
 
