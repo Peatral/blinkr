@@ -48,6 +48,10 @@ class SyncRepository @Inject constructor(
         sessionDao.deleteUnfinishedSession()
     }
 
+    suspend fun getUnfinishedSessionStartTime(): Instant? {
+        return sessionDao.getUnfinishedSessionStartTime()
+    }
+
     fun getSessionsForTimeframe(startOfDay: Instant, endOfDay: Instant): Flow<List<SessionEntity>> {
         return sessionDao.getSessionsForTimeframe(startOfDay, endOfDay)
     }

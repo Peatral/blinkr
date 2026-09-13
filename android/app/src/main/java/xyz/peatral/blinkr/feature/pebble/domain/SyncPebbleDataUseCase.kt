@@ -5,13 +5,11 @@ import kotlinx.coroutines.launch
 import xyz.peatral.blinkr.core.data.datasource.room.SessionEntity
 import xyz.peatral.blinkr.core.data.repository.SyncRepository
 import xyz.peatral.blinkr.core.data.repository.SyncState
-import xyz.peatral.blinkr.feature.pebble.data.PebbleConstants
 import xyz.peatral.blinkr.feature.pebble.data.PebbleMessage
 import xyz.peatral.blinkr.feature.pebble.data.PebbleRepository
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import javax.inject.Inject
-import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Instant
 
 class SyncPebbleDataUseCase @Inject constructor(
@@ -48,18 +46,6 @@ class SyncPebbleDataUseCase @Inject constructor(
                             syncRepository.updateSyncState(SyncState.Idle)
                         }
                     }
-
-                    is PebbleMessage.StartSession -> {
-                        syncRepository.saveSession(SessionEntity(message.startTimestamp, endTime = null))
-                    }
-
-                    is PebbleMessage.StopSession -> {
-                        syncRepository.deleteUnfinishedSession()
-                        if (isValidSession(message.startTimestamp, message.endTimestamp)) {
-                            syncRepository.saveSession(SessionEntity(message.startTimestamp, message.endTimestamp))
-                        }
-                    }
-
                     else -> {}
                 }
             }
@@ -87,12 +73,5 @@ class SyncPebbleDataUseCase @Inject constructor(
             pairs.add(SessionEntity(startTime = Instant.fromEpochSeconds(start), endTime = Instant.fromEpochSeconds(end)))
         }
         return pairs
-    }
-
-    private fun isValidSession(start: Instant, end: Instant): Boolean {
-        return start > PebbleConstants.DISTANT_PAST &&
-                end < PebbleConstants.DISTANT_FUTURE &&
-                start < end &&
-                end - start > 1.minutes
     }
 }

@@ -10,12 +10,18 @@ import javax.inject.Singleton
 @Singleton
 class TimerInitializer @Inject constructor(
     @ApplicationScope private val appScope: CoroutineScope,
-    private val orchestrateTimerService: OrchestrateTimerServiceUseCase
+    private val orchestrateTimerService: OrchestrateTimerServiceUseCase,
+    private val persistSessionToStorage: PersistSessionToStorageUseCase,
 ) : AppInitializer {
 
     override fun initialize() {
         appScope.launch {
-            orchestrateTimerService()
+            launch {
+                orchestrateTimerService()
+            }
+            launch {
+                persistSessionToStorage()
+            }
         }
     }
 }

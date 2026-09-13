@@ -39,6 +39,13 @@ interface SessionDao {
     """)
     suspend fun deleteUnfinishedSession()
 
+    @Query("""
+        SELECT startTime FROM sessions 
+        WHERE startTime = (SELECT startTime FROM sessions ORDER BY startTime DESC LIMIT 1) 
+        AND endTime IS NULL
+    """)
+    suspend fun getUnfinishedSessionStartTime(): Instant?
+
     @Query("SELECT * FROM sessions ORDER BY startTime DESC")
     fun getAllSessionsDesc(): Flow<List<SessionEntity>>
 
