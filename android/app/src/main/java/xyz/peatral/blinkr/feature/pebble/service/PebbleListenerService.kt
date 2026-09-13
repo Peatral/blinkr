@@ -1,7 +1,5 @@
 package xyz.peatral.blinkr.feature.pebble.service
 
-import android.content.Intent
-import androidx.core.content.ContextCompat
 import dagger.hilt.android.AndroidEntryPoint
 import io.rebble.pebblekit2.client.BasePebbleListenerService
 import io.rebble.pebblekit2.common.model.PebbleDictionary
@@ -12,38 +10,31 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
-import xyz.peatral.blinkr.core.data.datasource.pebble.PebbleDataSource
-import xyz.peatral.blinkr.core.data.repository.SyncRepository
-import xyz.peatral.blinkr.core.data.repository.TimerRepository
-import xyz.peatral.blinkr.service.TimerForegroundService
+import xyz.peatral.blinkr.core.domain.OrchestrateTimerServiceUseCase
+import xyz.peatral.blinkr.feature.pebble.domain.HandlePebbleMessageUseCase
+import xyz.peatral.blinkr.feature.pebble.domain.SyncPebbleDataUseCase
+import xyz.peatral.blinkr.feature.pebble.domain.SyncPebbleTimerUseCase
+import xyz.peatral.blinkr.feature.pebble.domain.UpdatePebbleAppVisibilityUseCase
 import java.util.UUID
 import javax.inject.Inject
 
 @AndroidEntryPoint
 class PebbleListenerService : BasePebbleListenerService() {
-    @Inject
-    lateinit var pebbleDataSource: PebbleDataSource
-
-    @Inject
-    lateinit var timerRepository: TimerRepository
-
-    @Inject
-    lateinit var syncRepository: SyncRepository
+    @Inject lateinit var handlePebbleMessage: HandlePebbleMessageUseCase
+    @Inject lateinit var updatePebbleAppVisibility: UpdatePebbleAppVisibilityUseCase
+    @Inject lateinit var syncPebbleData: SyncPebbleDataUseCase
+    @Inject lateinit var syncPebbleTimer: SyncPebbleTimerUseCase
+    @Inject lateinit var orchestrateTimerService: OrchestrateTimerServiceUseCase
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     override fun onCreate() {
         super.onCreate()
-        val serviceIntent = Intent(this, TimerForegroundService::class.java)
 
         scope.launch {
-            timerRepository.timer.collect { timer ->
-                if (timer != null) {
-                    ContextCompat.startForegroundService(this@PebbleListenerService, serviceIntent)
-                } else {
-                    stopService(serviceIntent)
-                }
-            }
+            launch { orchestrateTimerService() }
+            launch { syncPebbleData() }
+            launch { syncPebbleTimer() }
         }
     }
 
@@ -57,7 +48,7 @@ class PebbleListenerService : BasePebbleListenerService() {
         data: PebbleDictionary,
         watch: WatchIdentifier
     ): ReceiveResult {
-        val handled = pebbleDataSource.processIncomingMessage(watchappUUID, data)
+        val handled = handlePebbleMessage(watchappUUID, data)
         return if (handled) {
             ReceiveResult.Ack
         } else {
@@ -66,10 +57,10 @@ class PebbleListenerService : BasePebbleListenerService() {
     }
 
     override fun onAppOpened(watchappUUID: UUID, watch: WatchIdentifier) {
-        pebbleDataSource.setAppOpen(watchappUUID, true)
+        updatePebbleAppVisibility(watchappUUID, true)
     }
 
     override fun onAppClosed(watchappUUID: UUID, watch: WatchIdentifier) {
-        pebbleDataSource.setAppOpen(watchappUUID, false)
+        updatePebbleAppVisibility(watchappUUID, false)
     }
 }

@@ -1,4 +1,4 @@
-package xyz.peatral.blinkr.core.data.datasource.pebble
+package xyz.peatral.blinkr.feature.pebble.data
 
 import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -27,7 +27,7 @@ import kotlin.time.Instant
 
 @OptIn(ExperimentalAtomicApi::class, ExperimentalCoroutinesApi::class)
 @Singleton
-class PebbleDataSource @Inject constructor(
+class PebbleRepository @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
     companion object {

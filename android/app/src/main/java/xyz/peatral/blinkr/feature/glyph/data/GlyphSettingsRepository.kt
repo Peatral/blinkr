@@ -7,7 +7,7 @@ import androidx.datastore.preferences.core.intPreferencesKey
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-import xyz.peatral.blinkr.feature.pebble.data.dataStore
+import xyz.peatral.blinkr.core.data.settingsDataStore
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -28,7 +28,7 @@ class GlyphSettingsRepository @Inject constructor(
         const val DEFAULT_BRIGHTNESS = 128
     }
 
-    val settings: Flow<GlyphSettings> = context.dataStore.data.map { preferences ->
+    val settings: Flow<GlyphSettings> = context.settingsDataStore.data.map { preferences ->
         GlyphSettings(
             isEnabled = preferences[IS_ENABLED_KEY] ?: DEFAULT_IS_ENABLED,
             brightness = preferences[BRIGHTNESS_KEY] ?: DEFAULT_BRIGHTNESS,
@@ -36,13 +36,13 @@ class GlyphSettingsRepository @Inject constructor(
     }
 
     suspend fun setIsEnabled(enabled: Boolean) {
-        context.dataStore.edit { preferences ->
+        context.settingsDataStore.edit { preferences ->
             preferences[IS_ENABLED_KEY] = enabled
         }
     }
 
     suspend fun setBrightness(brightness: Int) {
-        context.dataStore.edit { preferences ->
+        context.settingsDataStore.edit { preferences ->
             preferences[BRIGHTNESS_KEY] = brightness
         }
     }

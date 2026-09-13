@@ -6,8 +6,8 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import xyz.peatral.blinkr.core.data.datasource.pebble.PebbleDataSource
-import xyz.peatral.blinkr.core.data.datasource.pebble.PebbleMessage
+import xyz.peatral.blinkr.feature.pebble.data.PebbleRepository
+import xyz.peatral.blinkr.feature.pebble.data.PebbleMessage
 import xyz.peatral.blinkr.feature.pebble.data.PebbleSettings
 import xyz.peatral.blinkr.feature.pebble.data.PebbleSettingsRepository
 import javax.inject.Inject
@@ -15,7 +15,7 @@ import javax.inject.Inject
 @HiltViewModel
 class PebbleSettingsViewModel @Inject constructor(
     private val pebbleSettingsRepository: PebbleSettingsRepository,
-    private val pebbleDataSource: PebbleDataSource,
+    private val pebbleRepository: PebbleRepository,
 ) : ViewModel() {
 
     val settings = pebbleSettingsRepository.settings.stateIn(
@@ -29,7 +29,7 @@ class PebbleSettingsViewModel @Inject constructor(
     fun setIntervalMins(intervalMins: Int) {
         viewModelScope.launch {
             pebbleSettingsRepository.setIntervalMins(intervalMins)
-            pebbleDataSource.sendMessageToWatch(
+            pebbleRepository.sendMessageToWatch(
                 PebbleMessage.UpdateSettings(
                     intervalMins = intervalMins
                 )

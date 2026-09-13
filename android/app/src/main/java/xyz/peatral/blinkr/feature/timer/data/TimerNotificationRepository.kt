@@ -1,4 +1,4 @@
-package xyz.peatral.blinkr.feature.notification_timer.data
+package xyz.peatral.blinkr.feature.timer.data
 
 import android.app.Notification
 import android.app.NotificationChannel

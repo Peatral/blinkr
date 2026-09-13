@@ -1,8 +1,8 @@
-package xyz.peatral.blinkr.feature.notification_timer.domain
+package xyz.peatral.blinkr.feature.timer.domain
 
 import kotlinx.coroutines.flow.collectLatest
 import xyz.peatral.blinkr.core.data.repository.TimerRepository
-import xyz.peatral.blinkr.feature.notification_timer.data.TimerNotificationRepository
+import xyz.peatral.blinkr.feature.timer.data.TimerNotificationRepository
 import javax.inject.Inject
 
 class SyncNotificationUpdatesUseCase @Inject constructor(

@@ -1,4 +1,4 @@
-package xyz.peatral.blinkr.core.data.datasource.pebble
+package xyz.peatral.blinkr.feature.pebble.data
 
 import io.rebble.pebblekit2.common.model.PebbleDictionary
 import io.rebble.pebblekit2.common.model.PebbleDictionaryItem
