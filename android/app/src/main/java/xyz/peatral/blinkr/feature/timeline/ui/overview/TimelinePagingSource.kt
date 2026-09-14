@@ -9,25 +9,25 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import kotlin.time.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.toLocalDateTime
 import xyz.peatral.blinkr.core.data.datasource.room.SessionEntity
-import xyz.peatral.blinkr.core.data.repository.SyncRepository
+import xyz.peatral.blinkr.core.data.repository.SessionRepository
+import kotlin.time.Clock
 import kotlin.time.Duration.Companion.days
 
 data class DayRecord(val daysAgo: Int, val sessions: List<SessionEntity>)
 
 class TimelinePagingSource(
-    private val syncRepository: SyncRepository
+    private val sessionRepository: SessionRepository,
 ) : PagingSource<Int, DayRecord>() {
 
     private val observerScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
     init {
         observerScope.launch {
-            syncRepository.getSessionUpdatesFlow()
+            sessionRepository.getSessionUpdatesFlow()
                 .drop(1)
                 .collect {
                     invalidate()
@@ -62,7 +62,7 @@ class TimelinePagingSource(
         val zone = TimeZone.currentSystemDefault()
         val startOfToday = Clock.System.now().toLocalDateTime(zone).date.atStartOfDayIn(zone)
 
-        val oldestEntryTime = syncRepository.getOldestSessionStartTime() ?: return LoadResult.Page(
+        val oldestEntryTime = sessionRepository.getOldestSessionStartTime() ?: return LoadResult.Page(
             data = emptyList(),
             prevKey = null,
             nextKey = null
@@ -73,7 +73,7 @@ class TimelinePagingSource(
         val chunkStart = startOfToday - (startDaysAgo + actualLoadSize - 1).days
 
         return try {
-            val chunkSessions = syncRepository.getSessionsForTimeframe(chunkStart, chunkEnd).first()
+            val chunkSessions = sessionRepository.getSessionsForTimeframe(chunkStart, chunkEnd).first()
 
             val days = (0 until loadSize).map { offset ->
                 val daysAgo = startDaysAgo + offset

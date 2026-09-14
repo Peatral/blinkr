@@ -1,8 +1,8 @@
 package xyz.peatral.blinkr.feature.timeline.domain
 
 import kotlinx.coroutines.flow.first
+import xyz.peatral.blinkr.core.data.repository.SessionRepository
 import xyz.peatral.blinkr.core.data.repository.SessionSettingsRepository
-import xyz.peatral.blinkr.core.data.repository.SyncRepository
 import xyz.peatral.blinkr.core.data.repository.Timer
 import xyz.peatral.blinkr.core.data.repository.TimerRepository
 import xyz.peatral.blinkr.core.data.repository.TimerState
@@ -13,7 +13,7 @@ import kotlin.time.Duration.Companion.minutes
 class ToggleTimerUseCase @Inject constructor(
     private val timerRepository: TimerRepository,
     private val sessionSettingsRepository: SessionSettingsRepository,
-    private val syncRepository: SyncRepository,
+    private val sessionRepository: SessionRepository,
 ) {
     suspend operator fun invoke() {
         val currentState = timerRepository.timerState.first()
@@ -23,7 +23,7 @@ class ToggleTimerUseCase @Inject constructor(
         when (currentState) {
             is TimerState.Idle -> {
                 var startTime = now
-                val latestSession = syncRepository.getLatestSession()
+                val latestSession = sessionRepository.getLatestSession()
 
                 if (latestSession != null) {
                     if (latestSession.isActive) {

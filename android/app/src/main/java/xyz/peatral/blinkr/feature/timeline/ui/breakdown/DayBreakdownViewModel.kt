@@ -13,7 +13,7 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
 import xyz.peatral.blinkr.core.data.datasource.room.SessionEntity
-import xyz.peatral.blinkr.core.data.repository.SyncRepository
+import xyz.peatral.blinkr.core.data.repository.SessionRepository
 import xyz.peatral.blinkr.core.domain.FormatDurationUseCase
 import xyz.peatral.blinkr.core.domain.FormatLocalDateUseCase
 import kotlin.time.Duration
@@ -22,7 +22,7 @@ import kotlin.time.Duration.Companion.days
 @HiltViewModel(assistedFactory = DayBreakdownViewModel.Factory::class)
 class DayBreakdownViewModel @AssistedInject constructor(
     @Assisted val targetDate: LocalDate,
-    private val syncRepository: SyncRepository,
+    private val sessionRepository: SessionRepository,
     private val formatDurationUseCase: FormatDurationUseCase,
     private val formatLocalDateUseCase: FormatLocalDateUseCase,
 ) : ViewModel() {
@@ -30,7 +30,7 @@ class DayBreakdownViewModel @AssistedInject constructor(
     private val dayStart = targetDate.atStartOfDayIn(zone)
     private val dayEnd = dayStart + 1.days
 
-    val sessions: StateFlow<List<SessionEntity>> = syncRepository
+    val sessions: StateFlow<List<SessionEntity>> = sessionRepository
         .getSessionsForTimeframe(dayStart, dayEnd)
         .stateIn(
             scope = viewModelScope,

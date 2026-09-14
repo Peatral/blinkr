@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
+import xyz.peatral.blinkr.core.data.repository.SessionRepository
 import xyz.peatral.blinkr.core.data.repository.SyncRepository
 import xyz.peatral.blinkr.core.data.repository.SyncState
 import xyz.peatral.blinkr.core.domain.CurrentTimeUseCase
@@ -28,6 +29,7 @@ data class TimerUiState(
 class SessionOverviewViewModel @Inject constructor(
     private val formatTimerUseCase: FormatTimerUseCase,
     private val syncRepository: SyncRepository,
+    private val sessionRepository: SessionRepository,
     private val currentTimeUseCase: CurrentTimeUseCase,
     private val formatDurationUseCase: FormatDurationUseCase,
     private val formatLocalDateUseCase: FormatLocalDateUseCase,
@@ -44,7 +46,7 @@ class SessionOverviewViewModel @Inject constructor(
             pageSize = 14,
             initialLoadSize = 28
         ),
-        pagingSourceFactory = { TimelinePagingSource(syncRepository) }
+        pagingSourceFactory = { TimelinePagingSource(sessionRepository) }
     )
 
     val timerText = formatTimerUseCase()
