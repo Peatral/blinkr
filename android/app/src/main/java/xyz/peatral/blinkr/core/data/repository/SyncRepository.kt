@@ -63,4 +63,8 @@ class SyncRepository @Inject constructor(
     fun getSessionUpdatesFlow(): Flow<Int> {
         return sessionDao.getSessionCountFlow()
     }
+
+    suspend fun getLatestSession(): SessionEntity? {
+        return sessionDao.getLatestSession()
+    }
 }

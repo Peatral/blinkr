@@ -109,6 +109,9 @@ interface SessionDao {
 
     @Query("SELECT COUNT(startTime) FROM sessions")
     fun getSessionCountFlow(): Flow<Int>
+
+    @Query("SELECT * FROM sessions ORDER BY startTime DESC LIMIT 1")
+    suspend fun getLatestSession(): SessionEntity?
 }
 
 @Database(

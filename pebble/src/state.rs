@@ -207,7 +207,7 @@ pub fn set_state(enabled: bool, start_ts: Option<time_t>, end_ts: Option<time_t>
 
         if let Some(start) = CURRENT_START_TIME.get() {
             // Only save the session if it lasted 60 seconds or more
-            if end_time >= start && (end_time - start) >= 60 {
+            if end_time > start && (end_time - start) >= 60 {
                 let mut history = HISTORY.borrow_mut();
                 history.push(TimePair { start, end: end_time });
 

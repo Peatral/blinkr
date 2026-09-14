@@ -47,6 +47,6 @@ class PersistSessionToStorageUseCase @Inject constructor(
 
     private fun isValidSession(start: Instant, end: Instant): Boolean {
         return start < end &&
-                end - start > 1.minutes
+                end - start >= 1.minutes
     }
 }
