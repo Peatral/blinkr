@@ -12,6 +12,7 @@ class TimerInitializer @Inject constructor(
     @ApplicationScope private val appScope: CoroutineScope,
     private val orchestrateTimerService: OrchestrateTimerServiceUseCase,
     private val persistSessionToStorage: PersistSessionToStorageUseCase,
+    private val rescheduleTimer: RescheduleTimerUseCase,
 ) : AppInitializer {
 
     override fun initialize() {
@@ -21,6 +22,9 @@ class TimerInitializer @Inject constructor(
             }
             launch {
                 persistSessionToStorage()
+            }
+            launch {
+                rescheduleTimer()
             }
         }
     }

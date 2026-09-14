@@ -42,6 +42,9 @@ class TimerRepository @Inject constructor(
 
     fun updateState(newState: TimerState, origin: EventOrigin = EventOrigin.LOCAL) {
         val oldState = _currentTimerState.value
+
+        if (oldState == newState) return
+
         _currentTimerState.value = newState
         _timerStateUpdates.tryEmit(TimerStateUpdate(
             prevState = oldState,
