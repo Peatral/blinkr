@@ -10,12 +10,14 @@ import javax.inject.Singleton
 @Singleton
 class PebbleInitializer @Inject constructor(
     @ApplicationScope private val appScope: CoroutineScope,
-    private val syncPebbleDataUseCase: SyncPebbleDataUseCase
+    private val syncPebbleDataUseCase: SyncPebbleDataUseCase,
+    private val syncPebbleTimerUseCase: SyncPebbleTimerUseCase,
 ) : AppInitializer {
 
     override fun initialize() {
         appScope.launch {
-            syncPebbleDataUseCase()
+            launch { syncPebbleDataUseCase() }
+            launch { syncPebbleTimerUseCase() }
         }
     }
 }
