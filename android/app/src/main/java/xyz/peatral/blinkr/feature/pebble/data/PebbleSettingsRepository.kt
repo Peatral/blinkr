@@ -1,15 +1,15 @@
 package xyz.peatral.blinkr.feature.pebble.data
 
-import android.content.Context
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import xyz.peatral.blinkr.core.data.settingsDataStore
 import xyz.peatral.blinkr.core.di.ApplicationScope
+import xyz.peatral.blinkr.core.di.SettingsDataStore
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -19,7 +19,7 @@ data class PebbleSettings(
 
 @Singleton
 class PebbleSettingsRepository @Inject constructor(
-    @ApplicationContext private val context: Context,
+    @SettingsDataStore private val settingsDataStore: DataStore<Preferences>,
     @ApplicationScope private val appScope: CoroutineScope,
     private val pebbleRepository: PebbleRepository,
 ) {
@@ -38,14 +38,14 @@ class PebbleSettingsRepository @Inject constructor(
         }
     }
 
-    val settings: Flow<PebbleSettings> = context.settingsDataStore.data.map { preferences ->
+    val settings: Flow<PebbleSettings> = settingsDataStore.data.map { preferences ->
         PebbleSettings(
             intervalMins = preferences[INTERVAL_MINS_KEY] ?: DEFAULT_INTERVAL_MINS
         )
     }
 
     suspend fun setIntervalMins(intervalMins: Int) {
-        context.settingsDataStore.edit { preferences ->
+        settingsDataStore.edit { preferences ->
             preferences[INTERVAL_MINS_KEY] = intervalMins
         }
     }

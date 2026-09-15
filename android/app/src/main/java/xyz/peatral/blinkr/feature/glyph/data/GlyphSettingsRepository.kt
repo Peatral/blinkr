@@ -1,17 +1,17 @@
 package xyz.peatral.blinkr.feature.glyph.data
 
-import android.content.Context
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import xyz.peatral.blinkr.core.data.settingsDataStore
 import xyz.peatral.blinkr.core.di.ApplicationScope
+import xyz.peatral.blinkr.core.di.SettingsDataStore
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -24,7 +24,7 @@ data class GlyphSettings(
 
 @Singleton
 class GlyphSettingsRepository @Inject constructor(
-    @ApplicationContext private val context: Context,
+    @SettingsDataStore private val settingsDataStore: DataStore<Preferences>,
     @ApplicationScope private val appScope: CoroutineScope,
 ) {
     companion object {
@@ -39,7 +39,7 @@ class GlyphSettingsRepository @Inject constructor(
         const val DEFAULT_FLASH_BRIGHTNESS = 256
     }
 
-    val settings: StateFlow<GlyphSettings> = context.settingsDataStore.data.map { preferences ->
+    val settings: StateFlow<GlyphSettings> = settingsDataStore.data.map { preferences ->
         GlyphSettings(
             isEnabled = preferences[IS_ENABLED_KEY] ?: DEFAULT_IS_ENABLED,
             timerBrightness = preferences[TIMER_BRIGHTNESS_KEY] ?: DEFAULT_BRIGHTNESS,
@@ -58,25 +58,25 @@ class GlyphSettingsRepository @Inject constructor(
     )
 
     suspend fun setIsEnabled(enabled: Boolean) {
-        context.settingsDataStore.edit { preferences ->
+        settingsDataStore.edit { preferences ->
             preferences[IS_ENABLED_KEY] = enabled
         }
     }
 
     suspend fun setBrightness(brightness: Int) {
-        context.settingsDataStore.edit { preferences ->
+        settingsDataStore.edit { preferences ->
             preferences[TIMER_BRIGHTNESS_KEY] = brightness
         }
     }
 
     suspend fun setFlashDuration(seconds: Int) {
-        context.settingsDataStore.edit { preferences ->
+        settingsDataStore.edit { preferences ->
             preferences[FLASH_DURATION_KEY] = seconds
         }
     }
 
     suspend fun setFlashBrightness(brightness: Int) {
-        context.settingsDataStore.edit { preferences ->
+        settingsDataStore.edit { preferences ->
             preferences[FLASH_BRIGHTNESS_KEY] = brightness
         }
     }

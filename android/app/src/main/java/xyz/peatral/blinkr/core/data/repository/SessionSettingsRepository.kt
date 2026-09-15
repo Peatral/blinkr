@@ -1,11 +1,11 @@
 package xyz.peatral.blinkr.core.data.repository
 
-import android.content.Context
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.intPreferencesKey
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-import xyz.peatral.blinkr.core.data.settingsDataStore
+import xyz.peatral.blinkr.core.di.SettingsDataStore
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -13,14 +13,14 @@ import javax.inject.Singleton
 // Maybe pebble just updates this and move the settings to a general category?
 @Singleton
 class SessionSettingsRepository @Inject constructor(
-    @ApplicationContext private val context: Context,
+    @SettingsDataStore private val settingsDataStore: DataStore<Preferences>,
 ) {
     companion object {
         val INTERVAL_MINS_KEY = intPreferencesKey("interval_mins")
         const val DEFAULT_INTERVAL_MINS = 20
     }
 
-    val intervalMins: Flow<Int> = context.settingsDataStore.data.map { preferences ->
+    val intervalMins: Flow<Int> = settingsDataStore.data.map { preferences ->
         preferences[INTERVAL_MINS_KEY] ?: DEFAULT_INTERVAL_MINS
     }
 }
