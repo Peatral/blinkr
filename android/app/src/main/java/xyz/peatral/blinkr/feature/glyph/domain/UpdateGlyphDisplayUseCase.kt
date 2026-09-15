@@ -14,9 +14,7 @@ import xyz.peatral.blinkr.feature.glyph.data.GlyphMode
 import xyz.peatral.blinkr.feature.glyph.data.GlyphRenderCommand
 import xyz.peatral.blinkr.feature.glyph.data.GlyphRepository
 import xyz.peatral.blinkr.feature.glyph.data.GlyphSettingsRepository
-import xyz.peatral.blinkr.feature.glyph.data.WakeLockRepository
 import javax.inject.Inject
-import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.seconds
 
 class UpdateGlyphDisplayUseCase @Inject constructor(
@@ -24,13 +22,9 @@ class UpdateGlyphDisplayUseCase @Inject constructor(
     private val glyphSettingsRepository: GlyphSettingsRepository,
     private val glyphRepository: GlyphRepository,
     private val timerRepository: TimerRepository,
-    private val wakeLockRepository: WakeLockRepository,
     private val flashGlyph: FlashGlyphUseCase,
 ) {
     companion object {
-        const val WAKELOCK_TAG = "Blinkr:GlyphTimerWakeLock"
-        val WAKELOCK_DURATION = 10.hours
-
         private const val TIMER_LAYER_ID = "timer_display_layer"
         private const val TIMER_PRIORITY = 50
     }
@@ -39,8 +33,6 @@ class UpdateGlyphDisplayUseCase @Inject constructor(
         var flashJob: Job? = null
 
         try {
-            wakeLockRepository.acquire(WAKELOCK_TAG, WAKELOCK_DURATION)
-
             timerRepository.timerState.collectLatest { state ->
                 when (state) {
                     is TimerState.Idle -> {
@@ -88,7 +80,6 @@ class UpdateGlyphDisplayUseCase @Inject constructor(
             }
         } finally {
             glyphRepository.removeLayer(mode, TIMER_LAYER_ID)
-            wakeLockRepository.release()
         }
     }
 
