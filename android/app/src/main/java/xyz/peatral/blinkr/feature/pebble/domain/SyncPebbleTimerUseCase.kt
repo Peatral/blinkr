@@ -3,6 +3,7 @@ package xyz.peatral.blinkr.feature.pebble.domain
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import xyz.peatral.blinkr.core.data.repository.EventOrigin
+import xyz.peatral.blinkr.core.data.repository.SessionRepository
 import xyz.peatral.blinkr.core.data.repository.Timer
 import xyz.peatral.blinkr.core.data.repository.TimerRepository
 import xyz.peatral.blinkr.core.data.repository.TimerState
@@ -12,7 +13,8 @@ import javax.inject.Inject
 
 class SyncPebbleTimerUseCase @Inject constructor(
     private val pebbleRepository: PebbleRepository,
-    private val timerRepository: TimerRepository
+    private val timerRepository: TimerRepository,
+    private val sessionRepository: SessionRepository,
 ) {
     suspend operator fun invoke() = coroutineScope {
         launch {
@@ -25,6 +27,9 @@ class SyncPebbleTimerUseCase @Inject constructor(
                             ),
                             EventOrigin.REMOTE,
                         )
+                    }
+                    is PebbleMessage.StartSession -> {
+                        sessionRepository.startSession(message.startTimestamp)
                     }
                     is PebbleMessage.StopSession -> {
                         timerRepository.updateState(

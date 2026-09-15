@@ -12,6 +12,10 @@ import kotlin.time.Instant
 class SessionRepository @Inject constructor(
     private val sessionDao: SessionDao
 ) {
+    suspend fun startSession(startTime: Instant = Clock.System.now()) {
+        sessionDao.insert(SessionEntity(startTime = startTime))
+    }
+
     suspend fun saveSessions(sessions: List<SessionEntity>) {
         sessionDao.insertAll(sessions)
         sessionDao.revalidateData(Clock.System.now())
