@@ -2,9 +2,12 @@ package xyz.peatral.blinkr.feature.glyph.data
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import xyz.peatral.blinkr.core.di.ApplicationScope
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -15,83 +18,90 @@ class GlyphRepository @Inject constructor(
     private val glyphDataSource: GlyphDataSource,
     @ApplicationScope private val appScope: CoroutineScope
 ) {
-    private var appReferences = 0
-    private var toyReferences = 0
+    val matrixSize: Int
+        get() = glyphDataSource.matrixSize
 
-    private val hardwareMutex = Mutex()
+    private val appRequests = MutableStateFlow<Map<String, LayerRequest>>(emptyMap())
+    private val toyRequests = MutableStateFlow<Map<String, LayerRequest>>(emptyMap())
 
-    suspend fun connect(mode: GlyphMode = GlyphMode.APP) {
-        withHardwareLock {
-            if (appReferences == 0 && toyReferences == 0) {
-                glyphDataSource.connect()
-            }
-            if (mode == GlyphMode.TOY) {
-                toyReferences++
-            } else {
-                appReferences++
-            }
-        }
-    }
+    init {
+        val activeAppCommand = appRequests
+            .map { requests -> requests.values.maxByOrNull { it.priority }?.command }
+            .distinctUntilChanged()
 
-    fun disconnect(mode: GlyphMode = GlyphMode.APP) {
+        val activeToyCommand = toyRequests
+            .map { requests -> requests.values.maxByOrNull { it.priority }?.command }
+            .distinctUntilChanged()
+
         appScope.launch {
-            val shouldDisconnectAll = withHardwareLock {
-                if (mode == GlyphMode.TOY) {
-                    toyReferences = 0.coerceAtLeast(toyReferences - 1)
-                    if (toyReferences == 0) {
-                        clearDisplay(mode = GlyphMode.TOY)
-                    }
+            activeAppCommand.collectLatest { command ->
+                if (command != null) {
+                    ensureConnected()
+                    glyphDataSource.renderCommand(command, GlyphMode.APP)
                 } else {
-                    appReferences = 0.coerceAtLeast(appReferences - 1)
-                    if (appReferences == 0) {
-                        clearDisplay(mode = GlyphMode.APP)
-                        glyphDataSource.closeAppMatrix()
-                    }
+                    glyphDataSource.closeAppMatrix()
                 }
-
-                appReferences == 0 && toyReferences == 0
             }
+        }
 
-            if (shouldDisconnectAll) {
-                delay(100.milliseconds)
-                withHardwareLock {
-                    if (appReferences == 0 && toyReferences == 0) {
-                        glyphDataSource.disconnect()
-                    }
+        appScope.launch {
+            activeToyCommand.collectLatest { command ->
+                if (command != null) {
+                    ensureConnected()
+                    glyphDataSource.renderCommand(command, GlyphMode.TOY)
+                } else if (glyphDataSource.isConnected) {
+                    glyphDataSource.renderCommand(GlyphRenderCommand.Clear, GlyphMode.TOY)
+                }
+            }
+        }
+
+        appScope.launch {
+            combine(activeAppCommand, activeToyCommand) { app, toy ->
+                app == null && toy == null
+            }.collectLatest { isCompletelyIdle ->
+                if (isCompletelyIdle) {
+                    delay(100.milliseconds)
+                    glyphDataSource.disconnect()
                 }
             }
         }
     }
 
-    fun turnOnAll(brightness: Int = 255, mode: GlyphMode = GlyphMode.APP) {
-        glyphDataSource.turnOnAll(brightness, mode)
-    }
-
-    fun displayText(text: String, x: Int, y: Int, brightness: Int = 255, mode: GlyphMode = GlyphMode.APP) {
-        glyphDataSource.displayText(
-            text = text,
-            x = x,
-            y = y,
-            brightness = brightness,
-            mode = mode
-        )
-    }
-
-    fun clearDisplay(mode: GlyphMode = GlyphMode.APP) {
-        glyphDataSource.clearDisplay(mode)
-    }
-
-    suspend fun <T> withHardwareLock(block: suspend () -> T): T {
-        return hardwareMutex.withLock { block() }
-    }
-
-    fun tryHardwareLock(block: () -> Unit) {
-        if (hardwareMutex.tryLock()) {
-            try {
-                block()
-            } finally {
-                hardwareMutex.unlock()
-            }
+    private suspend fun ensureConnected() {
+        if (!glyphDataSource.isConnected) {
+            glyphDataSource.connect()
         }
     }
+
+    /**
+     * Called by UseCases to draw a frame.
+     * Overwrites any existing request with the same [layerId].
+     */
+    fun updateLayer(
+        mode: GlyphMode,
+        layerId: String,
+        priority: Int,
+        command: GlyphRenderCommand
+    ) {
+        val request = LayerRequest(priority, command)
+        when (mode) {
+            GlyphMode.APP -> appRequests.value += (layerId to request)
+            GlyphMode.TOY -> toyRequests.value += (layerId to request)
+        }
+    }
+
+    /**
+     * Called by UseCases to remove themselves from the display pool.
+     */
+    fun removeLayer(mode: GlyphMode, layerId: String) {
+        when (mode) {
+            GlyphMode.APP -> appRequests.value -= layerId
+            GlyphMode.TOY -> toyRequests.value -= layerId
+        }
+    }
+
+    private data class LayerRequest(
+        val priority: Int,
+        val command: GlyphRenderCommand
+    )
 }

@@ -1,6 +1,5 @@
 package xyz.peatral.blinkr.feature.glyph.domain
 
-import com.nothing.ketchum.Common
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.coroutineScope
@@ -12,11 +11,13 @@ import xyz.peatral.blinkr.core.data.repository.TimerRepository
 import xyz.peatral.blinkr.core.data.repository.TimerState
 import xyz.peatral.blinkr.core.domain.FormatTimerUseCase
 import xyz.peatral.blinkr.feature.glyph.data.GlyphMode
+import xyz.peatral.blinkr.feature.glyph.data.GlyphRenderCommand
 import xyz.peatral.blinkr.feature.glyph.data.GlyphRepository
 import xyz.peatral.blinkr.feature.glyph.data.GlyphSettingsRepository
 import xyz.peatral.blinkr.feature.glyph.data.WakeLockRepository
 import javax.inject.Inject
 import kotlin.time.Duration.Companion.hours
+import kotlin.time.Duration.Companion.seconds
 
 class UpdateGlyphDisplayUseCase @Inject constructor(
     private val formatTimerUseCase: FormatTimerUseCase,
@@ -24,11 +25,14 @@ class UpdateGlyphDisplayUseCase @Inject constructor(
     private val glyphRepository: GlyphRepository,
     private val timerRepository: TimerRepository,
     private val wakeLockRepository: WakeLockRepository,
-    private val flashGlyphUseCase: FlashGlyphUseCase,
+    private val flashGlyph: FlashGlyphUseCase,
 ) {
     companion object {
         const val WAKELOCK_TAG = "Blinkr:GlyphTimerWakeLock"
         val WAKELOCK_DURATION = 10.hours
+
+        private const val TIMER_LAYER_ID = "timer_display_layer"
+        private const val TIMER_PRIORITY = 50
     }
 
     suspend operator fun invoke(mode: GlyphMode = GlyphMode.APP) = coroutineScope {
@@ -36,7 +40,6 @@ class UpdateGlyphDisplayUseCase @Inject constructor(
 
         try {
             wakeLockRepository.acquire(WAKELOCK_TAG, WAKELOCK_DURATION)
-            glyphRepository.connect(mode)
 
             timerRepository.timerState.collectLatest { state ->
                 when (state) {
@@ -45,19 +48,18 @@ class UpdateGlyphDisplayUseCase @Inject constructor(
 
                         if (mode == GlyphMode.TOY) {
                             val settings = glyphSettingsRepository.settings.first()
-                            glyphRepository.tryHardwareLock {
-                                val approxTextHeight = 5
-                                val approxTextWidth = 3 * 4 + 2 // 3 letters a 4 pixels + 2 paddings
-                                drawCenteredText(
+
+                            glyphRepository.updateLayer(
+                                mode = mode,
+                                layerId = TIMER_LAYER_ID,
+                                priority = TIMER_PRIORITY,
+                                command = GlyphRenderCommand.Text(
                                     text = "RDY",
-                                    brightness = settings.timerBrightness,
-                                    width = approxTextWidth,
-                                    height = approxTextHeight,
-                                    mode = mode,
+                                    brightness = settings.timerBrightness
                                 )
-                            }
+                            )
                         } else {
-                            clearDisplaySafe(mode)
+                            glyphRepository.removeLayer(mode, TIMER_LAYER_ID)
                         }
                     }
 
@@ -65,17 +67,17 @@ class UpdateGlyphDisplayUseCase @Inject constructor(
                         val settings = glyphSettingsRepository.settings.first()
 
                         if ((mode == GlyphMode.APP && !settings.isEnabled) || settings.flashDurationSeconds <= 0) {
-                            clearDisplaySafe(mode)
+                            glyphRepository.removeLayer(mode, TIMER_LAYER_ID)
                             return@collectLatest
                         }
 
                         flashJob = launch {
-                            flashGlyphUseCase(
-                                durationSeconds = settings.flashDurationSeconds,
+                            flashGlyph(
+                                duration = settings.flashDurationSeconds.seconds,
                                 brightness = settings.flashBrightness,
                                 mode = mode,
                             )
-                            clearDisplaySafe(mode)
+                            glyphRepository.removeLayer(mode, TIMER_LAYER_ID)
                         }
                     }
 
@@ -85,14 +87,9 @@ class UpdateGlyphDisplayUseCase @Inject constructor(
                 }
             }
         } finally {
-            glyphRepository.tryHardwareLock { glyphRepository.clearDisplay(mode) }
-            glyphRepository.disconnect(mode)
+            glyphRepository.removeLayer(mode, TIMER_LAYER_ID)
             wakeLockRepository.release()
         }
-    }
-
-    private fun clearDisplaySafe(mode: GlyphMode) {
-        glyphRepository.tryHardwareLock { glyphRepository.clearDisplay(mode) }
     }
 
     private suspend fun streamCountdownToGlyph(mode: GlyphMode) {
@@ -101,33 +98,19 @@ class UpdateGlyphDisplayUseCase @Inject constructor(
             glyphSettingsRepository.settings
         ) { time, settings -> time to settings }
             .collect { (time, settings) ->
-                glyphRepository.tryHardwareLock {
-                    if ((mode == GlyphMode.APP && !settings.isEnabled) || time.isBlank()) {
-                        glyphRepository.clearDisplay(mode)
-                    } else {
-                        val approxTextHeight = 5
-                        val approxTextWidth = 4 * 4 + 4 + 1 // 4 numbers a 4 px, 4 paddings, the colon
-                        drawCenteredText(
+                if ((mode == GlyphMode.APP && !settings.isEnabled) || time.isBlank()) {
+                    glyphRepository.removeLayer(mode, TIMER_LAYER_ID)
+                } else {
+                    glyphRepository.updateLayer(
+                        mode = mode,
+                        layerId = TIMER_LAYER_ID,
+                        priority = TIMER_PRIORITY,
+                        command = GlyphRenderCommand.Text(
                             text = time,
-                            brightness = settings.timerBrightness,
-                            width = approxTextWidth,
-                            height = approxTextHeight,
-                            mode = mode,
+                            brightness = settings.timerBrightness
                         )
-                    }
+                    )
                 }
             }
-    }
-
-    private fun drawCenteredText(text: String, brightness: Int, width: Int, height: Int, mode: GlyphMode) {
-        val matrixSize = Common.getDeviceMatrixLength()
-
-        glyphRepository.displayText(
-            text = text,
-            x = (matrixSize - width) / 2,
-            y = (matrixSize - height) / 2,
-            brightness = brightness,
-            mode = mode
-        )
     }
 }

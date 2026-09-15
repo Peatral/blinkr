@@ -13,12 +13,16 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.coroutines.resume
 
+
 @Singleton
 class GlyphDataSource @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
     private var glyphManager: GlyphMatrixManager? = null
-    private var isConnected = false
+    var isConnected = false
+        private set
+    val matrixSize: Int
+        get() = Common.getDeviceMatrixLength()
 
     suspend fun connect() = suspendCancellableCoroutine { cont ->
         if (isConnected) {
@@ -42,14 +46,6 @@ class GlyphDataSource @Inject constructor(
         })
     }
 
-    private fun renderFrame(frame: GlyphMatrixFrame, mode: GlyphMode) {
-        if (mode == GlyphMode.TOY) {
-            glyphManager?.setMatrixFrame(frame.render())
-        } else {
-            glyphManager?.setAppMatrixFrame(frame.render())
-        }
-    }
-
     private fun renderRaw(frame: IntArray, mode: GlyphMode) {
         if (mode == GlyphMode.TOY) {
             glyphManager?.setMatrixFrame(frame)
@@ -58,37 +54,42 @@ class GlyphDataSource @Inject constructor(
         }
     }
 
-    fun displayText(text: String, x: Int, y: Int, brightness: Int = 255, mode: GlyphMode = GlyphMode.APP) {
-        if (!isConnected || text.isBlank()) return
-
-        val textObject = GlyphMatrixObject.Builder()
-            .setText(text)
-            .setPosition(x, y)
-            .setBrightness(brightness.coerceIn(0, 255))
-            .build()
-
-        val frame = GlyphMatrixFrame.Builder()
-            .addTop(textObject)
-            .build(context)
-
-        renderFrame(frame, mode)
-    }
-
-    fun turnOnAll(brightness: Int = 255, mode: GlyphMode = GlyphMode.APP) {
+    fun renderCommand(command: GlyphRenderCommand, mode: GlyphMode) {
         if (!isConnected) return
 
-        val matrixLength = Common.getDeviceMatrixLength()
-        val fullScreenFrame = IntArray(matrixLength * matrixLength) { brightness.coerceIn(0, 255) }
+        when (command) {
+            is GlyphRenderCommand.Clear -> {
+                renderRaw(IntArray(matrixSize * matrixSize), mode)
+            }
+            is GlyphRenderCommand.AllOn -> {
+                renderRaw(IntArray(matrixSize * matrixSize) { command.brightness }, mode)
+            }
+            is GlyphRenderCommand.RawFrame -> {
+                renderRaw(command.pixels, mode)
+            }
+            is GlyphRenderCommand.Text -> {
+                if (command.text.isBlank()) return
 
-        renderRaw(fullScreenFrame, mode)
-    }
+                val actualX = command.x ?: calculateCenteredX(command.text, matrixSize)
+                val actualY = command.y ?: calculateCenteredY(matrixSize)
 
-    fun clearDisplay(mode: GlyphMode = GlyphMode.APP) {
-        if (!isConnected) return
+                val textObject = GlyphMatrixObject.Builder()
+                    .setText(command.text)
+                    .setPosition(actualX, actualY)
+                    .setBrightness(command.brightness.coerceIn(0, 255))
+                    .build()
 
-        val matrixLength = Common.getDeviceMatrixLength()
-        val emptyFrame = IntArray(matrixLength * matrixLength)
-        renderRaw(emptyFrame, mode)
+                val frame = GlyphMatrixFrame.Builder()
+                    .addTop(textObject)
+                    .build(context)
+
+                if (mode == GlyphMode.TOY) {
+                    glyphManager?.setMatrixFrame(frame.render())
+                } else {
+                    glyphManager?.setAppMatrixFrame(frame.render())
+                }
+            }
+        }
     }
 
     fun closeAppMatrix() {
@@ -100,5 +101,31 @@ class GlyphDataSource @Inject constructor(
         glyphManager?.unInit()
         glyphManager = null
         isConnected = false
+    }
+
+    /**
+     * Dynamically calculates text width based on character types.
+     * Matches standard Nothing LED matrix font spacing.
+     */
+    private fun calculateCenteredX(text: String, matrixSize: Int): Int {
+        var widthInPixels = 0
+
+        for (char in text) {
+            widthInPixels += when (char) {
+                ':', '.', ' ' -> 1
+                else -> 4
+            }
+        }
+
+        if (text.isNotEmpty()) {
+            widthInPixels += (text.length - 1)
+        }
+
+        return (matrixSize - widthInPixels) / 2
+    }
+
+    private fun calculateCenteredY(matrixSize: Int): Int {
+        val approxTextHeight = 5
+        return (matrixSize - approxTextHeight) / 2
     }
 }

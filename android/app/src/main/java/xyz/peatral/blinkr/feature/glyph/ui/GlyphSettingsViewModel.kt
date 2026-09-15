@@ -15,6 +15,7 @@ import xyz.peatral.blinkr.feature.glyph.data.GlyphSettings
 import xyz.peatral.blinkr.feature.glyph.data.GlyphSettingsRepository
 import xyz.peatral.blinkr.feature.glyph.domain.FlashGlyphUseCase
 import javax.inject.Inject
+import kotlin.time.Duration.Companion.seconds
 
 @HiltViewModel
 class GlyphSettingsViewModel @Inject constructor(
@@ -64,8 +65,8 @@ class GlyphSettingsViewModel @Inject constructor(
         testFlashJob?.cancel()
         testFlashJob = viewModelScope.launch {
             flashGlyph(
-                glyphSettingsRepository.settings.value.flashDurationSeconds,
-                glyphSettingsRepository.settings.value.flashBrightness
+                duration = glyphSettingsRepository.settings.value.flashDurationSeconds.seconds,
+                brightness = glyphSettingsRepository.settings.value.flashBrightness
             )
         }
     }
