@@ -56,7 +56,7 @@ class GlyphSettingsViewModel @Inject constructor(
 
     fun setFlashBrightness(brightness: Int) {
         viewModelScope.launch {
-            glyphSettingsRepository.setBrightness(brightness)
+            glyphSettingsRepository.setFlashBrightness(brightness)
         }
     }
 
