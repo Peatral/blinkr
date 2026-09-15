@@ -1,4 +1,4 @@
-package xyz.peatral.blinkr.feature.timeline.domain
+package xyz.peatral.blinkr.core.domain
 
 import kotlinx.coroutines.flow.first
 import xyz.peatral.blinkr.core.data.repository.SessionRepository

@@ -36,4 +36,6 @@
     <string name="glyph_setting_general">General</string>
     <string name="glyph_setting_timer">Timer</string>
     <string name="glyph_setting_flash">Flash</string>
+    <string name="manage_glyph_toys">Manage Glyph Toys</string>
+    <string name="glyph_toy_summary">Displays a timer to remind you to blink and look into the distance when the time is up</string>
 </resources>

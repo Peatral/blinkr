@@ -51,6 +51,29 @@
                 <action android:name="io.rebble.pebblekit2.RECEIVE_DATA_FROM_WATCH"/>
             </intent-filter>
         </service>
+        <service
+            android:name=".feature.glyph.service.BlinkrGlyphToyService"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.nothing.glyph.TOY"/>
+            </intent-filter>
+
+            <meta-data
+                android:name="com.nothing.glyph.toy.name"
+                android:resource="@string/app_name"/>
+
+            <meta-data
+                android:name="com.nothing.glyph.toy.image"
+                android:resource="@drawable/glyph_toy_preview"/>
+
+            <meta-data
+                android:name="com.nothing.glyph.toy.summary"
+                android:resource="@string/glyph_toy_summary"/>
+
+            <meta-data
+                android:name="com.nothing.glyph.toy.longpress"
+                android:value="1"/>
+        </service>
     </application>
 
 </manifest>

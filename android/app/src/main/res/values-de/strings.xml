@@ -35,4 +35,6 @@
     <string name="glyph_setting_general">Allgemein</string>
     <string name="glyph_setting_timer">Timer</string>
     <string name="glyph_setting_flash">Blinken</string>
+    <string name="manage_glyph_toys">Glyph-Toys verwalten</string>
+    <string name="glyph_toy_summary">Zeigt einen Timer um dich daran zu erinnern zu Blinzeln und in die Ferne zu schauen wenn die Zeit abgelaufen ist</string>
 </resources>

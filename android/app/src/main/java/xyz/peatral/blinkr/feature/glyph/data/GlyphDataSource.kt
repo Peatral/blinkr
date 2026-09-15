@@ -29,7 +29,8 @@ class GlyphDataSource @Inject constructor(
         glyphManager = GlyphMatrixManager.getInstance(context)
         glyphManager?.init(object : GlyphMatrixManager.Callback {
             override fun onServiceConnected(componentName: ComponentName) {
-                glyphManager?.register(Glyph.DEVICE_23112)
+                val device = if (Common.getDeviceMatrixLength() == 13) Glyph.DEVICE_25111p else Glyph.DEVICE_23112
+                glyphManager?.register(device)
                 isConnected = true
 
                 if (cont.isActive) cont.resume(Unit)
@@ -41,7 +42,23 @@ class GlyphDataSource @Inject constructor(
         })
     }
 
-    fun displayText(text: String, x: Int, y: Int, brightness: Int = 255) {
+    private fun renderFrame(frame: GlyphMatrixFrame, mode: GlyphMode) {
+        if (mode == GlyphMode.TOY) {
+            glyphManager?.setMatrixFrame(frame.render())
+        } else {
+            glyphManager?.setAppMatrixFrame(frame.render())
+        }
+    }
+
+    private fun renderRaw(frame: IntArray, mode: GlyphMode) {
+        if (mode == GlyphMode.TOY) {
+            glyphManager?.setMatrixFrame(frame)
+        } else {
+            glyphManager?.setAppMatrixFrame(frame)
+        }
+    }
+
+    fun displayText(text: String, x: Int, y: Int, brightness: Int = 255, mode: GlyphMode = GlyphMode.APP) {
         if (!isConnected || text.isBlank()) return
 
         val textObject = GlyphMatrixObject.Builder()
@@ -54,22 +71,28 @@ class GlyphDataSource @Inject constructor(
             .addTop(textObject)
             .build(context)
 
-        glyphManager?.setAppMatrixFrame(frame.render())
+        renderFrame(frame, mode)
     }
 
-    fun turnOnAll(brightness: Int = 255) {
+    fun turnOnAll(brightness: Int = 255, mode: GlyphMode = GlyphMode.APP) {
         if (!isConnected) return
 
-        val fullScreenFrame = IntArray(25 * 25) { brightness.coerceIn(0, 255) }
+        val matrixLength = Common.getDeviceMatrixLength()
+        val fullScreenFrame = IntArray(matrixLength * matrixLength) { brightness.coerceIn(0, 255) }
 
-        glyphManager?.setAppMatrixFrame(fullScreenFrame)
+        renderRaw(fullScreenFrame, mode)
     }
 
-    fun clearDisplay() {
+    fun clearDisplay(mode: GlyphMode = GlyphMode.APP) {
         if (!isConnected) return
 
-        val emptyFrame = IntArray(25 * 25)
-        glyphManager?.setAppMatrixFrame(emptyFrame)
+        val matrixLength = Common.getDeviceMatrixLength()
+        val emptyFrame = IntArray(matrixLength * matrixLength)
+        renderRaw(emptyFrame, mode)
+    }
+
+    fun closeAppMatrix() {
+        glyphManager?.closeAppMatrix()
     }
 
     fun disconnect() {

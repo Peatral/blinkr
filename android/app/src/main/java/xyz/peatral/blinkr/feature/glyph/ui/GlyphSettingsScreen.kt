@@ -83,7 +83,7 @@ fun GlyphSettingsScreen(
                 verticalArrangement = Arrangement.spacedBy(ListItemDefaults.SegmentedGap),
             ) {
                 SegmentedListItem(
-                    shapes = ListItemDefaults.segmentedShapes(index = 0, count = 1),
+                    shapes = ListItemDefaults.segmentedShapes(index = 0, count = 2),
                     colors = ListItemDefaults.colors(
                         containerColor = MaterialTheme.colorScheme.surfaceContainer
                     ),
@@ -96,6 +96,15 @@ fun GlyphSettingsScreen(
                         )
                     },
                     onClick = { viewModel.setIsEnabled(!settings.isEnabled) }
+                )
+
+                SegmentedListItem(
+                    shapes = ListItemDefaults.segmentedShapes(index = 1, count = 2),
+                    colors = ListItemDefaults.colors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainer
+                    ),
+                    content = { Text(stringResource(R.string.manage_glyph_toys)) },
+                    onClick = { viewModel.openManageGlyphToys() }
                 )
             }
 

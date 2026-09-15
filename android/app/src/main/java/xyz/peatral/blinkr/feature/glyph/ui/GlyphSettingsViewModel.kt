@@ -1,8 +1,12 @@
 package xyz.peatral.blinkr.feature.glyph.ui
 
+import android.content.ComponentName
+import android.content.Context
+import android.content.Intent
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
@@ -14,6 +18,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class GlyphSettingsViewModel @Inject constructor(
+    @ApplicationContext private val context: Context,
     private val glyphSettingsRepository: GlyphSettingsRepository,
     private val flashGlyph: FlashGlyphUseCase
 ) : ViewModel() {
@@ -63,5 +68,12 @@ class GlyphSettingsViewModel @Inject constructor(
                 glyphSettingsRepository.settings.value.flashBrightness
             )
         }
+    }
+
+    fun openManageGlyphToys() {
+        val intent = Intent().apply {
+            component = ComponentName("com.nothing.thirdparty", "com.nothing.thirdparty.matrix.toys.manager.ToysManagerActivity")
+        }
+        context.startActivity(intent)
     }
 }

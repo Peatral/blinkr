@@ -17,7 +17,7 @@ import xyz.peatral.blinkr.core.domain.CurrentTimeUseCase
 import xyz.peatral.blinkr.core.domain.FormatDurationUseCase
 import xyz.peatral.blinkr.core.domain.FormatLocalDateUseCase
 import xyz.peatral.blinkr.core.domain.FormatTimerUseCase
-import xyz.peatral.blinkr.feature.timeline.domain.ToggleTimerUseCase
+import xyz.peatral.blinkr.core.domain.ToggleTimerUseCase
 import javax.inject.Inject
 import kotlin.time.Duration
 
