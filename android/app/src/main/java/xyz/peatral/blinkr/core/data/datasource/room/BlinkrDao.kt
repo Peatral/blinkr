@@ -56,41 +56,9 @@ interface SessionDao {
     suspend fun deleteAll()
 
     @Transaction
-    suspend fun revalidateData(currentTime: Instant) {
-        val history = getAllSessionsAsc()
-        if (history.isEmpty()) return
-
-        val activeSession = history.lastOrNull { it.isActive }
-        val completedSessions = history.filter { !it.isActive }
-
-        val maxAllowedTime = currentTime + 1.days
-
-        val validHistory = completedSessions.filter {
-            it.startTime.toEpochMilliseconds() > 0 &&
-                    it.endTime!! >= it.startTime &&
-                    it.endTime <= maxAllowedTime
-        }
-
-        val mergedHistory = mutableListOf<SessionEntity>()
-        for (current in validHistory) {
-            val last = mergedHistory.lastOrNull()
-
-            if (last != null && current.startTime < (last.endTime!! + 1.minutes)) {
-                if (current.endTime!! > last.endTime) {
-                    mergedHistory[mergedHistory.lastIndex] = last.copy(endTime = current.endTime)
-                }
-            } else {
-                mergedHistory.add(current)
-            }
-        }
-
-        val finalHistory = mergedHistory.filter {
-            (it.endTime!! - it.startTime) >= 1.minutes
-        }
-
+    suspend fun replaceHistory(validSessions: List<SessionEntity>, activeSession: SessionEntity?) {
         deleteAll()
-        insertAll(finalHistory)
-
+        insertAll(validSessions)
         if (activeSession != null) {
             insert(activeSession)
         }

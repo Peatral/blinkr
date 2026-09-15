@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import xyz.peatral.blinkr.core.data.EventOrigin
 import xyz.peatral.blinkr.core.di.ApplicationScope
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -23,10 +24,6 @@ sealed interface TimerState {
     data class Idle(val timestamp: Instant? = Clock.System.now()) : TimerState
     data class Running(val timer: Timer) : TimerState
     data class Expired(val timer: Timer) : TimerState
-}
-
-enum class EventOrigin {
-    LOCAL, REMOTE
 }
 
 @Singleton

@@ -13,12 +13,16 @@ class TimerInitializer @Inject constructor(
     private val orchestrateTimerService: OrchestrateTimerServiceUseCase,
     private val persistSessionToStorage: PersistSessionToStorageUseCase,
     private val rescheduleTimer: RescheduleTimerUseCase,
+    private val deriveSessionStateFromTimers: DeriveSessionStateUseCase,
 ) : AppInitializer {
 
     override fun initialize() {
         appScope.launch {
             launch {
                 orchestrateTimerService()
+            }
+            launch {
+                deriveSessionStateFromTimers()
             }
             launch {
                 persistSessionToStorage()

@@ -6,17 +6,20 @@ import xyz.peatral.blinkr.core.data.datasource.room.SessionEntity
 import xyz.peatral.blinkr.core.data.repository.SessionRepository
 import xyz.peatral.blinkr.core.data.repository.SyncRepository
 import xyz.peatral.blinkr.core.data.repository.SyncState
+import xyz.peatral.blinkr.core.domain.ReconcileSessionsUseCase
 import xyz.peatral.blinkr.feature.pebble.data.PebbleMessage
 import xyz.peatral.blinkr.feature.pebble.data.PebbleRepository
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import javax.inject.Inject
+import kotlin.time.Clock
 import kotlin.time.Instant
 
 class SyncPebbleDataUseCase @Inject constructor(
     private val syncRepository: SyncRepository,
     private val sessionRepository: SessionRepository,
     private val pebbleRepository: PebbleRepository,
+    private val reconcileSession: ReconcileSessionsUseCase,
 ) {
     suspend operator fun invoke() = coroutineScope {
         var expectedChunks = 0
@@ -43,6 +46,9 @@ class SyncPebbleDataUseCase @Inject constructor(
 
                         if (expectedChunks in 1..receivedChunks) {
                             sessionRepository.saveSessions(syncBuffer)
+
+                            reconcileSession(Clock.System.now())
+
                             syncBuffer.clear()
                             expectedChunks = 0
                             syncRepository.updateSyncState(SyncState.Idle)
