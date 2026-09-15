@@ -32,12 +32,8 @@ interface SessionDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(sessions: SessionEntity)
 
-    @Query("""
-        DELETE FROM sessions 
-        WHERE startTime = (SELECT startTime FROM sessions ORDER BY startTime DESC LIMIT 1) 
-        AND endTime IS NULL
-    """)
-    suspend fun deleteUnfinishedSession()
+    @Query("DELETE FROM sessions WHERE endTime IS NULL")
+    suspend fun deleteAllUnfinishedSessions()
 
     @Query("""
         SELECT startTime FROM sessions 

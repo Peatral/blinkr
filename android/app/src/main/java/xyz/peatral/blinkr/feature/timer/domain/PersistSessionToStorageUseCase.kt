@@ -21,8 +21,16 @@ class PersistSessionToStorageUseCase @Inject constructor(
 
             when (next) {
                 is SessionState.Active -> {
+                    val trueStartTime = if (prev is SessionState.Active) {
+                        minOf(prev.startTime, next.startTime)
+                    } else {
+                        next.startTime
+                    }
+
+                    sessionRepository.deleteAllUnfinishedSessions()
+
                     sessionRepository.saveSession(
-                        SessionEntity(startTime = next.startTime, endTime = null)
+                        SessionEntity(startTime = trueStartTime, endTime = null)
                     )
                 }
                 is SessionState.Break -> {
@@ -33,7 +41,7 @@ class PersistSessionToStorageUseCase @Inject constructor(
                         if (isValidSession(sessionStart, sessionEnd)) {
                             sessionRepository.saveSession(SessionEntity(sessionStart, sessionEnd))
                         } else {
-                            sessionRepository.deleteUnfinishedSession()
+                            sessionRepository.deleteAllUnfinishedSessions()
                         }
 
                         reconcileSessionsUseCase(Clock.System.now())

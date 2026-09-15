@@ -85,8 +85,8 @@ class SessionRepository @Inject constructor(
         sessionDao.insert(session)
     }
 
-    suspend fun deleteUnfinishedSession() {
-        sessionDao.deleteUnfinishedSession()
+    suspend fun deleteAllUnfinishedSessions() {
+        sessionDao.deleteAllUnfinishedSessions()
     }
 
     fun getSessionsForTimeframe(startOfDay: Instant, endOfDay: Instant): Flow<List<SessionEntity>> {
