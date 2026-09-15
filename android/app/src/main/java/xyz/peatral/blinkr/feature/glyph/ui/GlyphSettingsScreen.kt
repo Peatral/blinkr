@@ -37,7 +37,7 @@ fun GlyphSettingsScreen(
 ) {
     val settings by viewModel.settings.collectAsState()
 
-    val sliderState = rememberSliderState(
+    val timerBrightnessSliderState = rememberSliderState(
         value = settings.timerBrightness.toFloat(),
         steps = 0, trackRange = 0f..255f
     )
@@ -127,10 +127,10 @@ fun GlyphSettingsScreen(
                             modifier = Modifier.fillMaxWidth(),
                         ) {
                             Slider(
-                                state = sliderState,
+                                state = timerBrightnessSliderState,
                                 modifier = Modifier.padding(top = 8.dp),
                                 enabled = settings.isEnabled,
-                                onValueChangeFinished = { viewModel.setTimerBrightness(sliderState.value.roundToInt()) },
+                                onValueChangeFinished = { viewModel.setTimerBrightness(timerBrightnessSliderState.value.roundToInt()) },
                             )
                         }
                     }
@@ -159,7 +159,7 @@ fun GlyphSettingsScreen(
                                 state = flashBrightnessSliderState,
                                 modifier = Modifier.padding(top = 8.dp),
                                 enabled = settings.isEnabled,
-                                onValueChangeFinished = { viewModel.setFlashBrightness(sliderState.value.roundToInt()) },
+                                onValueChangeFinished = { viewModel.setFlashBrightness(flashBrightnessSliderState.value.roundToInt()) },
                             )
                         }
                     }
